@@ -5,7 +5,8 @@ Random experiments on CG and expressivity.
 So far just a simple program that converts very simple regular expressions into CG rules. 
 We assume an automaton like
 
-```     det        n
+```
+        det        n
 ->(s0) ----->(s1)----->((s2))
 ```
 
