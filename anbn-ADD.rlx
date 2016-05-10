@@ -1,0 +1,39 @@
+LIST >>> = >>> ;
+LIST <<< = <<< ;
+DELIMITERS = "<.>" ;
+
+LIST A = "a" ;
+LIST B = "b" ;
+LIST ANY = "a" "b" ;
+LIST OPTA = (opta) ;
+LIST OPTB = (optb) ;
+
+LIST EVEN = (even) ;
+LIST ODD  = (odd) ;
+LIST FAIL = (fail) ;
+
+
+# check if the string is even, if not "fail"
+SECTION
+ADD ODD TARGET ANY (-1 >>>) ;
+
+SECTION 
+ADD EVEN TARGET ANY (-1 ODD) ;
+ADD ODD  TARGET ANY (-1 EVEN) ;
+
+SECTION
+ADD FAIL TARGET ODD (1 <<<) ;
+
+SECTION 
+REMCOHORT ANY (1* FAIL) ;
+
+SECTION
+REMCOHORT ANY (0 FAIL) ;
+
+SECTION
+SELECT A  (-1 >>>) ;
+SELECT B  ( 1 <<<) ;
+ADD OPTA TARGET A (-1C A) ;
+ADD OPTB TARGET B ( 1C B) ;
+SELECT A (0 OPTA) ;
+SELECT B (0 OPTB) ;

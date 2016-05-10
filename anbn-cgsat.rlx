@@ -1,0 +1,39 @@
+DELIMITERS = "<.>" ;
+
+LIST A     = "a"     ;
+LIST B     = "b"     ;
+LIST OPT_A = "opt_a" ;
+LIST OPT_B = "opt_b" ;
+LIST ODD   = "odd"   ;
+LIST EVEN  = "even"  ;
+LIST >>>   = "BOS"   ;
+LIST <<<   = "EOS"   ;
+SET  ANY   = A OR B  ;
+
+# create own magic tags
+SECTION
+
+REMOVE >>> (-1 ANY) ;
+REMOVE <<< ( 1 ANY) ;
+
+# mark even/odd cohorts
+
+REMOVE EVEN (0 >>>) ;
+
+REMOVE ODD  (NOT 0 >>>) (NOT -1 EVEN) ;
+REMOVE EVEN (NOT -1 ODD) ;
+
+# AFTER-SECTIONS
+# REMCOHORT ANY (1* <<< LINK NOT 0 EVEN) ;
+# REMCOHORT <<< (NOT 0 EVEN) ;
+
+SECTION
+# mark a/b
+SELECT A (0 >>>) ;
+SELECT B (0 <<<) ;
+
+SECTION
+REMOVE OPT_B (-1C A) ;
+REMOVE OPT_A ( 1C B) ;
+SELECT A (NOT 0 OPT_B) ;
+SELECT B (NOT 0 OPT_A) ;
