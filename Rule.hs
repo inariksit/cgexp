@@ -28,16 +28,25 @@ stateToTag = TS  --Makes states also into special tags;
 
 --------------------------------------------------------------------------------
 
+
 data Rule = R { target  :: [TagPlus]
               , context :: [Context] } deriving (Eq)
 
 
-data Context = Yes Int [TagPlus] | No Int [TagPlus] deriving (Eq)
+data Context = Yes Position [TagPlus] | No Position [TagPlus] deriving (Eq)
+
+data Position = C Int | NC Int deriving (Eq)
+
+type Cautious = Bool
 
 instance Show Context where
-  show (Yes i ts) = "(" ++ show i ++ " " ++ show ts ++ ")"
-  show (No i ts)  = "(NOT " ++ show i ++ " " ++ show ts ++ ")"
+  show (Yes pos ts) = "(" ++ show pos ++ " " ++ show ts ++ ")"
+  show (No pos ts)  = "(NOT " ++ show pos ++ " " ++ show ts ++ ")"
 
+instance Show Position where
+  show (C i)  = show i ++ "C"
+  show (NC i) = show i
+ 
 instance Show Rule where
   show (R trg ctxs) = "REMOVE " ++ show trg ++ " IF " ++ (unwords $ map show ctxs)
 
@@ -53,8 +62,8 @@ removeTagFrom a s = never:sometimes
   --If there is a transition with Det from 0, allow that but remove Det from everywhere else
   sometimes = [ R [T tag] [beforeCtx,afterCtx]
                    | (tag,s') <- fromS
-                   , let beforeCtx = Yes (-1) [stateToTag s] 
-                   , let afterCtx = No 1 [stateToTag s'] ]
+                   , let beforeCtx = Yes (C (-1)) [stateToTag s] 
+                   , let afterCtx = No (NC 1) [stateToTag s'] ]
 
 
   --If there is no transition with Noun from 0, remove all Nouns from 0.
@@ -62,7 +71,7 @@ removeTagFrom a s = never:sometimes
   never = R trg [ctx]
     where (tags,_) = unzip fromS  --transitions that happen to *some* state
           trg = map T $ compl tags  --complement: transitions that never happen
-          ctx = Yes (-1) [stateToTag s]
+          ctx = Yes (C (-1)) [stateToTag s]
 
 
 
