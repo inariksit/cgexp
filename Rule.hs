@@ -10,6 +10,8 @@ test a = do mapM_ print (defRules a)
             putStrLn ""
             [0..bound a] `forM_` \i -> mapM_ print (removeTagFrom a i)
             [1..bound a] `forM_` \i -> mapM_ print (removeTagTo a i)
+            putStrLn ""
+            [0..bound a] `forM_` \i -> mapM_ print (removeState a i)
 
 
 
@@ -60,14 +62,19 @@ showTS  = intercalate " OR " . map show
 --------------------------------------------------------------------------------
 
 defRules :: Automaton Tag -> [Rule]
-defRules a = [ R allButStart [nothingInPrevious]
-             , R allButEnd   [nothingInFollowing] ] 
+defRules a = [ R allButStart [noPrec]
+             , R allButEnd   [noFoll] ] 
  where 
-  allButStart = [ TS s | s <- [1..bound a] ]  --all states excluding 0
+  allButStart = [ TS s | s <- [1..bound a] ] --all states excluding 0 
   allButEnd   = [ TS s | s <- [0..bound a]
                        , not $ final a s ]
-  nothingInPrevious = No (NC (-1)) [ T t | t <- [minBound..maxBound] :: [Tag] ]
-  nothingInFollowing = No (NC  1) [ T t | t <- [minBound..maxBound] :: [Tag] ]
+{-
+  allButStartExceptIfItsAlsoFinal
+    = [ TS s | s <- [1..bound a] ++ --all states excluding 0 
+                   if final a 0 then [0] else [] ] --(except if it's also accepting)
+-}
+  noPrec = No (NC (-1)) [ T t | t <- [minBound..maxBound] :: [Tag] ]
+  noFoll = No (NC  1) [ T t | t <- [minBound..maxBound] :: [Tag] ]
 
 --------------------------------------------------------------------------------
 
@@ -112,8 +119,14 @@ removeTagTo a s = neverTo:sometimesTo
 
 --------------------------------------------------------------------------------
 
-removeState :: Automaton a -> State -> Rule
-removeState = undefined
-
+removeState :: Automaton Tag -> State -> [Rule]
+removeState a s = [ R [TS s] [c] 
+                    | c@(No _ (x:xs)) <- contexts] --only non-empty ctxs
+ where
+  (tagsFrom,_) = unzip $ fromState a s
+  (_,tagsTo)   = unzip $ toState a s 
+  contexts     = [ No (NC 1) (map T $ nub tagsFrom) 
+                 , No (NC (-1)) (map T $ nub tagsTo) ] 
+         
 
 
