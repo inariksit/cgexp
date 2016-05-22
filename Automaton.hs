@@ -42,7 +42,7 @@ withSymbol (A f b _) symb = [ (from,to) | from <- [0..b]
 
 --------------------------------------------------------------------------------
 
-data Tag = Det | Adj | Noun  deriving (Show,Eq,Enum,Bounded)
+data Tag = Det | Adj | Noun | Verb deriving (Show,Eq,Enum,Bounded)
 
 
 detAdjNoun :: Automaton Tag
@@ -56,3 +56,5 @@ detAdjNoun = A trans 2 fin
   fin 2 = True
   fin _ = False
 
+
+detNounVerb 
