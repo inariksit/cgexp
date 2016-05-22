@@ -31,10 +31,14 @@ fromState (A f b _) from = [ (a,to) | to <- [0..b]
                                     , a <- f from to ]
   
 
-
 toState :: Automaton a -> State -> [(State,a)]
 toState (A f b _) to = [ (from,a) | from <- [0..b]
                                   , a <- f from to ]
+
+withSymbol :: (Eq a, Enum a, Bounded a) => Automaton a -> a -> [(State,State)]
+withSymbol (A f b _) symb = [ (from,to) | from <- [0..b]
+                                        , to <- [0..b]
+                                        , symb `elem` f from to ]
 
 --------------------------------------------------------------------------------
 

@@ -1,0 +1,29 @@
+SET >>> = (>>>)
+SET <<< = (<<<)
+SET Det = (det) ;
+SET Adj = (adj) ;
+SET Noun = (noun) ;
+BEFORE-SECTIONS
+REMOVE (s1) OR (s2) IF (-1 >>>) ;
+REMOVE (s0) OR (s1) IF (1 <<<) ;
+
+SECTION
+
+REMOVE Adj OR Noun IF (-1C (s0)) ;
+REMOVE Det IF (-1C (s0)) (NOT 1 (s1)) ;
+REMOVE Det IF (-1C (s1)) ;
+REMOVE Adj IF (-1C (s1)) (NOT 1 (s1)) ;
+REMOVE Adj IF (-1C (s1)) (NOT 1 (s2)) ;
+REMOVE Noun IF (-1C (s1)) (NOT 1 (s2)) ;
+REMOVE Det OR Adj OR Noun IF (-1C (s2)) ;
+REMOVE Noun IF (1C (s1)) ;
+REMOVE Det IF (1C (s1)) (NOT -1 (s0)) ;
+REMOVE Adj IF (1C (s1)) (NOT -1 (s1)) ;
+REMOVE Det IF (1C (s2)) ;
+REMOVE Adj IF (1C (s2)) (NOT -1 (s1)) ;
+REMOVE Noun IF (1C (s2)) (NOT -1 (s1)) ;
+
+REMOVE (s0) IF (NOT 1 Det) ;
+REMOVE (s1) IF (NOT 1 Adj OR Noun) ;
+REMOVE (s1) IF (NOT -1 Det OR Adj) ;
+REMOVE (s2) IF (NOT -1 Adj OR Noun) ; 
