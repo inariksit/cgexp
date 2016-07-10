@@ -1,10 +1,10 @@
 module Rule where
 
 import Automaton
-import Data.Char
+import Data.Char ( toLower )
 import Data.List
 import Control.Monad ( forM_ )
-import System.Environment
+import System.Environment ( getArgs )
 
 import Debug.Trace
 
@@ -44,9 +44,8 @@ printRules a = do mapM_ putStrLn definitions
                   [0..bound a] `forM_` \i -> mapM_ print (removeState a i)
 
 
-
 --------------------------------------------------------------------------------
--- States need to be tags too
+-- Include states in tags
 
 data TagPlus = T Tag | TS State | BOS | EOS deriving (Eq)
 
@@ -128,7 +127,7 @@ baseRules a = [ R allButStart [bos] --[noPrec]
                                     then [0] --EXCEPT if start also accepts
                                      else [] ] 
 
-  --remove states that are accepting and sink from all but last (state) cohort
+  --remove accepting & sink states from all but last (state) cohort
   onlyEnd = [ TS s | s <- [0..bound a]
                    , final a s 
                    , sink a s ]
@@ -146,7 +145,7 @@ baseRules a = [ R allButStart [bos] --[noPrec]
 
 removeTag :: Automaton Tag -> Tag -> [Rule]
 removeTag a t = [ R [T t] [No nc_1 (map TS froms)]
-                    ,  R [T t] [No nc1  (map TS tos)] ]
+                , R [T t] [No nc1  (map TS tos)] ]
   where (froms,tos) = unzip $ withSymbol a t       
 
 ---
@@ -158,8 +157,8 @@ removeState a s = [ R [TS s] [c]
  where
   (tagsFrom,_) = unzip $ fromState a s
   (_,tagsTo)   = unzip $ toState a s 
-  contexts     = [ No (NC 1) (map T $ nub tagsFrom) 
-                 , No (NC (-1)) (map T $ nub tagsTo) ] 
+  contexts     = [ No nc1  (map T $ nub tagsFrom) 
+                 , No nc_1 (map T $ nub tagsTo) ]
 
 
 --------------------------------------------------------------------------------
