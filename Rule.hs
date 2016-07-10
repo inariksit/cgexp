@@ -104,8 +104,8 @@ definitions = "SET >>> = (>>>) ;":
 
 
 baseRules :: Automaton Tag -> [Rule]
-baseRules a = [ R allButStart [noPrec] 
-              , R allButEnd   [noFoll] 
+baseRules a = [ R allButStart [bos] --[noPrec] 
+              , R allButEnd   [eos] --[noFoll] 
               , R onlyStart   [hasPrec] 
               , R onlyEnd     [hasFoll] ] 
 
@@ -130,66 +130,61 @@ baseRules a = [ R allButStart [noPrec]
   hasFoll = Yes (NC   1 ) alltps
 
   --more readable alternative to noPrec and noFoll
-  --bos = Yes (NC (-1)) [BOS]
-  --eos = Yes (NC   1)  [EOS]
+  bos = Yes (NC (-1)) [BOS]
+  eos = Yes (NC   1)  [EOS]
 
 --------------------------------------------------------------------------------
 
+{-   Desired behaviour:
+    REMOVE Noun IF (-1C (s1)) (NOT 1 (s2) OR (s3)) ;
+    REMOVE Det OR Noun OR Verb IF (-1C (s0)) (NOT 1 (s3)) ;
+
+   Bad behaviour:
+    REMOVE Noun IF (-1C (s1)) (NOT 1 (s2)) ;
+    REMOVE Noun IF (-1C (s1)) (NOT 1 (s3)) ;
+  
+    REMOVE Det IF (-1C (s0)) (NOT 1 (s3)) ;
+    REMOVE Noun IF (-1C (s0)) (NOT 1 (s3)) ;
+    REMOVE Verb IF (-1C (s0)) (NOT 1 (s3)) ;
+-}
+
 removeTagFrom :: Automaton Tag -> State -> [Rule]
-removeTagFrom a s = neverFrom:sometimesFrom
+removeTagFrom = removeTag transition (C (-1)) (NC 1)
+
+removeTagTo :: Automaton Tag -> State -> [Rule]
+removeTagTo = removeTag transitionTo (C 1) (NC (-1))
+
+
+removeTag :: (Automaton Tag -> State -> Tag -> [State])
+          -> Position -> Position
+          -> Automaton Tag 
+          -> State
+          -> [Rule]
+removeTag tr posFrom posTo a s = never:sometimes
  where
                      -- if s==0, then [ (Det,  [1,2])
                      --               , (Noun, [2,3])
                      --               , (Verb, [3])  ]
-  byTag = [ (tag,ts) -- if s==1, then [ (Noun, [2,3]) ]
+  byTag = [ (tag,states) -- if s==1, then [ (Noun, [2,3]) ]
            | tag <- alltags :: [Tag] 
-           , let ts = transition a s tag 
-           , not $ null ts ] :: [(Tag,[State])]
+           , let states = tr a s tag 
+           , not $ null states ] :: [(Tag,[State])]
 
-  ctxFrom   = Yes (C (-1)) [stateToTag s] -- e.g. `-1C (s0)'
+  ctxFrom   = Yes posFrom [stateToTag s] -- e.g. `-1C (s0)'
 
 
   --If there is no transition with Noun from/to 0, remove all Nouns from/to 0.
   --May not be strictly needed if we go for actual sentences, not symbolic?
   (tags,_)  = unzip byTag  --transitions that happen *to* some state
-  neverFrom = R [ T t | t <- compl tags ] [ctxFrom]
+  never = R [ T t | t <- compl tags ] [ctxFrom]
 
   -- If there is a transition with Det from 0, 
   -- allow that but remove Det from everywhere else.
-  sometimesFrom = [ R trg [ctxFrom, ctxTo]
-                    | (tags,ss) <- mergeFst byTag
-                    , let trg = map T tags
-                    , let ctxTo = No (NC 1) (map stateToTag ss) ]
+  sometimes = [ R trg [ctxFrom, ctxTo]
+                | (tags,ss) <- mergeFst byTag
+                , let trg = map T tags
+                , let ctxTo = No posTo (map stateToTag ss) ]
 
-
-  -- Desired behaviour:
-  --  REMOVE Noun IF (-1C (s1)) (NOT 1 (s2) OR (s3)) ;
-  --  REMOVE Det OR Noun OR Verb IF (-1C (s1)) (NOT 1 (s3)) ;
-
-  -- Bad behaviour:
-  --  REMOVE Noun IF (-1C (s1)) (NOT 1 (s2)) ;
-  --  REMOVE Noun IF (-1C (s1)) (NOT 1 (s3)) ;
-  --
-  --  REMOVE Det IF (-1C (s0)) (NOT 1 (s3)) ;
-  --  REMOVE Noun IF (-1C (s0)) (NOT 1 (s3)) ;
-  --  REMOVE Verb IF (-1C (s0)) (NOT 1 (s3)) ;
-
-
-
-removeTagTo :: Automaton Tag -> State -> [Rule]
-removeTagTo a s = neverTo:sometimesTo
- where
-  toS = toState a s :: [(State,Tag)]
-
-  sometimesTo = [ R [T tag] [afterCtx, beforeCtx]
-                  | (s',tag) <- toS
-                  , let afterCtx = Yes (C 1) [stateToTag s]
-                  , let beforeCtx = No (NC (-1)) [stateToTag s'] ]
-
-  neverTo = R trgTo [ctxTo]
-   where (_,tagsTo) = unzip toS  --transitions that happen *from* some state
-         trgTo      = map T $ compl tagsTo
-         ctxTo      = Yes (C 1) [stateToTag s]
 
 --------------------------------------------------------------------------------
 
@@ -204,12 +199,16 @@ removeState a s = [ R [TS s] [c]
          
 --------------------------------------------------------------------------------
 
+{-
+mergeFst [('a',[1,2,3]), ('b',[1,2]), ('c',[1,2,3]), ('d',[1,2])]
+[(['b','d'],[1,2]),(['a','c'],[1,2,3])]
 
+-}
 
-mergeFst :: (Eq b) => [(a,[b])] -> [([a],[b])]
+mergeFst :: (Ord b, Eq b) => [(a,[b])] -> [([a],[b])]
 mergeFst a_bs = [ (as, bs) 
-                  | as_bs <- groupBy (\(_,b) (_,b') -> b==b') a_bs -- :: [[(a,[b])]]
+                  | as_bs <- groupBy (\(_,b) (_,b') -> b==b') $ sortOn snd a_bs -- :: [[(a,[b])]]
                   , let as = map fst as_bs
-                  , let bs = snd $ head as_bs
+                  , let bs = snd $ head as_bs 
                 ]
 
