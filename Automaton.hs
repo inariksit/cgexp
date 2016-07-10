@@ -41,10 +41,16 @@ withSymbol (A f b _) symb = [ (from,to) | from <- [0..b]
                                         , to <- [0..b]
                                         , symb `elem` f from to ] 
 
-transition :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> a -> [State]
-transition (A f b _) from symb = [ to | to <- [0..b]
-                                      , symb `elem` f from to ]
+transitionFrom :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> a -> [State]
+transitionFrom (A f b _) from symb = [ to | to <- [0..b]
+                                          , symb `elem` f from to ]
 
+transitionTo :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> a -> [State]
+transitionTo (A f b _) to symb = [ from | from <- [0..b]
+                                        , symb `elem` f from to ]
+
+sink :: Automaton a -> State -> Bool
+sink (A f b fin) s = all null [ f s t | t <- [0..b] ]
 
 --------------------------------------------------------------------------------
 
@@ -57,6 +63,7 @@ detAdjNoun :: Automaton Tag
 detAdjNoun = A t 2 fin
  where 
   t 0 1 = [Det]
+  t 0 2 = [Adj]
   t 1 1 = [Adj]
   t 1 2 = [Adj,Noun]
   t _ _ = []
@@ -71,7 +78,7 @@ detNounVerb = A t 3 fin
   t 0 1 = [Det]
   t 0 2 = [Noun]
   t 0 3 = [Det,Noun,Verb]
---  t 1 1 = [Adj]
+  t 1 1 = [Adj]
   t 1 2 = [Noun]
   t 1 3 = [Noun]
   t 2 3 = [Verb]
