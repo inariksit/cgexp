@@ -22,12 +22,12 @@ printRules a = do mapM_ putStrLn definitions
                   putStrLn ""
 
                   putStrLn "BEFORE-SECTIONS"
+                  putStrLn ""
                   mapM_ print (baseRules a)
                   putStrLn ""
 
 
                   putStrLn "SECTION"
-                  putStrLn ""
                   putStrLn ""
                   putStrLn "# Remove tags NOT between certain states"
                   alltags `forM_` \t -> mapM_ print (removeTag a t)
@@ -141,24 +141,37 @@ baseRules a = [ R allButStart [bos] --[noPrec]
   bos = Yes (NC (-1)) [BOS]
   eos = Yes (NC   0)  [EOS]
 
----
+-----
+
+-- Doesn't work properly if a sentence has more or less cohorts 
+-- than the automaton needs transitions to reach accepting state.
+-- "Doesn't work" means it still disambiguates, but nonsensically.
 
 removeTag :: Automaton Tag -> Tag -> [Rule]
-removeTag a t = [ R [T t] [No nc_1 (map TS froms)]
-                , R [T t] [No nc1  (map TS tos)] ]
-  where (froms,tos) = unzip $ withSymbol a t       
+removeTag a t =  [ R [T t] [c] | c@(No _ cs) <- contexts
+                               , not $ null cs ]
+ where 
+  (statesFrom,statesTo) = unzip $ withSymbol a t       
+  contexts = [ No nc_1 (TS `map` nub statesFrom) 
+             , No nc1  (TS `map` nub statesTo) ]
 
----
+------
 
---TODO: make it not remove a *final* state when it's not followed by something
 removeState :: Automaton Tag -> State -> [Rule]
-removeState a s = [ R [TS s] [c] 
-                    | c@(No _ (x:xs)) <- contexts] --only non-empty ctxs
+removeState a s = [ R [TS s] (c:eos)
+                    | c@(No pos cs) <- contexts
+                    , not $ null cs
+
+                    --don't remove *final* state when not followed by something
+                    , let eos = if final a s && pos == NC 1
+                                 then [No (NC 0) [EOS]] else [] 
+                  ] 
  where
   (tagsFrom,_) = unzip $ fromState a s
   (_,tagsTo)   = unzip $ toState a s 
-  contexts     = [ No nc1  (map T $ nub tagsFrom) 
-                 , No nc_1 (map T $ nub tagsTo) ]
+  contexts     = [ No nc1  (T `map` nub tagsFrom)
+                 , No nc_1 (T `map` nub tagsTo) ]
+                 
 
 
 --------------------------------------------------------------------------------
