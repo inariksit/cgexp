@@ -4,32 +4,29 @@ SET Det = (det) ;
 SET Adj = (adj) ;
 SET Noun = (noun) ;
 SET Verb = (verb) ;
+SET Any = Det OR Adj OR Noun OR Verb ;
+
 BEFORE-SECTIONS
-REMOVE (s1) OR (s2) IF (NOT -1 Det OR Adj OR Noun OR Verb) ;
-REMOVE (s0) OR (s1) IF (NOT 1 Det OR Adj OR Noun OR Verb) ;
+REMOVE (s1) OR (s2) IF (-1 >>>) ;
+REMOVE (s0) OR (s1) IF (0 <<<) ;
 REMOVE (s0) IF (-1 Det OR Adj OR Noun OR Verb) ;
 REMOVE (s2) IF (1 Det OR Adj OR Noun OR Verb) ;
 
 SECTION
 
-# Remove tags coming from a certain state (-1C foo)
-REMOVE Adj OR Noun OR Verb IF (-1C (s0)) ;
-REMOVE Det IF (-1C (s0)) (NOT 1 (s1)) ;
-REMOVE Det OR Verb IF (-1C (s1)) ;
-REMOVE Adj IF (-1C (s1)) (NOT 1 (s1) OR (s2)) ;
-REMOVE Noun IF (-1C (s1)) (NOT 1 (s2)) ;
-REMOVE Det OR Adj OR Noun OR Verb IF (-1C (s2)) ;
 
-# Remove tags coming to a certain state (1C foo)
-REMOVE Noun OR Verb IF (1C (s1)) ;
-REMOVE Det IF (1C (s1)) (NOT -1 (s0)) ;
-REMOVE Adj IF (1C (s1)) (NOT -1 (s1)) ;
-REMOVE Det OR Verb IF (1C (s2)) ;
-REMOVE Adj IF (1C (s2)) (NOT -1 (s1)) ;
-REMOVE Noun IF (1C (s2)) (NOT -1 (s1)) ;
+# Remove tags NOT between certain states
+REMOVE Det IF (NOT -1 (s0)) ;
+REMOVE Det IF (NOT 1 (s1)) ;
+REMOVE Adj IF (NOT -1 (s0) OR (s1) OR (s1)) ;
+REMOVE Adj IF (NOT 1 (s2) OR (s1) OR (s2)) ;
+REMOVE Noun IF (NOT -1 (s1)) ;
+REMOVE Noun IF (NOT 1 (s2)) ;
+REMOVE Verb IF (NOT -1 ) ;
+REMOVE Verb IF (NOT 1 ) ;
 
 # Remove states between certain tags
-REMOVE (s0) IF (NOT 1 Det) ;
+REMOVE (s0) IF (NOT 1 Det OR Adj) ;
 REMOVE (s1) IF (NOT 1 Adj OR Noun) ;
 REMOVE (s1) IF (NOT -1 Det OR Adj) ;
 REMOVE (s2) IF (NOT -1 Adj OR Noun) ;
