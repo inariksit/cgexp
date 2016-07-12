@@ -3,11 +3,9 @@
 module Test where
 
 import Automaton
---import Rule
 import Test.QuickCheck
 
 import Control.Monad
---import Data.List
 import Debug.Trace
 
 
@@ -21,11 +19,14 @@ checkAutomaton :: Automaton Tag -> Bool
 checkAutomaton a = True
 
 
+randomAutomaton :: IO (Automaton Tag)
+randomAutomaton = generate (arbitrary :: Gen (Automaton Tag)) 
+
 --------------------------------------------------------------------------------
 
 instance Arbitrary (Automaton Tag) where
   arbitrary = liftM3 A arbitrary -- trans :: Gen (State -> State -> [a]))
-                       (suchThat arbitrary (<10)) -- bound :: Gen State)
+                       (elements [1..10]) -- bound :: Gen State)
                        arbitrary -- final :: Gen (State -> Bool))
 
 
