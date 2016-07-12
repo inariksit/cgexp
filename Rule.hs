@@ -1,6 +1,7 @@
 module Rule where
 
 import Automaton
+import Test
 import Data.Char ( toLower )
 import Data.List
 import Control.Monad ( forM_ )
@@ -13,37 +14,29 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of 
-    ["detNounV"] -> printRules detNounVerb
-    ["detAdjN"]  -> printRules detAdjNoun
-    _            -> mapM_ (putStrLn . showAutomaton) [detAdjNoun, detNounVerb]
+    ["detNounV"] -> putStrLn $ printRules detNounVerb
+    ["detAdjN"]  -> putStrLn $ printRules detAdjNoun
+    ["random"]   -> do a <- randomAutomaton
+                       print a
+                       putStrLn $ printRules a
+                       --writeFile ()
+    _            -> mapM_ print [detAdjNoun, detNounVerb]
 
-printRules :: Automaton Tag -> IO ()
-printRules a = do mapM_ putStrLn definitions
-                  putStrLn ""
+printRules :: Automaton Tag -> String
+printRules a = 
+  unlines [ unlines definitions
+          , "BEFORE-SECTIONS\n"
+          , pr (baseRules a)
+          , "SECTION\n"
+          , "# Remove tags NOT between certain states"
+          , concatMap (pr . removeTag a) alltags
 
-                  putStrLn "BEFORE-SECTIONS"
-                  putStrLn ""
-                  mapM_ print (baseRules a)
-                  putStrLn ""
+          , "# Remove states between certain tags"
+          , concatMap (pr . removeState a) [0..bound a]
+          ]
 
-
-                  putStrLn "SECTION"
-                  putStrLn ""
-                  putStrLn "# Remove tags NOT between certain states"
-                  alltags `forM_` \t -> mapM_ print (removeTag a t)
-
-                  --putStrLn "# Remove tags coming from a certain state (-1C foo)"
-                  --[0..bound a] `forM_` \i -> mapM_ print (removeTagFrom a i)
-                  --putStrLn ""
-
-                  --putStrLn "# Remove tags coming to a certain state (1C foo)"
-                  --[1..bound a] `forM_` \i -> mapM_ print (removeTagTo a i)
-
-                  putStrLn ""
-                  putStrLn "# Remove states between certain tags"
-                  [0..bound a] `forM_` \i -> mapM_ print (removeState a i)
-
-
+pr :: [Rule] -> String
+pr = unlines . map show
 --------------------------------------------------------------------------------
 -- Include states in tags
 
@@ -112,10 +105,10 @@ definitions = "SET >>> = (>>>) ;":
 -- Automaton to Rules
 
 baseRules :: Automaton Tag -> [Rule]
-baseRules a = [ R allButStart [bos] --[noPrec] 
-              , R allButEnd   [eos] --[noFoll] 
-              , R onlyStart   [hasPrec] 
-              , R onlyEnd     [hasFoll] ] 
+baseRules a = [ R allButStart [bos]   --[noPrec] 
+              , R allButEnd   [eos] ] --[noFoll] 
+              ++ [ R onlyStart [hasPrec] | not (null onlyStart) ] 
+              ++ [ R onlyEnd   [hasFoll] | not (null onlyEnd) ] 
 
  where
   allButStart = [ TS s | s <- [1..bound a] ] --all states excluding 0 
@@ -157,12 +150,13 @@ removeTag a t =  [ R [T t] [c] | c@(No _ cs) <- contexts
 ------
 
 removeState :: Automaton Tag -> State -> [Rule]
-removeState a s = [ R [TS s] (c:eos)
+removeState a s = [ R [TS s] (c:notEos)
                     | c@(No pos cs) <- contexts
                     , not $ null cs
 
                     --don't remove *final* state when not followed by something
-                    , let eos = [ No (NC 0) [EOS] | final a s && pos == NC 1 ]
+                    , let notEos = [ No (NC 0) [EOS] 
+                                     | final a s && pos == NC 1 ]
                                  
                   ] 
  where
@@ -187,57 +181,3 @@ mergeFst a_bs = [ (as, bs)
                   , let as = map fst as_bs
                   , let bs = snd $ head as_bs 
                 ]
-
---------------------------------------------------------------------------------
--- Old, unused, TODO make sure it's not actually needed and delete
-
-{-   Desired behaviour:
-    REMOVE Noun IF (-1C (s1)) (NOT 1 (s2) OR (s3)) ;
-    REMOVE Det OR Noun OR Verb IF (-1C (s0)) (NOT 1 (s3)) ;
-
-   Bad behaviour:
-    REMOVE Noun IF (-1C (s1)) (NOT 1 (s2)) ;
-    REMOVE Noun IF (-1C (s1)) (NOT 1 (s3)) ;
-  
-    REMOVE Det IF (-1C (s0)) (NOT 1 (s3)) ;
-    REMOVE Noun IF (-1C (s0)) (NOT 1 (s3)) ;
-    REMOVE Verb IF (-1C (s0)) (NOT 1 (s3)) ;
-
-
-removeTagFrom :: Automaton Tag -> State -> [Rule]
-removeTagFrom = removeTag transitionFrom c_1 nc1
-
-removeTagTo :: Automaton Tag -> State -> [Rule]
-removeTagTo = removeTag transitionTo c1 nc_1
-
-
-removeTag :: (Automaton Tag -> State -> Tag -> [State])
-          -> Position -> Position
-          -> Automaton Tag 
-          -> State
-          -> [Rule]
-removeTag tr posFrom posTo a s = never:sometimes
- where
-                     -- if s==0, then [ (Det,  [1,2])
-                     --               , (Noun, [2,3])
-                     --               , (Verb, [3])  ]
-  byTag = [ (tag,states) -- if s==1, then [ (Noun, [2,3]) ]
-           | tag <- alltags :: [Tag] 
-           , let states = tr a s tag 
-           , not $ null states ] :: [(Tag,[State])]
-
-  ctxFrom   = Yes posFrom [stateToTag s] -- e.g. `-1C (s0)'
-
-
-  --If there is no transition with Noun from/to 0, remove all Nouns from/to 0.
-  --May not be strictly needed if we go for actual sentences, not symbolic?
-  (tags,_)  = unzip byTag  --transitions that happen *to* some state
-  never = R [ T t | t <- compl tags ] [ctxFrom]
-
-  -- If there is a transition with Det from 0, 
-  -- allow that but remove Det from everywhere else.
-  sometimes = [ R trg [ctxFrom, ctxTo]
-                | (tags,ss) <- mergeFst byTag
-                , let trg = map T tags
-                , let ctxTo = No posTo (map stateToTag ss) ]
--}
