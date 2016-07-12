@@ -18,8 +18,12 @@ main = do
     ["detAdjN"]  -> putStrLn $ printRules detAdjNoun
     ["random"]   -> do a <- randomAutomaton
                        print a
-                       putStrLn $ printRules a
-                       --writeFile ()
+                       --putStrLn $ printRules a
+
+                       let n = show (bound a)
+                       writeFile "examples/random/random.rlx" (printRules a)
+                       writeFile ("examples/random/ex-random-" ++ n ++ ".txt")
+                                 (printCohorts $ bound a)
     _            -> mapM_ print [detAdjNoun, detNounVerb]
 
 printRules :: Automaton Tag -> String
@@ -30,13 +34,24 @@ printRules a =
           , "SECTION\n"
           , "# Remove tags NOT between certain states"
           , concatMap (pr . removeTag a) alltags
-
           , "# Remove states between certain tags"
           , concatMap (pr . removeState a) [0..bound a]
           ]
 
-pr :: [Rule] -> String
-pr = unlines . map show
+printCohorts :: Int -> String
+printCohorts bnd = unlines $ cohortS bnd : replicate bnd (cohortW ++ cohortS bnd)
+
+cohortW :: String 
+cohortW = unlines [ "\n\"<w>\""
+                  , "   \"det\" det"
+                  , "   \"adj\" adj"
+                  , "   \"noun\" noun"
+                  , "   \"verb\" verb" ]
+
+cohortS :: Int -> String
+cohortS i = unlines ([ "\n\"<s>\"" ] ++
+                    [ "   \"s" ++ n ++ "\" s" ++ n 
+                      | n <- map show [0..i] ])
 --------------------------------------------------------------------------------
 -- Include states in tags
 
@@ -73,6 +88,7 @@ data Context = Yes Position [TagPlus] | No Position [TagPlus] deriving (Eq)
 data Position = C Int | NC Int deriving (Eq)
 
 -- Shorthands, we'll write these a lot
+nc0  = NC 0
 c1   = C 1
 c_1  = C (-1)
 nc1  = NC 1
@@ -129,8 +145,8 @@ baseRules a = [ R allButStart [bos]   --[noPrec]
   hasFoll = Yes nc1  alltps
 
   --alternative to noPrec and noFoll
-  bos = Yes (NC (-1)) [BOS]
-  eos = Yes (NC   0)  [EOS]
+  bos = Yes nc_1 [BOS]
+  eos = Yes nc0  [EOS]
 
 -----
 
@@ -139,12 +155,11 @@ baseRules a = [ R allButStart [bos]   --[noPrec]
 -- "Doesn't work" means it still disambiguates, but nonsensically.
 
 removeTag :: Automaton Tag -> Tag -> [Rule]
-removeTag a t =  [ R [T t] [c] | c@(No _ cs) <- contexts
-                               , not $ null cs ]
+removeTag a t = [ R [T t] [c] | c <- contexts ]
  where 
   (statesFrom,statesTo) = unzip $ withSymbol a t       
-  contexts = [ No nc_1 (TS `map` nub statesFrom) 
-             , No nc1  (TS `map` nub statesTo) ]
+  contexts = [ No nc_1 (TS `map` nub statesFrom) | not (null statesFrom) ] ++
+             [ No nc1  (TS `map` nub statesTo) | not (null statesTo) ]
 
 ------
 
@@ -169,9 +184,11 @@ removeState a s = [ R [TS s] (c:notEos)
 --------------------------------------------------------------------------------
 -- General utilities
 
+pr :: (Show a) => [a] -> String
+pr = unlines . map show
+
 compl :: (Bounded a, Eq a, Enum a) => [a] -> [a]
 compl as = [minBound..maxBound] \\ as
-
 
 --mergeFst [(a,1), (b,2), (c,1), (d,2)] = [([a,c],1),([b,d],2)] 
 mergeFst :: (Ord b, Eq b) => [(a,[b])] -> [([a],[b])]
