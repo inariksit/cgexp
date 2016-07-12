@@ -4,52 +4,67 @@ module Automaton where
 
 type State = Int
 
-data Automaton a = A { trans :: State -> State -> [a] 
+--workaround for generating QuickCheck.
+--I suspect there's a better way, but I don't know of it.
+newtype Symbols a = S { symb :: [a] }
+
+{- Nicer for random generating automata to have the transition function
+   as State->State->[a], instead of State->a->State.
+
+-}
+data Automaton a = A { trans :: State -> State -> Symbols a 
                      , bound :: State 
                      , final :: State -> Bool }
+
+--to get the list of symbols directly
+tr :: Automaton a -> State -> State -> [a]
+tr a s s' = symb $ trans a s s'
 
 instance (Show a) => Show (Automaton a) where
   show = showAutomaton
 
 
 showAutomaton :: (Show a) => Automaton a -> String
-showAutomaton (A f b _) = unlines  
-  [       pad ++ show vals  ++ "\n" ++
-    show from ++ arrow ++ show to ++ "\n"
-    | from <- [0..b]
-    , to <- [0..b]
-    , let vals = f from to
+showAutomaton a = unlines  
+  [        pad ++ show vals  ++ "\n" ++
+    ifFin from ++ arrow ++ ifFin to ++ "\n"
+    | from <- [0..bound a]
+    , to <- [0..bound a]
+    , let vals = tr a from to
     , not $ null vals 
 
-
-    , let padLen = length $ show from
-    , let pad = take padLen $ repeat ' '
+    , let padLen = length $ show (ifFin from)
+    , let pad = replicate padLen  ' '
     , let arrLen = length $ show vals
-    , let arrow = (take arrLen $ repeat '-') ++ ">"
-  ]
+    , let arrow = replicate arrLen '-' ++ ">"
 
+  ]
+ where ifFin s = if final a s
+                  then "(" ++ show s ++ ")"
+                  else show s
+
+---
 
 fromState :: Automaton a -> State -> [(a,State)]
-fromState (A f b _) from = [ (a,to) | to <- [0..b]
-                                    , a <- f from to ]
-  
+fromState a sFrom = [ (v,sTo) | sTo <- [0..bound a]
+                              , v <- tr a sFrom sTo ]
 
 toState :: Automaton a -> State -> [(State,a)]
-toState (A f b _) to = [ (from,a) | from <- [0..b]
-                                  , a <- f from to ]
+toState a sTo = [ (sFrom,v) | sFrom <- [0..bound a]
+                            , v <- tr a sFrom sTo ]
 
 ---
  
 withSymbol :: (Eq a, Enum a, Bounded a) => Automaton a -> a -> [(State,State)]
-withSymbol (A f b _) symb = [ (from,to) | from <- [0..b]  
-                                        , to <- [0..b]
-                                        , symb `elem` f from to ]
+withSymbol a s = [ (from,to) | from <- [0..bound a]  
+                             , to <- [0..bound a]
+                             , s `elem` tr a from to ]
 
 --which symbols lead to the state, and which symbols go out from it.
 withState :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> [([a],[a])]
-withState (A f b _) state = [ (f state s, f s state) | s <- [0..b] ]
-
----
+withState a s = [ (tr a s t, tr a t s) | t <- [0..bound a] ]
+ 
+{---
 
 transitionFrom :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> a -> [State]
 transitionFrom (A f b _) from symb = [ to | to <- [0..b]
@@ -58,10 +73,10 @@ transitionFrom (A f b _) from symb = [ to | to <- [0..b]
 transitionTo :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> a -> [State]
 transitionTo (A f b _) to symb = [ from | from <- [0..b]
                                         , symb `elem` f from to ]
----
+---}
 
 sink :: Automaton a -> State -> Bool
-sink (A f b fin) s = all null [ f s t | t <- [0..b] ]
+sink a s = all null [ symb $ trans a s t | t <- [0..bound a] ]
 
 --------------------------------------------------------------------------------
 
@@ -73,11 +88,11 @@ alltags = [minBound..maxBound]
 detAdjNoun :: Automaton Tag
 detAdjNoun = A t 2 fin
  where 
-  t 0 1 = [Det]
-  t 0 2 = [Adj]
-  t 1 1 = [Adj]
-  t 1 2 = [Adj,Noun]
-  t _ _ = []
+  t 0 1 = S [Det]
+  t 0 2 = S [Adj]
+  t 1 1 = S [Adj]
+  t 1 2 = S [Adj,Noun]
+  t _ _ = S []
 
   fin 2 = True
   fin _ = False
@@ -86,14 +101,14 @@ detAdjNoun = A t 2 fin
 detNounVerb :: Automaton Tag
 detNounVerb = A t 3 fin
  where
-  t 0 1 = [Det]
-  t 0 2 = [Noun]
-  t 0 3 = [Det,Noun,Verb]
-  t 1 1 = [Adj]
-  t 1 2 = [Noun]
-  t 1 3 = [Noun]
-  t 2 3 = [Verb]
-  t _ _ = []
+  t 0 1 = S [Det]
+  t 0 2 = S [Noun]
+  t 0 3 = S [Det,Noun,Verb]
+  t 1 1 = S [Adj]
+  t 1 2 = S [Noun]
+  t 1 3 = S [Noun]
+  t 2 3 = S [Verb]
+  t _ _ = S []
 
   fin 3 = True
   fin 2 = True
