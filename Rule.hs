@@ -95,7 +95,7 @@ instance Show Position where
  
 instance Show Rule where
   show (R trg ctxs) = "REMOVE " ++ showTS trg ++ 
-                      " IF " ++ (unwords $ map show ctxs) ++ " ;"
+                      " IF " ++ unwords (map show ctxs) ++ " ;"
 
 
 definitions :: [String]
@@ -123,9 +123,8 @@ baseRules a = [ R allButStart [bos] --[noPrec]
                        , not $ final a s ]
 
   --remove start state from all but first (state) cohort;
-  onlyStart = [ TS s | s <- [0] \\ if final a 0
-                                    then [0] --EXCEPT if start also accepts
-                                     else [] ] 
+  onlyStart = [ TS s | s <- [0] \\ [0 | final a 0] ]
+                                    --EXCEPT if start also accepts
 
   --remove accepting & sink states from all but last (state) cohort
   onlyEnd = [ TS s | s <- [0..bound a]
@@ -163,8 +162,8 @@ removeState a s = [ R [TS s] (c:eos)
                     , not $ null cs
 
                     --don't remove *final* state when not followed by something
-                    , let eos = if final a s && pos == NC 1
-                                 then [No (NC 0) [EOS]] else [] 
+                    , let eos = [ No (NC 0) [EOS] | final a s && pos == NC 1 ]
+                                 
                   ] 
  where
   (tagsFrom,_) = unzip $ fromState a s
