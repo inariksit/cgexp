@@ -33,8 +33,8 @@ showAutomaton a = unlines
     , let vals = tr a from to
     , not $ null vals 
 
-    , let padLen = length $ show (ifFin from)
-    , let pad = replicate padLen  ' '
+    , let padLen = length $ ifFin from
+    , let pad = replicate padLen ' '
     , let arrLen = length $ show vals
     , let arrow = replicate arrLen '-' ++ ">"
 
