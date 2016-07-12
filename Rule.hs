@@ -116,8 +116,7 @@ baseRules a = [ R allButStart [bos]   --[noPrec]
                        , not $ final a s ]
 
   --remove start state from all but first (state) cohort;
-  onlyStart = [ TS s | s <- [0] \\ [0 | final a 0] ]
-                                    --EXCEPT if start also accepts
+  onlyStart = [ TS 0 | not $ final a 0 ] --EXCEPT if start also accepts
 
   --remove accepting & sink states from all but last (state) cohort
   onlyEnd = [ TS s | s <- [0..bound a]
