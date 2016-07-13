@@ -1,0 +1,20 @@
+"<s>"
+	"s0" s0
+	"s1" s1
+	"s2" s2
+"<w>"
+	"det" det
+	"adj" adj
+	"noun" noun
+"<s>"
+	"s0" s0
+	"s1" s1
+	"s2" s2
+"<w>"
+	"det" det
+	"adj" adj
+	"noun" noun
+"<s>"
+	"s0" s0
+	"s1" s1
+	"s2" s2

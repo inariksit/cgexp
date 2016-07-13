@@ -1,0 +1,34 @@
+SET >>> = (>>>) ;
+SET <<< = (<<<) ;
+SET Det = (det) ;
+SET Adj = (adj) ;
+SET Noun = (noun) ;
+SET Verb = (verb) ;
+SET Any = Det OR Adj OR Noun OR Verb ;
+
+BEFORE-SECTIONS
+
+REMOVE (s1) OR (s2) OR (s3) IF (-1 >>>) ;
+REMOVE (s0) OR (s1) IF (0 <<<) ;
+REMOVE (s0) IF (-1 Det OR Adj OR Noun OR Verb) ;
+REMOVE (s3) IF (1 Det OR Adj OR Noun OR Verb) ;
+
+SECTION
+
+# Remove tags NOT between certain states
+REMOVE Det IF (NOT -1 (s0)) ;
+REMOVE Det IF (NOT 1 (s1) OR (s3)) ;
+REMOVE Adj IF (NOT -1 (s1)) ;
+REMOVE Adj IF (NOT 1 (s1)) ;
+REMOVE Noun IF (NOT -1 (s0) OR (s1)) ;
+REMOVE Noun IF (NOT 1 (s2) OR (s3)) ;
+REMOVE Verb IF (NOT -1 (s0) OR (s2)) ;
+REMOVE Verb IF (NOT 1 (s3)) ;
+
+# Remove states between certain tags
+REMOVE (s0) IF (NOT 1 Det OR Noun OR Verb) ;
+REMOVE (s1) IF (NOT 1 Adj OR Noun) ;
+REMOVE (s1) IF (NOT -1 Det OR Adj) ;
+REMOVE (s2) IF (NOT 1 Verb) (NOT 0 <<<) ;
+REMOVE (s2) IF (NOT -1 Noun) ;
+REMOVE (s3) IF (NOT -1 Det OR Noun OR Verb) ;
