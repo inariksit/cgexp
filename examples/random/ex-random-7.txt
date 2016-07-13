@@ -1,0 +1,130 @@
+
+"<s>"
+   "s0" s0
+   "s1" s1
+   "s2" s2
+   "s3" s3
+   "s4" s4
+   "s5" s5
+   "s6" s6
+   "s7" s7
+
+
+"<w>"
+   "det" det
+   "adj" adj
+   "noun" noun
+   "verb" verb
+
+"<s>"
+   "s0" s0
+   "s1" s1
+   "s2" s2
+   "s3" s3
+   "s4" s4
+   "s5" s5
+   "s6" s6
+   "s7" s7
+
+
+"<w>"
+   "det" det
+   "adj" adj
+   "noun" noun
+   "verb" verb
+
+"<s>"
+   "s0" s0
+   "s1" s1
+   "s2" s2
+   "s3" s3
+   "s4" s4
+   "s5" s5
+   "s6" s6
+   "s7" s7
+
+
+"<w>"
+   "det" det
+   "adj" adj
+   "noun" noun
+   "verb" verb
+
+"<s>"
+   "s0" s0
+   "s1" s1
+   "s2" s2
+   "s3" s3
+   "s4" s4
+   "s5" s5
+   "s6" s6
+   "s7" s7
+
+
+"<w>"
+   "det" det
+   "adj" adj
+   "noun" noun
+   "verb" verb
+
+"<s>"
+   "s0" s0
+   "s1" s1
+   "s2" s2
+   "s3" s3
+   "s4" s4
+   "s5" s5
+   "s6" s6
+   "s7" s7
+
+
+"<w>"
+   "det" det
+   "adj" adj
+   "noun" noun
+   "verb" verb
+
+"<s>"
+   "s0" s0
+   "s1" s1
+   "s2" s2
+   "s3" s3
+   "s4" s4
+   "s5" s5
+   "s6" s6
+   "s7" s7
+
+
+"<w>"
+   "det" det
+   "adj" adj
+   "noun" noun
+   "verb" verb
+
+"<s>"
+   "s0" s0
+   "s1" s1
+   "s2" s2
+   "s3" s3
+   "s4" s4
+   "s5" s5
+   "s6" s6
+   "s7" s7
+
+
+"<w>"
+   "det" det
+   "adj" adj
+   "noun" noun
+   "verb" verb
+
+"<s>"
+   "s0" s0
+   "s1" s1
+   "s2" s2
+   "s3" s3
+   "s4" s4
+   "s5" s5
+   "s6" s6
+   "s7" s7
+
