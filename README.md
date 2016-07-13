@@ -4,11 +4,13 @@
 
 ### Explanation 
 
-So far just a simple program that converts regular expressions into CG rules. 
-We assume an automaton like the following:
+We convert regular expressions into CG rules. 
+Assume an automaton like the following:
 
-```
-        det        n
+``` 
+             adj
+             ___
+       det   \ ↙    n
 -> s0 -----> s1 -----> (s2)
 ```
 
@@ -18,6 +20,7 @@ If our tag set is [det,adj,n], then we have *word cohorts* like the following:
 "<w>"
 	"det" det
 	"adj" adj 
+	"n"   n
 ```
 
 In addition, we insert *state cohorts* between each word cohort:
@@ -38,7 +41,8 @@ For example, a sequence with two transitions would be modelled with the followin
 	"s2" s2 
 "<w>"
 	"det" det
-	"adj" adj 
+	"adj" adj
+	"n"   n
 "<s>"
 	"s0" s0
 	"s1" s1 
@@ -46,6 +50,7 @@ For example, a sequence with two transitions would be modelled with the followin
 "<w>"
 	"det" det
 	"adj" adj 
+	"n"   n
 "<s>"
 	"s0" s0
 	"s1" s1 
@@ -53,8 +58,23 @@ For example, a sequence with two transitions would be modelled with the followin
 ```
 
 Now that we have word and state cohorts in place, we form *rules* which remove tags depending on states, and states depending on tags.
+The only possible outcome on a sequence of 2 word cohorts should be the following:
+
+```
+"<s>"
+	"s0" s0
+"<w>"
+	"det" det
+"<s>"
+	"s1" s1 
+"<w>"
+	"n" n
+"<s>"
+	"s2" s2
+```
 
 -----
+
 ### Example
 
 The following is a short, randomly generated automaton (using `randomAutomaton` in `Test.hs`):
@@ -113,12 +133,12 @@ Then we apply it to a symbolic sentence, where every word cohort has initially a
 
 From the automaton we see that a sequence of 2 transitions can take two paths:
 
-```          Noun
-     Det     Verb       
-(0) ----> 1 -----> (2) 
+```             Noun
+        Det     Verb       
+a.  (0) ----> 1 -----> (2) 
 
-     Det     Verb
-(0) ----> 1 -----> (0)
+        Det     Verb
+b.  (0) ----> 1 -----> (0)
 
 ```
 
