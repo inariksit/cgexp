@@ -30,13 +30,12 @@ instance Arbitrary (Automaton Tag) where
                        arbitrary -- final :: Gen (State -> Bool))
 
 
---instance Arbitrary Tag where
---    --arbitrary :: Gen a
---    arbitrary = elements [minBound..maxBound]
+instance Arbitrary Tag where
+  arbitrary = elements [minBound..maxBound]
 
 instance Arbitrary (Symbols Tag) where
-  --arbitrary :: Gen a
-  arbitrary = S `fmap` sublistOf [minBound..maxBound]
+  arbitrary = S `fmap` frequency [ (1, sublistOf [minBound..maxBound])
+                                 , (3, vectorOf 0 (arbitrary :: Gen Tag)) ]
 
 instance CoArbitrary Tag where
   --coarbitrary :: a -> Gen b -> Gen b
