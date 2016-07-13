@@ -171,6 +171,12 @@ removeState a s = [ R [TS s] (c:notEos)
                     --don't remove *final* state when not followed by something
                     , let notEos = [ No (NC 0) [EOS] 
                                      | final a s && pos == NC 1 ]
+
+                    -- We don't need a similar check for initial state.
+                    -- The rule `R allButStart [bos]' in BEFORE-SECTIONS 
+                    -- will remove everything but s0 from the first state cohort.
+                    -- A rule created here may target s0 in the first state cohort,
+                    -- but it is protected by "don't remove the last reading".
                                  
                   ] 
  where
