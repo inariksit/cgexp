@@ -1,20 +1,63 @@
-# cgexp
+# Experiments on CG and expressivity
 
-Random experiments on CG and expressivity.
+## Transforming regular expressions to CG grammars
+
+### Explanation 
 
 So far just a simple program that converts regular expressions into CG rules. 
-We assume an automaton like
+We assume an automaton like the following:
 
 ```
         det        n
-->(s0) ----->(s1)----->((s2))
+-> s0 -----> s1 -----> (s2)
 ```
 
-Then we insert all the states in between the cohorts--it should work with actual sentences or symbolic sentences--and form rules which remove tags depending on states, and states depending on tags.
+If our tag set is [det,adj,n], then we have *word cohorts* like the following:
+
+```
+"<w>"
+	"det" det
+	"adj" adj 
+```
+
+In addition, we insert *state cohorts* between each word cohort:
+
+```
+"<s>"
+	"s0" s0
+	"s1" s1 
+	"s2" s2 
+```
+
+For example, a sequence with two transitions would be modelled with the following "sentence", with two word cohorts, three state cohorts:
+
+```
+"<s>"
+	"s0" s0
+	"s1" s1 
+	"s2" s2 
+"<w>"
+	"det" det
+	"adj" adj 
+"<s>"
+	"s0" s0
+	"s1" s1 
+	"s2" s2 
+"<w>"
+	"det" det
+	"adj" adj 
+"<s>"
+	"s0" s0
+	"s1" s1 
+	"s2" s2 
+```
+
+Now that we have word and state cohorts in place, we form *rules* which remove tags depending on states, and states depending on tags.
 
 -----
+### Example
 
-An example for a short, randomly generated automaton:
+The following is a short, randomly generated automaton (using `randomAutomaton` in `Test.hs`):
 
 ```
 $ runghc Rule.hs random
@@ -66,7 +109,7 @@ $ cat -n examples/random/random.rlx
     32	REMOVE (s2) IF (NOT -1 Noun OR Verb) ;
 ```
 
-Then we apply it to a symbolic sentence, where every (word) cohort has initially all tags, and every (state) cohort has all states.
+Then we apply it to a symbolic sentence, where every word cohort has initially all tags, and every state cohort has all states.
 
 From the automaton we see that a sequence of 2 transitions can take two paths:
 
@@ -125,5 +168,3 @@ $ ./runExample.sh random 2 -t
 	"s2" s2
 ;	"s1" s1 REMOVE:12
 ```
-
-These
