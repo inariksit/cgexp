@@ -1,36 +1,45 @@
 module Earley where 
 
-import Data.List (intercalate)
+import Data.List (intercalate,nub)
 import qualified Data.Set as S
 import qualified Data.IntMap as IM
 import Data.IntMap ((!))
+import Debug.Trace (trace)
 
 
 type Grammar = [Production]
 type Sentence = [String]
 
 data Production = (:->) { lhs :: Nonterminal
-                        , rhs :: RHS } --different options of consecutive symbols
+                        , rhs :: [Symbol] } deriving (Eq,Ord) --any consecutive symbols
 
-data Nonterminal = S | NP | VP | PP | POS String deriving (Eq) -- S is special; beside that, any other letter or word
+data Nonterminal = S | NP | VP | PP | POS String deriving (Eq,Ord) -- S is special; beside that, any other letter or word
 type Terminal = String -- anything goes
-data Symbol = T Terminal | NT Nonterminal deriving (Eq) -- To have terminals and nonterminals in the same list
+data Symbol = T Terminal | NT Nonterminal deriving (Eq,Ord) -- To have terminals and nonterminals in the same list
 
-type RHS = [Symbol] -- Any consecutive symbols
 
 data State = State { prod :: Production 
                    , orig :: Int -- where the constituent predicted by this state begins
                    , dot :: Int -- where in the RHS of the prod are we reading currently 
-                   , blocksProd :: Maybe Int } deriving (Show)
-         									   -- Nothing: the state is there in the final analysis of the string
+                   , createdBy :: String
+                   , blocksProd :: Maybe Int } deriving (Eq,Ord)
+                                                -- Nothing: the state is there in the final analysis of the string
                                                -- Just x: word in index x blocks this state from happening
+advance :: State -> State
+advance s = s { dot = dot s + 1}
 
-zeroState :: Grammar -> [State]
-zeroState gr = [ State sp 0 0 Nothing | sp <- filter start gr ]
+changeOwner :: String -> State -> State
+changeOwner rl s = s { createdBy = rl }
+
+zeroState :: Grammar -> States
+zeroState gr = S.fromList
+				[ State sp 0 0 "default" Nothing 
+				  | sp <- filter start gr ]
 
 
+type States = S.Set State
 
-type Chart = IM.IntMap [State] --(S.Set State)
+type Chart = IM.IntMap States
 
 --------------------------------------------------------------------------------
 
@@ -46,7 +55,13 @@ instance Show Nonterminal where
   show (POS x) = x
 
 instance Show Production where
-  show (lh :-> rh) = show lh ++ "->" ++ intercalate "|" (map show rh)
+  show (lh :-> rh) = show lh ++ "->" ++ unwords (map show rh) -- intercalate "|" (map show rh)
+
+instance Show State where
+  show s = "\n" ++ show (prod s) ++ "\n"
+  		   ++ show (orig s, dot s) ++ "\n"
+  		   ++ "created by: " ++ (createdBy s) ++ "\n"
+  		   ++ "-----------------"
 
 --------------------------------------------------------------------------------
 
