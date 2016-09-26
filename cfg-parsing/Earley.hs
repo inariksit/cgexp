@@ -58,10 +58,14 @@ instance Show Production where
   show (lh :-> rh) = show lh ++ "->" ++ unwords (map show rh) -- intercalate "|" (map show rh)
 
 instance Show State where
-  show s = "\n" ++ show (prod s) ++ "\n"
+  show s = "\n" ++ show (lhs $ prod s) ++ "->" ++ bdStr ++ " * " ++ adStr ++ "\n"
   		   ++ show (orig s, dot s) ++ "\n"
   		   ++ "created by: " ++ (createdBy s) ++ "\n"
   		   ++ "-----------------"
+   where
+   	(bd,ad) = splitAt (dot s) (rhs $ prod s)  -- :: ([Symbol],[Symbol])
+   	(bdStr,adStr) = ( unwords $ map show bd
+   					, unwords $ map show ad )
 
 --------------------------------------------------------------------------------
 
