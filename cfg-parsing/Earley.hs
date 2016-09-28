@@ -1,9 +1,10 @@
 module Earley where 
 
-import Data.List (intercalate,nub)
+import Data.List (intercalate,nub,splitAt)
+import Data.Maybe (isNothing)
 import qualified Data.Set as S
-import qualified Data.IntMap as IM
-import Data.IntMap ((!))
+import qualified Data.IntMap.Strict as IM
+--import Data.IntMap ((!))
 import Debug.Trace (trace)
 
 
@@ -21,25 +22,26 @@ data Symbol = T Terminal | NT Nonterminal deriving (Eq,Ord) -- To have terminals
 data State = State { prod :: Production 
                    , orig :: Int -- where the constituent predicted by this state begins
                    , dot :: Int -- where in the RHS of the prod are we reading currently 
-                   , createdBy :: String
-                   , blocksProd :: Maybe Int } deriving (Eq,Ord)
-                                                -- Nothing: the state is there in the final analysis of the string
+                   , createdByRule :: String
+                   , createdByState :: Maybe Id } deriving (Eq,Ord)
+          -- later: , blocksProd :: Maybe Int } -- Nothing: the state is there in the final analysis of the string
                                                -- Just x: word in index x blocks this state from happening
-advance :: State -> State
-advance s = s { dot = dot s + 1}
 
-changeOwner :: String -> State -> State
-changeOwner rl s = s { createdBy = rl }
+state :: Production -> Int -> Int -> String -> State
+state pd o d c = State pd o d c Nothing
 
 zeroState :: Grammar -> States
-zeroState gr = S.fromList
-				[ State sp 0 0 "default" Nothing 
-				  | sp <- filter start gr ]
+zeroState gr = S.singleton (State ((POS "γ") :-> [NT S]) 0 0 "default" (Just (0,0)))
 
 
-type States = S.Set State
+type Id = (Int,Int)
+
+type States = S.Set State --TODO: unambiguous ID
 
 type Chart = IM.IntMap States
+
+(!) :: Chart -> Int -> [State]
+(!) chart key = maybe [] S.toAscList (IM.lookup key chart)
 
 --------------------------------------------------------------------------------
 
@@ -58,15 +60,19 @@ instance Show Production where
   show (lh :-> rh) = show lh ++ "->" ++ unwords (map show rh) -- intercalate "|" (map show rh)
 
 instance Show State where
-  show s = "\n" ++ show (lhs $ prod s) ++ "->" ++ bdStr ++ " * " ++ adStr ++ "\n"
-  		   ++ show (orig s, dot s) ++ "\n"
-  		   ++ "created by: " ++ (createdBy s) ++ "\n"
-  		   ++ "-----------------"
+  show s = "\n" ++ createdByRule s ++ ":\n"
+               ++ show (lhs $ prod s) ++ "->" 
+             ++ bdStr ++ " * " ++ adStr ++ "\n"
+             ++ show (orig s, dot s) ++ "\n"
+             ++ "created by: " ++ (show $ createdByState s) ++ "\n"
+             ++ "-----------------"
    where
-   	(bd,ad) = splitAt (dot s) (rhs $ prod s)  -- :: ([Symbol],[Symbol])
-   	(bdStr,adStr) = ( unwords $ map show bd
-   					, unwords $ map show ad )
+       (bd,ad) = splitAt (dot s) (rhs $ prod s)  -- :: ([Symbol],[Symbol])
+       (bdStr,adStr) = ( unwords $ map show bd
+                       , unwords $ map show ad )
 
+showLite :: State -> String
+showLite s = createdByRule s ++ ": " ++ (show $ prod s)
 --------------------------------------------------------------------------------
 
 start :: Production -> Bool
@@ -74,53 +80,84 @@ start (S :-> _) = True
 start _         = False
 
 finished :: State -> Bool
-finished s = dot s >= length (rhs $ prod s)
+finished s = length (rhs $ prod s) <= (dot s)
 
 next :: State -> Symbol
-next s = (rhs $ prod s) !! dot s
+next s = --trace ("next: " ++ show ((rhs $ prod s) !! (dot s))) $
+         if finished s
+             then trace ("Cannot access next symbol, state is finished\n***" ++ showLite s ++ "***") 
+                    $ NT (POS "dummy")
+             else (rhs $ prod s) !! dot s
 
-terminal :: Symbol -> Bool
-terminal (T _) = True
-terminal _     = False
+lastRead :: State -> Symbol
+lastRead s = (rhs $ prod s) !! (dot s - 1)
 
 isPos :: Symbol -> Bool
 isPos (NT (POS _)) = True
 isPos _       = False
 
+dupl :: [a] -> [a]
+dupl [x]    = [x,x]
+dupl (x:xs) = x:x:dupl xs
+
 --------------------------------------------------------------------------------
 
 earley :: Sentence -> Grammar -> Chart
-earley sent gr = foldl go states (zip [0..] sent)
+earley sent grammar = foldl go chart ((0,"dummy"): (zip [0..] sent) ++ [(4,"dummy")])
  where 
-  states = IM.insert 0 (zeroState gr) IM.empty
+  chart = IM.insert 0 (zeroState grammar) IM.empty
 
   go :: Chart -> (Int,String) -> Chart
-  go states (j,word) = IM.insertWith (++) j (concatMap act latestStates) states  
-  	
-
+  go chart (j,word) = trace ("\nRound " ++ show j ++ ": " ++ word ++
+                               "\n***********\n"  ++ show chart ++ "\n") $
+                      (iterate insertRepeatedly chart) !! 4 -- totally arbitrary
    where
-    latestStates = states ! (j-1)
 
-    completer :: State -> [State]
-    -- For every state in S(k) of the form (X → γ •, j), 
-    -- find states in S(j) of the form (Y → α • X β, i) and add (Y → α X • β, i) to S(k).
-    completer s = undefined
+    insertRepeatedly chart = foldl insertStates chart (concatMap (uncurry act) (recentStates chart))
 
-    scanner :: State -> [State] -- For every state in S(k) of the form (X → γ • Pos, [i,j]),  
-    scanner s = undefined     -- examine the input `word' to see if it matches the Pos,
-    						   -- then create rule (Pos → word, [j,j+1])
+    recentStates chart = [ (j,state) | state <- chart ! j ]
 
-    predictor :: State -> [State]
-    predictor s = [ State pd d d Nothing | pd <- filter (isLhs (next s)) gr ]
-     where (o,d) = (orig s, dot s)
+    insertStates = (\ch (k,st) -> IM.insertWith S.union k (S.singleton st) ch) 
+    												  :: Chart -> (Int,State) -> Chart
 
-    act :: State -> [State]
-    act s | finished s     = completer s
-          | isPos (next s) = scanner s 
-          | otherwise      = predictor s
+
+    act :: Int -> State -> [(Int,State)]
+    act k s | finished s     = trace ("finished") $ completer k s
+            | isPos (next s) = scanner k s 
+            | otherwise      = predictor k s
+
+
+    scanner :: Int -> State -> [(Int,State)]   
+    scanner k s = [ (k+1, state pd d (d+1) "Scanner")
+                     | pd <- grammar       -- For every state in S(k) of the form (X → γ • Pos, [i,j]),
+                     , T word `isRhs` pd   -- examine the input `word' to see if it matches the Pos,
+                     , let d = dot s ]     -- then create rule (Pos → word, [j,j+1]) and store it in S(k+1)
+
+
+    completer :: Int -> State -> [(Int,State)]
+    completer k s = [ (k, state (prod oldSt) (orig oldSt) (dot s) "Completer")
+                      | oldSt <- concat [ chart ! j | j <- [0..k-1] ] -- For every state in S(k) of the form (X → γ •, [j,k]), 
+                      , next oldSt `isLhs` prod s ]       -- find states in S(j) of the form (Y → α • X β, [i,j])
+                       									   -- and add (Y → α X • β, [i,k]) to S(k).
+
+
+    predictor :: Int -> State -> [(Int,State)] 
+    predictor k s = [ (k, state pd d d "Predictor")
+                        | pd <- grammar
+                        , next s `isLhs` pd
+                        , let d = dot s ]
+
+
 
 --------------------------------------------------------------------------------
 
+main = do 
+	    --sentence <- words `fmap` getLine
+	    let chart = earley sentence grammar
+	    print chart
+
+
+--------------------------------------------------------------------------------
 
 n = POS "N"
 v = POS "V"
@@ -128,9 +165,9 @@ dt = POS "Det"
 
 grammar = [ S  :-> [NT NP, NT VP]
           , NP :-> [NT dt, NT n]
-          , NP :-> [NT NP, NT n]
+        --  , NP :-> [NT NP, NT n]
           , VP :-> [NT v,  NT NP]
-          , VP :-> [NT v]
+        --  , VP :-> [NT v]
           , dt :-> [T "the"]
           , n  :-> [T "cat"]
           , n  :-> [T "marks"]
@@ -140,9 +177,11 @@ grammar = [ S  :-> [NT NP, NT VP]
           , v  :-> [T "sleeps"]
           ]
 
---pos :: Grammar -> Terminal -> [Symbol]
---pos gr term = map rhs $ filter isTerm gr
+sentence = words "the cat marks essays"
 
-isLhs symb (_ :-> symbs) | symb `elem` symbs = True
-						 | otherwise         = False
+isRhs :: Symbol -> Production -> Bool
+isRhs symb (_ :-> rh) = symb `elem` rh
 
+isLhs :: Symbol -> Production -> Bool
+isLhs (NT symb) (lh :-> _) = symb == lh
+isLhs _         _          = False
