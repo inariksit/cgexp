@@ -20,15 +20,15 @@ data State = State { prod :: Production
                    , spans :: Span -- where in the input string this state spans
                    , dot :: Int    -- where in the RHS of the prod are we reading currently 
                    , createdByRule :: String
-                   , createdByState :: Maybe Id } deriving (Ord)
+                   , createdByState :: [Id] } deriving (Ord)
           -- later: , blocksProd :: Maybe Int } -- Nothing: the state is there in the final analysis of the string
                                                -- Just x: word in index x blocks this state from happening
 
-st :: Production -> Span -> Int -> String -> Maybe Id -> State
+st :: Production -> Span -> Int -> String -> [Id] -> State
 st pd sp d c id_ = State pd sp d c id_
 
 zeroState :: Grammar -> State
-zeroState gr = st (POS "γ" :-> [NT S]) (0,0) 0 "default" Nothing
+zeroState gr = st (POS "γ" :-> [NT S]) (0,0) 0 "default" []
 
 printChart :: Chart -> String
 printChart c = unlines $ map printState as
@@ -50,6 +50,8 @@ type Chart = IM.IntMap States
 
 (!) :: Chart -> Int -> [(Int,State)]
 (!) chart key = maybe [] IM.assocs (IM.lookup key chart)
+
+--getTree :: Chart -> Sentence -> 
 
 --------------------------------------------------------------------------------
 
@@ -87,9 +89,10 @@ instance Show State where
 showLite :: State -> String
 showLite s = createdByRule s ++ ": " ++ show (prod s)
 
-showCreatedBy :: Maybe Id -> String
-showCreatedBy (Just (x,y)) = show [x,y]
-showCreatedBy Nothing      = "virgin birth"
+showCreatedBy :: [Id] -> String
+showCreatedBy [] = "virgin birth"
+showCreatedBy xs = show xs
+
 
 --------------------------------------------------------------------------------
 
@@ -141,14 +144,14 @@ earley sent grammar = foldl go chart ((zip [0..] sent) ++ [(length sent,"dummy")
 
 
     scanner :: Int -> Int -> State -> [(Int,State)]   
-    scanner k i s = [ (k+1, st pd (sp,sp+1) (dot s+1) "Scanner" (Just (k,i)))
+    scanner k i s = [ (k+1, st pd (sp,sp+1) (dot s+1) "Scanner" [(k,i)])
                      | pd <- grammar         -- For every state in S(k) of the form (X → γ • Pos, [i,j]),
                      , T word `isRhs` pd     -- examine the input `word' to see if it matches the Pos,
                      , let (_,sp) = spans s ]  -- then create rule (Pos → word, [j,j+1]) and store it in S(k+1)
 
     completer :: Int -> Int -> State -> [(Int,State)]
-    completer k i s@(State pd sp dt _ _) = 
-    	[ (k, st (prod oldSt) (o,j) (dot oldSt+1) "Completer" (Just (k,i)))
+    completer k i s@(State pd sp dt _ createdBy) = 
+    	[ (k, st (prod oldSt) (o,j) (dot oldSt+1) "Completer" ((k,i):createdBy))
                       | (_,oldSt) <- (chart !) =<< [0..k-1]
                       , next oldSt `isLhs` prod s   -- For every state in S(k) of the form (X → γ •, [j,k]), 
                       , let (o,spOld) = spans oldSt   -- find states in S(j) of the form (Y → α • X β, [i,j])
@@ -157,7 +160,7 @@ earley sent grammar = foldl go chart ((zip [0..] sent) ++ [(length sent,"dummy")
 
 
     predictor :: Int -> Int -> State -> [(Int,State)] 
-    predictor k i s = [ (k, st pd (j,j) 0 "Predictor" (Just (k,i)))
+    predictor k i s = [ (k, st pd (j,j) 0 "Predictor" [(k,i)])
                         | pd <- grammar
                         , next s `isLhs` pd
                         , let (i,j) = spans s ]
