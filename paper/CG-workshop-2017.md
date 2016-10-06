@@ -77,7 +77,7 @@ This is how we can (maybe???) do it: [link](https://github.com/inariksit/cgexp/b
 
 ### CG is beyond regular: the language aⁿbⁿ
 
-It took a lot of work to show that CG *is* at least regular. Now, can we go further? Can we transform all context-free grammars into CGs?
+**Assuming that the RE->CG conversion works, otherwise scrap this:** It took a lot of work to show that CG *is* at least regular. Now, can we go further? Can we transform all context-free grammars into CGs?
 
 Unfortunately, transforming CFGs into CGs is not as easy as transforming automata. We relied on the fact that any symbol comes directly after the state it transitions from, there is no memory. But the structure of a CFG is nested, and CG is very linear, no hidden nodes (except dependency in CG3 but that isn't part of our fragment!).
 
