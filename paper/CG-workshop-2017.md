@@ -47,7 +47,8 @@ even though both systems can run the same CG-2 style grammars, the complexities 
 
 In order to claim that a formal language belongs to a certain class, we need to show that it can express *all* constructs in the said class. For instance, if CG can express the language `a*b*`, it is not yet evidence that CG is "regular": for all we know, CG could just have a common subset with regular languages, illustrated in Figure X:
 
-``` (figure X)
+```
+ (figure X)
        ______
   ____/      \
  /   /\ Reg.  \ 
@@ -70,9 +71,9 @@ Or it could be like in Figure Y: encompassing all of the regular languages, and 
       \______/
 ```
 
-We know that all regular languages can be expressed by finite automata. Thus, in order to answer ``is CG regular?'', we can try to find a conversion from any arbitrary automaton to a corresponding CG.
+We know that all regular languages can be expressed by finite automata. Thus, in order to answer "is CG regular?", we can try to find a conversion from any arbitrary automaton to a corresponding CG.
 
-This is how we can (maybe???) do it: [https://github.com/inariksit/cgexp/blob/master/README.md](link)
+This is how we can (maybe???) do it: [link](https://github.com/inariksit/cgexp/blob/master/README.md)
 
 ### CG is beyond regular: the language aⁿbⁿ
 
@@ -80,7 +81,7 @@ It took a lot of work to show that CG *is* at least regular. Now, can we go furt
 
 Unfortunately, transforming CFGs into CGs is not as easy as transforming automata. We relied on the fact that any symbol comes directly after the state it transitions from, there is no memory. But the structure of a CFG is nested, and CG is very linear, no hidden nodes (except dependency in CG3 but that isn't part of our fragment!).
 
-To reveal the ending, we don't have a solution--it may or may not exist. But we can show with a hand-crafted grammar, which recognises a solidly context-free language aⁿbⁿ, that CG is *beyond* regular. No guarantees how much of an overlap there is with CG and context-free, just that it is beyond regular.
+To reveal the ending, we don't have a solution--it may or may not exist. But we can show a hand-crafted grammar, which recognises a solidly context-free language `aⁿbⁿ` for arbitrary n. Just this one counterexample proves that CG is *beyond* regular. No guarantees how much of an overlap there is with CG and context-free, just that it is beyond regular.
 
 **TODO: explanation from Pepijn's blog post**
 
