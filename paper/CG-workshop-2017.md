@@ -96,10 +96,10 @@ If our alphabet consists of anything more than `{a,b}`, all the other readings w
 
 Another option would be to return a set of CGs: one that disambiguates into *ab* and other that disambiguates into *ba*. Given that our fragment of CG is strict and ordered, we can introduce the following rules, in the specified order:
 
-| Accepts *ab*            | Accepts *ba*            |
-|-------------------------|-------------------------|
-| SELECT (b) IF (-1 a) ;  | SELECT (a) IF (-1 b) ;  |
-| SELECT (a) IF (1 b) ;   | SELECT (b) IF (1 a) ;   |
+| Accepts *ab*           | | Accepts *ba*            |
+|------------------------|-|-------------------------|
+| SELECT (b) IF (-1 a) ; | | SELECT (a) IF (-1 b) ;  |
+| SELECT (a) IF ( 1 b) ; | | SELECT (b) IF ( 1 a) ;  |
 
 
 ### CG is beyond regular: the language aⁿbⁿ
@@ -120,14 +120,49 @@ Can we go further? Yes! By same reasoning, we can show that CG extends at least 
 
 ## Discussion
 
-#### Practical benefits: derive CGs from perhaps more easily defined formalisms?
+### Practical benefits: derive CGs from perhaps more easily defined formalisms?
 
 CG can act as a preprocessing step for some more expensive parser. Then the rules can be non-human-oriented, and contain extra symbols. The rules would be derived from the grammar itself, with the sole purpose of making the parsing *faster*, not more accurate.
 
-#### Wild speculation about deriving CGs from CFGs
+#### Using templates
+
+We may not need to aim for complete coverage, but just some useful rules. (Though I'm pretty sure these are going to be super trivial, and as easy to come up with in CG as in writing a CFG.)
+
+```
+S -> NP VP
+NP -> Det N | MassN | Predet NP
+VP -> V NP | V
+N -> bear | ...
+V -> bear | ...
+```
+
+Some things are easy to extract: `SELECT N IF (-1C Det)`, assuming that there is nowhere a sequence `Det something-not-N`. 
+Many rules have something more complex on the RHS. But we can also access those in the conditions, by using *templates*. They are also recursive, so we can do this:
+
+```
+TEMPLATE NP = (1 Det LINK 1 N) OR 
+					    (1 MassN) OR
+					       (1 Predet LINK 1 T:NP) ;
+```
+
+We can use templates in the conditional tests just like any other lists or sets:
+
+
+```
+REMOVE V IF (-1 Det) ;
+
+SELECT V IF (-1 T:NP) ;
+```
+
+Easy (and probably useless) derivation: `SELECT/REMOVE <any category that expands to a terminal> IF (<position>C T:<any category that doesn't expand into a terminal>)`.
+
+
+#### Using a parser
 
 How does a CFG resolve lexical ambiguities? Initially some word has >1 productions where it's on the RHS; but when the parser is considering the word in its context, only one of those productions can fit into the greater structure, that matches the whole sentence. 
 But if we think like a CG grammarian, we don't want all the fancy structure. We just want to know: **after reading which word(s) did the parser know to discard the irrelevant analyses of the ambiguous word**? (It is not always the previous one. Take any chart parser, and look at the intermediate results.)
+
+
 
 ## Conclusion
 
