@@ -96,10 +96,10 @@ If our alphabet consists of anything more than `{a,b}`, all the other readings w
 
 Another option would be to return a set of CGs: one that disambiguates into *ab* and other that disambiguates into *ba*. Given that our fragment of CG is strict and ordered, we can introduce the following rules, in the specified order:
 
-| Accepts *ab*           | | Accepts *ba*            |
-|------------------------|-|-------------------------|
-| SELECT (b) IF (-1 a) ; | | SELECT (a) IF (-1 b) ;  |
-| SELECT (a) IF ( 1 b) ; | | SELECT (b) IF ( 1 a) ;  |
+| Accepts *ab*           | . | Accepts *ba*            |
+|------------------------|---|-------------------------|
+| SELECT (b) IF (-1 a) ; | . | SELECT (a) IF (-1 b) ;  |
+| SELECT (a) IF ( 1 b) ; | . | SELECT (b) IF ( 1 a) ;  |
 
 
 ### CG is beyond regular: the language aⁿbⁿ
@@ -154,7 +154,7 @@ REMOVE V IF (-1 Det) ;
 SELECT V IF (-1 T:NP) ;
 ```
 
-Easy (and probably useless) derivation: `SELECT/REMOVE <any category that expands to a terminal> IF (<position>C T:<any category that doesn't expand into a terminal>)`.
+Easy (and probably useless) derivation: `SELECT/REMOVE <any category that expands to a terminal> IF (<position>C T:<any category that doesn't expand to a terminal>)`.
 
 
 #### Using a parser
