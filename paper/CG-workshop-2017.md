@@ -73,6 +73,11 @@ Or it could be like in Figure Y: encompassing all of the regular languages, and 
 
 We know that all regular languages can be expressed by finite automata. Thus, in order to answer "is CG regular?", we can try to find a conversion from any arbitrary automaton to a corresponding CG.
 
+
+#### Deriving CGs from REs
+
+This is how we can (maybe???) do it: [link](https://github.com/inariksit/cgexp/blob/master/README.md)
+
 #### A note about disjunction 
 
 One obvious flaw is the lack of disjunction in CG. Consider the regular expression `ab|ba`, accepting the language `{ab,ba}`.
@@ -87,22 +92,15 @@ Given a symbolic sentence of size 2, this is the closest we could get in CG outp
   	b
 ```	
 
-If our alphabet consists of anything more than `{a,b}`, all the other readings would correctly be removed. But CG cannot express the disjunction any further: the description "either *ab* or *ba*" is translated into a related, but broader description: "the first character may be either *a* or *b*, and the second character may be either *a* or *b*".
+If our alphabet consists of anything more than `{a,b}`, all the other readings would correctly be removed. But CG cannot express the disjunction any further: the description "either *ab* or *ba*" is translated into a coarser description: "the first character may be either *a* or *b*, and the second character may be either *a* or *b*".
 
-For a more natural input (not maximally ambiguous), the following rules would do the trick:
+Another option would be to return a set of CGs: one that disambiguates into *ab* and other that disambiguates into *ba*. Given that our fragment of CG is strict and ordered, we can introduce the following rules, in the specified order:
 
-```
-SELECT (b) IF (-1C a) ;
-SELECT (a) IF (-1C b) ;
-```
+| Accepts *ab*            | Accepts *ba*            |
+|-------------------------|-------------------------|
+| SELECT (b) IF (-1 a) ;  | SELECT (a) IF (-1 b) ;  |
+| SELECT (a) IF (1 b) ;   | SELECT (b) IF (1 a) ;   |
 
-If there is an unambiguous *a* on the left, select *b*. This is the translation of "only *b* may follow *a*" and "only *a* may follow *b*" of the RE. But if our input strings are maximally ambiguous, we cannot rely on C conditions. If we remove the C, then the output will be determined by whichever rule happens to be first in the rule file.
-
-In order to keep going, let us be satisfied with a looser definition. "A constraint grammar is said to accept a string *w* of length *n* if, when we pass ⟨Σ⟩n as an input to the CG, *w* is **one of the possible interpretations** of its output."
-
-#### Deriving CGs from REs
-
-This is how we can (maybe???) do it: [link](https://github.com/inariksit/cgexp/blob/master/README.md)
 
 ### CG is beyond regular: the language aⁿbⁿ
 
