@@ -94,12 +94,16 @@ Given a symbolic sentence of size 2, this is the closest we could get in CG outp
 
 If our alphabet consists of anything more than `{a,b}`, all the other readings would correctly be removed. But CG cannot express the disjunction any further: the description "either *ab* or *ba*" is translated into a coarser description: "the first character may be either *a* or *b*, and the second character may be either *a* or *b*".
 
-Another option would be to return a set of CGs: one that disambiguates into *ab* and other that disambiguates into *ba*. Given that our fragment of CG is strict and ordered, we can introduce the following rules, in the specified order:
+Another option would be to return a set of CGs: one that disambiguates into *ab* and other that disambiguates into *ba*. For this example, we could force just the first item into either *a* or *b*, by adding a rule `SELECT a IF (-1 >>>)` or `SELECT b IF (-1 >>>)`, and then some more C conditions will match, hence more rules will apply.
+But probably there are more complex REs where just fixing the first character is not enough: e.g. `(aab|b)*(ab|ba)`. I don't know (yet?) what to do with those.
 
-| Accepts *ab*           | . | Accepts *ba*            |
-|------------------------|---|-------------------------|
-| SELECT (b) IF (-1 a) ; | . | SELECT (a) IF (-1 b) ;  |
-| SELECT (a) IF ( 1 b) ; | . | SELECT (b) IF ( 1 a) ;  |
+Another vague idea which is probably wrong: expand all the words in the language (up to some depth), and write constraint rules that will only select those words, nothing more. There's no C, so the rules start disambiguating right away. 
+
+
+| Accepts *ab*             | . | Accepts *ba*             |
+|--------------------------|---|--------------------------|
+| `SELECT (b) IF (-1 a) ;` | . | `SELECT (a) IF (-1 b) ;` |
+| `SELECT (a) IF ( 1 b) ;` | . | `SELECT (b) IF ( 1 a) ;` |
 
 
 ### CG is beyond regular: the language aⁿbⁿ
