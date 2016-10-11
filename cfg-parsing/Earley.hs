@@ -30,7 +30,7 @@ zeroState = State (POS "γ" :-> [NT S]) (0,0) 0 Default []
 type Span = (Int,Int)
 type Id = (Int,Int)
 
-type States = IM.IntMap State --TODO: unambiguous ID
+type States = IM.IntMap State
 
 type Chart = IM.IntMap States
 
@@ -42,8 +42,17 @@ takeSpan (orig,sp) | orig==sp  = const []
                    | otherwise = drop orig . take sp
 
 predState :: Chart -> State -> [State]
-predState c s = mapMaybe lu (prevStates s)
-  where lu (outerK,innerK) = lookup innerK (c ! outerK)
+predState c s = mapMaybe doubleLookup (prevStates s)
+  where doubleLookup (outerK,innerK) = lookup innerK (c ! outerK)
+
+blocksProd :: Chart -> State -> [State]
+blocksProd c s = [ deadEndState | fruitfulState <- predState c s
+                                , deadEndState <- concatMap IM.elems (IM.elems c)
+                                , prod deadEndState `sameRHS` prod fruitfulState 
+                                , deadEndState /= fruitfulState 
+                                , byRule deadEndState == Scanner ]
+  where sameRHS :: Production -> Production -> Bool
+        sameRHS (lh1 :-> rh1) (lh2 :-> rh2) = rh1 == rh2
 --------------------------------------------------------------------------------
 
 instance Show Symbol where
@@ -200,8 +209,13 @@ main = do
       let (_,finalState) = IM.findMax (IM.deleteMax (snd $ IM.findMax chart))
       let preds = concatMap (predState chart) `iterate` [finalState]
       mapM_ print (nub $ concat $ take 10 preds)
+      putStrLn "---------"
+      putStrLn ""
+      putStrLn "now some states that didn't make it to the final parse tree"
 
-
+      let deadends = blocksProd chart finalState
+      print deadends
+--      mapM_ print (nub $ concat $ take 10 deadends)
 
 --------------------------------------------------------------------------------
 
