@@ -24,23 +24,8 @@ data State = State { prod :: Production
                    , prevStates :: [Id] } deriving (Ord)
           -- later: , blocksProd :: Maybe Int } -- Nothing: the state is there in the final analysis of the string
                                                -- Just x: word in index x blocks this state from happening
-
-st :: Production -> Span -> Int -> Rule -> [Id] -> State
-st = State
-
 zeroState :: State
-zeroState = st (POS "γ" :-> [NT S]) (0,0) 0 Default []
-
-printChart :: Chart -> String
-printChart c = unlines $ map printState as
-  where 
-    as = concatMap ( \(k,v) -> [ (k,i,st) | (i,st) <- IM.assocs v ] ) (IM.assocs c)
-
-    printState :: (Int,Int,State) -> String
-    printState (k,i,s) = "\nState " ++ showId (k,i) ++ ":\n" ++
-                         "------------" ++ 
-                         show s
-
+zeroState = State (POS "γ" :-> [NT S]) (0,0) 0 Default []
 
 type Span = (Int,Int)
 type Id = (Int,Int)
@@ -51,6 +36,10 @@ type Chart = IM.IntMap States
 
 (!) :: Chart -> Int -> [(Int,State)]
 (!) chart key = maybe [] IM.assocs (IM.lookup key chart)
+
+takeSpan :: Span -> Sentence -> Sentence
+takeSpan (orig,sp) | orig==sp  = const []
+                   | otherwise = drop orig . take sp
 
 --getTree :: Chart -> Sentence -> 
 
@@ -71,23 +60,13 @@ instance Show Production where
   show (lh :-> rh) = show lh ++ "->" ++ unwords (map show rh) -- intercalate "|" (map show rh)
 
 instance Eq State where
-  s1 == s2 = prod s1 == prod s2 && 
-             spans s1 == spans s2 &&
-             dot s1 == dot s2 &&
-             byRule s1 == byRule s2
+  s1 == s2 = prod s1 == prod s2 
+            -- && spans s1 == spans s2 
+             && dot s1 == dot s2 
+            -- && byRule s1 == byRule s2
 
 instance Show State where
-  show s = "\n" ++ show (byRule s) ++ "\n"
-               ++ show (lhs $ prod s) ++ " -> " 
-             ++ bdStr ++ "● " ++ adStr ++ "\n"
-             ++ "spans " ++ show (spans s) ++ "\n"
-             ++ "created by: " ++ showPrevStates (prevStates s) ++ "\n"
-             ++ "------------"
-   where
-       (bd,ad) = splitAt (dot s) (rhs $ prod s)  -- :: ([Symbol],[Symbol])
-       (bdStr,adStr) = ( if null bd then ""
-                           else unwords (map show bd) ++ " "
-                       , unwords (map show ad) ++ " ")
+  show = (\(a,b,c) -> a++b++c) . showStateTuple
 
 showLite :: State -> String
 showLite s = show (byRule s) ++ ": " ++ show (prod s)
@@ -98,6 +77,33 @@ showPrevStates xs = intercalate ", " $ map showId xs
 
 showId :: Id -> String
 showId (i,j) = show i ++ "." ++ show j
+
+showStateTuple :: State -> (String,String,String)
+showStateTuple s =
+  ( show (byRule s) ++ " "
+  , "\n" ++show (lhs $ prod s) ++ " -> " 
+         ++ bdot ++ "● " ++ adot ++ "\n"
+         ++ show (spans s) ++ " "
+
+  , "\n" ++ (if True --byRule s == Completer 
+             then "created by: " ++ showPrevStates (prevStates s) ++ "\n"
+             else "")
+   ++ "------------")
+  where
+   (bd,ad)     = splitAt (dot s) (rhs $ prod s)  -- :: ([Symbol],[Symbol])
+   (bdot,adot) = ( if null bd then ""
+                    else unwords (map show bd) ++ " "
+                 , unwords (map show ad) ++ " ")
+
+printChart :: Chart -> Sentence -> String
+printChart c sent = unlines $ map (printState sent) as
+  where 
+    as = concatMap ( \(k,v) -> [ (k,i,st) | (i,st) <- IM.assocs v ] ) (IM.assocs c)
+
+    printState :: Sentence -> (Int,Int,State) -> String
+    printState sent (k,i,s) = "\n" ++ s1 ++ showId (k,i) ++ ":" ++
+                              s2 ++ unwords (takeSpan (spans s) sent) ++ s3
+      where (s1,s2,s3) = showStateTuple s
 
 --------------------------------------------------------------------------------
 
@@ -123,9 +129,9 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
   chart = IM.insert 0 (IM.insert 0 zeroState IM.empty) IM.empty
 
   go :: Chart -> (Int,String) -> Chart
-  go chart (j,word) = trace ("\nRound " ++ show j ++ ": " ++ word ++
-                               "\n***********\n"  ++ show chart ++ "\n") $
-                      iterate insertRepeatedly chart !! 3 --totally arbitrary
+  go chart (j,word) = --trace ("\nRound " ++ show j ++ ": " ++ word ++
+                      --         "\n***********\n"  ++ show chart ++ "\n") $
+                      iterate insertRepeatedly chart !! 5 --totally arbitrary
    where
 
     insertRepeatedly chart = foldl insertStates chart (act `concatMap` recentStates chart)
@@ -137,7 +143,7 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
         innerChart = fromMaybe IM.empty (IM.lookup k chart)
         maxKey = if IM.null innerChart then (-1) else fst $ IM.findMax innerChart
         newInnerChart = if state `elem` IM.elems innerChart
-                         then innerChart
+                         then trace ("state " ++ showLite state ++ " already in chart") $ innerChart
                          else IM.insert (maxKey+1) state innerChart 
                              -- :: Chart -> (Int,State) -> Chart
 
@@ -149,26 +155,29 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
 
 
     scanner :: Int -> Int -> State -> [(Int,State)]   
-    scanner k i s = [ (k+1, st pd (sp,sp+1) (dot s+1) Scanner [(k,i)])
-                     | pd <- grammar         -- For every state in S(k) of the form (X → γ • Pos, [i,j]),
-                     , T word `isRhs` pd     -- examine the input `word' to see if it matches the Pos,
-                     , let (_,sp) = spans s ]  -- then create rule (Pos → word, [j,j+1]) and store it in S(k+1)
-
-    completer :: Int -> Int -> State -> [(Int,State)]
-    completer k i s@(State pd sp dt _ createdBy) = 
-      [ (k, st (prod oldSt) (o,j) (dot oldSt+1) Completer ((k,i):createdBy))
-                      | (_,oldSt) <- (chart !) =<< [0..k-1]
-                      , next oldSt `isLhs` prod s   -- For every state in S(k) of the form (X → γ •, [j,k]), 
-                      , let (o,spOld) = spans oldSt   -- find states in S(j) of the form (Y → α • X β, [i,j])
-                      , spOld == fst (spans s)]  
-                                        -- and add (Y → α X • β, [i,k]) to S(k).
-
+    scanner k i s = [ (k+1, State pd (j,j+1) (dot s+1) Scanner [(k,i)])
+                     | pd@(lh :-> rh) <- grammar 
+                     , T word `elem` rh                     
+                     --, next s == lh --Uncomment for standard Earley, with top-down filtering
+                     , wordIsLegit (T word) (next s) grammar
+                     , let (_i,j) = spans s ]
 
     predictor :: Int -> Int -> State -> [(Int,State)] 
-    predictor k i s = [ (k, st pd (j,j) 0 Predictor [(k,i)])
-                        | pd <- grammar
-                        , next s `isLhs` pd
-                        , let (i,j) = spans s ]
+    predictor k i s = [ (k, State pd (j,j) 0 Predictor [(k,i)])
+                        | pd@(lh :-> rh) <- grammar
+                        , next s == NT lh
+                        , let (_i,j) = spans s ]
+
+    completer :: Int -> Int -> State -> [(Int,State)]
+    completer k i (State (lhCur :-> rhCur) (origCur,spCur) _ _ prevs) = 
+      [ (k, State pdOld (origOld,j) (dotOld+1) Completer ((k,i):prevs))
+           | (_,old@(State pdOld (origOld,spOld) dotOld _ _)) 
+               <- (chart !) =<< [0..k-1]     -- For every state in S(k) of the form (X → γ •, [j,k]), 
+           , next old == NT lhCur            -- find states in S(j) of the form (Y → α • X β, [i,j])
+           , spOld == origCur]               -- and add (Y → α X • β, [i,k]) to S(k).
+                                        
+
+
 
 
 
@@ -177,7 +186,7 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
 main = do 
       --sentence <- words `fmap` getLine
       let chart = earley sentence grammar
-      putStrLn (printChart chart)
+      putStrLn (printChart chart sentence)
 
 
 --------------------------------------------------------------------------------
@@ -195,17 +204,17 @@ grammar = [ S  :-> [NT NP, NT VP]
           , dt :-> [T "the"]
           , n  :-> [T "cat"]
           , n  :-> [T "marks"]
-          , n  :-> [T "essays"]
+          , n  :-> [T "leaves"]
           , v  :-> [T "cat"]
           , v  :-> [T "marks"]
-          , v  :-> [T "sleeps"]
+          , v  :-> [T "leaves"]
           ]
 
-sentence = words "the cat marks essays"
+sentence = words "the cat leaves marks"
 
-isRhs :: Symbol -> Production -> Bool
-isRhs symb (_ :-> rh) = symb `elem` rh
 
-isLhs :: Symbol -> Production -> Bool
-isLhs (NT symb) (lh :-> _) = symb == lh
-isLhs _         _          = False
+wordIsLegit :: Symbol -> Symbol -> Grammar -> Bool
+wordIsLegit word (NT nt) gr = 
+  (not.null) [ lh :-> rh | (lh :-> rh) <- grammar
+                         , word `elem` rh 
+                         , nt == lh ]
