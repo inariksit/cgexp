@@ -1,7 +1,7 @@
 module Earley where 
 
-import Data.List (splitAt,intercalate)
-import Data.Maybe (fromMaybe)
+import Data.List (splitAt,intercalate,nub)
+import Data.Maybe (mapMaybe,fromMaybe)
 import qualified Data.IntMap.Strict as IM
 import Debug.Trace (trace)
 
@@ -41,8 +41,9 @@ takeSpan :: Span -> Sentence -> Sentence
 takeSpan (orig,sp) | orig==sp  = const []
                    | otherwise = drop orig . take sp
 
---getTree :: Chart -> Sentence -> 
-
+predState :: Chart -> State -> [State]
+predState c s = mapMaybe lu (prevStates s)
+  where lu (outerK,innerK) = lookup innerK (c ! outerK)
 --------------------------------------------------------------------------------
 
 instance Show Symbol where
@@ -60,13 +61,19 @@ instance Show Production where
   show (lh :-> rh) = show lh ++ "->" ++ unwords (map show rh) -- intercalate "|" (map show rh)
 
 instance Eq State where
-  s1 == s2 = prod s1 == prod s2 
+  s1 == s2 | byRule s1==Completer && byRule s2==Completer 
+              =  prod s1 == prod s2 
+                 && dot s1 == dot s2 
+               --  && prevStates s1 == prevStates s2
+           | otherwise = prod s1 == prod s2 
+                         && dot s1 == dot s2 
+
+
             -- && spans s1 == spans s2 
-             && dot s1 == dot s2 
             -- && byRule s1 == byRule s2
 
 instance Show State where
-  show = (\(a,b,c) -> a++b++c) . showStateTuple
+  show = uncurry (++) . showStateTuple
 
 showLite :: State -> String
 showLite s = show (byRule s) ++ ": " ++ show (prod s)
@@ -78,12 +85,12 @@ showPrevStates xs = intercalate ", " $ map showId xs
 showId :: Id -> String
 showId (i,j) = show i ++ "." ++ show j
 
-showStateTuple :: State -> (String,String,String)
+showStateTuple :: State -> (String,String)
 showStateTuple s =
-  ( show (byRule s) ++ " "
-  , "\n" ++show (lhs $ prod s) ++ " -> " 
-         ++ bdot ++ "● " ++ adot ++ "\n"
-         ++ show (spans s) ++ " "
+  ( " " ++ show (byRule s) ++ " "
+        ++ show (lhs $ prod s) ++ " -> " 
+        ++ bdot ++ "● " ++ adot ++ "\n"
+        ++ show (spans s) ++ " "
 
   , "\n" ++ (if True --byRule s == Completer 
              then "created by: " ++ showPrevStates (prevStates s) ++ "\n"
@@ -101,9 +108,10 @@ printChart c sent = unlines $ map (printState sent) as
     as = concatMap ( \(k,v) -> [ (k,i,st) | (i,st) <- IM.assocs v ] ) (IM.assocs c)
 
     printState :: Sentence -> (Int,Int,State) -> String
-    printState sent (k,i,s) = "\n" ++ s1 ++ showId (k,i) ++ ":" ++
-                              s2 ++ unwords (takeSpan (spans s) sent) ++ s3
-      where (s1,s2,s3) = showStateTuple s
+    printState sent (k,i,s) = "\n" ++ showId (k,i) ++ s1 
+                                   ++ unwords (takeSpan (spans s) sent) 
+                                   ++ s2
+      where (s1,s2) = showStateTuple s
 
 --------------------------------------------------------------------------------
 
@@ -131,7 +139,7 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
   go :: Chart -> (Int,String) -> Chart
   go chart (j,word) = --trace ("\nRound " ++ show j ++ ": " ++ word ++
                       --         "\n***********\n"  ++ show chart ++ "\n") $
-                      iterate insertRepeatedly chart !! 5 --totally arbitrary
+                      iterate insertRepeatedly chart !! 4 --totally arbitrary
    where
 
     insertRepeatedly chart = foldl insertStates chart (act `concatMap` recentStates chart)
@@ -143,7 +151,7 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
         innerChart = fromMaybe IM.empty (IM.lookup k chart)
         maxKey = if IM.null innerChart then (-1) else fst $ IM.findMax innerChart
         newInnerChart = if state `elem` IM.elems innerChart
-                         then trace ("state " ++ showLite state ++ " already in chart") $ innerChart
+                         then trace ("state " ++ showLite state ++ " already in chart") innerChart
                          else IM.insert (maxKey+1) state innerChart 
                              -- :: Chart -> (Int,State) -> Chart
 
@@ -155,7 +163,7 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
 
 
     scanner :: Int -> Int -> State -> [(Int,State)]   
-    scanner k i s = [ (k+1, State pd (j,j+1) (dot s+1) Scanner [(k,i)])
+    scanner k i s = [ (k+1, State pd (j,j+1) (dot s+1) Scanner [])
                      | pd@(lh :-> rh) <- grammar 
                      , T word `elem` rh                     
                      --, next s == lh --Uncomment for standard Earley, with top-down filtering
@@ -163,15 +171,15 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
                      , let (_i,j) = spans s ]
 
     predictor :: Int -> Int -> State -> [(Int,State)] 
-    predictor k i s = [ (k, State pd (j,j) 0 Predictor [(k,i)])
+    predictor k i s = [ (k, State pd (j,j) 0 Predictor [] ) --[(k,i)])
                         | pd@(lh :-> rh) <- grammar
                         , next s == NT lh
                         , let (_i,j) = spans s ]
 
     completer :: Int -> Int -> State -> [(Int,State)]
     completer k i (State (lhCur :-> rhCur) (origCur,spCur) _ _ prevs) = 
-      [ (k, State pdOld (origOld,j) (dotOld+1) Completer ((k,i):prevs))
-           | (_,old@(State pdOld (origOld,spOld) dotOld _ _)) 
+      [ (k, State pdOld (origOld,j) (dotOld+1) Completer ((k,i):prevs++prevsOld))
+           | (_,old@(State pdOld (origOld,spOld) dotOld _ prevsOld)) 
                <- (chart !) =<< [0..k-1]     -- For every state in S(k) of the form (X → γ •, [j,k]), 
            , next old == NT lhCur            -- find states in S(j) of the form (Y → α • X β, [i,j])
            , spOld == origCur]               -- and add (Y → α X • β, [i,k]) to S(k).
@@ -186,7 +194,13 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
 main = do 
       --sentence <- words `fmap` getLine
       let chart = earley sentence grammar
-      putStrLn (printChart chart sentence)
+      --putStrLn (printChart chart sentence)
+
+                -- deleteMax to remove the dummy start state
+      let (_,finalState) = IM.findMax (IM.deleteMax (snd $ IM.findMax chart))
+      let preds = concatMap (predState chart) `iterate` [finalState]
+      mapM_ print (nub $ concat $ take 10 preds)
+
 
 
 --------------------------------------------------------------------------------
@@ -197,7 +211,7 @@ dt = POS "Det"
 
 grammar = [ S  :-> [NT NP, NT VP]
           , NP :-> [NT dt, NT n]
-          , NP :-> [NT NP, NT n]
+         -- , NP :-> [NT NP, NT n]
           , NP :-> [NT n]
           , VP :-> [NT v,  NT NP]
           , VP :-> [NT v]
@@ -205,12 +219,13 @@ grammar = [ S  :-> [NT NP, NT VP]
           , n  :-> [T "cat"]
           , n  :-> [T "marks"]
           , n  :-> [T "leaves"]
+          , n  :-> [T "essays"]
           , v  :-> [T "cat"]
           , v  :-> [T "marks"]
           , v  :-> [T "leaves"]
           ]
 
-sentence = words "the cat leaves marks"
+sentence = words "the cat marks leaves"
 
 
 wordIsLegit :: Symbol -> Symbol -> Grammar -> Bool
