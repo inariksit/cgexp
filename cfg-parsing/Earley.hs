@@ -45,14 +45,14 @@ predState :: Chart -> State -> [State]
 predState c s = mapMaybe doubleLookup (prevStates s)
   where doubleLookup (outerK,innerK) = lookup innerK (c ! outerK)
 
-blocksProd :: Chart -> State -> [State]
-blocksProd c s = [ deadEndState | fruitfulState <- predState c s
-                                , deadEndState <- concatMap IM.elems (IM.elems c)
-                                , prod deadEndState `sameRHS` prod fruitfulState 
-                                , deadEndState /= fruitfulState 
-                                , byRule deadEndState == Scanner ]
-  where sameRHS :: Production -> Production -> Bool
-        sameRHS (lh1 :-> rh1) (lh2 :-> rh2) = rh1 == rh2
+unluckyAlternative :: Chart -> State -> [(State,State)]
+unluckyAlternative c s = [ (s, deadEndState) 
+                                  | fruitfulState <- predState c s
+                                  , deadEndState <- concatMap IM.elems (IM.elems c)
+                                  , byRule deadEndState == Scanner
+                                  , deadEndState /= fruitfulState 
+                                  , rhs (prod deadEndState) == rhs (prod fruitfulState) ]
+
 --------------------------------------------------------------------------------
 
 instance Show Symbol where
@@ -76,10 +76,6 @@ instance Eq State where
                --  && prevStates s1 == prevStates s2
            | otherwise = prod s1 == prod s2 
                          && dot s1 == dot s2 
-
-
-            -- && spans s1 == spans s2 
-            -- && byRule s1 == byRule s2
 
 instance Show State where
   show = uncurry (++) . showStateTuple
@@ -208,14 +204,15 @@ main = do
                 -- deleteMax to remove the dummy start state
       let (_,finalState) = IM.findMax (IM.deleteMax (snd $ IM.findMax chart))
       let preds = concatMap (predState chart) `iterate` [finalState]
-      mapM_ print (nub $ concat $ take 10 preds)
+      let preds' = nub $ concat $ take 10 preds
+      mapM_ print preds'
       putStrLn "---------"
       putStrLn ""
       putStrLn "now some states that didn't make it to the final parse tree"
 
-      let deadends = blocksProd chart finalState
-      print deadends
---      mapM_ print (nub $ concat $ take 10 deadends)
+      let deadends = concatMap (unluckyAlternative chart) preds'
+      mapM_ (\(x,y) -> putStrLn ("\n" ++ show x ++ "\nblocks\n" ++ show y)) deadends
+
 
 --------------------------------------------------------------------------------
 
