@@ -3,7 +3,9 @@ module Earley where
 import Data.List (splitAt,intercalate,nub)
 import Data.Maybe (mapMaybe,fromMaybe)
 import qualified Data.IntMap.Strict as IM
-import Debug.Trace (trace)
+--import Debug.Trace (trace)
+
+trace x y = y
 
 type Grammar = [Production]
 type Sentence = [String]
@@ -37,6 +39,9 @@ type Chart = IM.IntMap States
 (!) :: Chart -> Int -> [(Int,State)]
 (!) chart key = maybe [] IM.assocs (IM.lookup key chart)
 
+statesIDs :: Chart -> [(Int,Int,State)]
+statesIDs c = concatMap ( \(k,v) -> [ (k,i,st) | (i,st) <- IM.assocs v ] ) (IM.assocs c)
+
 takeSpan :: Span -> Sentence -> Sentence
 takeSpan (orig,sp) | orig==sp  = const []
                    | otherwise = drop orig . take sp
@@ -45,13 +50,14 @@ predState :: Chart -> State -> [State]
 predState c s = mapMaybe doubleLookup (prevStates s)
   where doubleLookup (outerK,innerK) = lookup innerK (c ! outerK)
 
-unluckyAlternative :: Chart -> State -> [(State,State)]
-unluckyAlternative c s = [ (s, deadEndState) 
+--unluckyAlternative :: Chart -> State -> [(State,State)]
+unluckyAlternative c s = [ (s, (k,i,deadEndState))
                                   | fruitfulState <- predState c s
-                                  , deadEndState <- concatMap IM.elems (IM.elems c)
-                                  , byRule deadEndState == Scanner
-                                  , deadEndState /= fruitfulState 
+                                  , (k,i,deadEndState) <- statesIDs c
+                                  --, byRule deadEndState == Scanner
+                                  , lhs (prod deadEndState) /= lhs (prod fruitfulState)
                                   , rhs (prod deadEndState) == rhs (prod fruitfulState) ]
+
 
 --------------------------------------------------------------------------------
 
@@ -73,7 +79,7 @@ instance Eq State where
   s1 == s2 | byRule s1==Completer && byRule s2==Completer 
               =  prod s1 == prod s2 
                  && dot s1 == dot s2 
-               --  && prevStates s1 == prevStates s2
+                 && prevStates s1 == prevStates s2
            | otherwise = prod s1 == prod s2 
                          && dot s1 == dot s2 
 
@@ -110,7 +116,7 @@ showStateTuple s =
 printChart :: Chart -> Sentence -> String
 printChart c sent = unlines $ map (printState sent) as
   where 
-    as = concatMap ( \(k,v) -> [ (k,i,st) | (i,st) <- IM.assocs v ] ) (IM.assocs c)
+    as = statesIDs c
 
     printState :: Sentence -> (Int,Int,State) -> String
     printState sent (k,i,s) = "\n" ++ showId (k,i) ++ s1 
@@ -156,7 +162,7 @@ earley sent grammar = foldl go chart (zip [0..] sent ++ [(length sent,"dummy")])
         innerChart = fromMaybe IM.empty (IM.lookup k chart)
         maxKey = if IM.null innerChart then (-1) else fst $ IM.findMax innerChart
         newInnerChart = if state `elem` IM.elems innerChart
-                         then trace ("state " ++ showLite state ++ " already in chart") innerChart
+                         then trace ("state " ++ show state ++ " already in chart") innerChart
                          else IM.insert (maxKey+1) state innerChart 
                              -- :: Chart -> (Int,State) -> Chart
 
@@ -202,18 +208,24 @@ main = do
       --putStrLn (printChart chart sentence)
 
                 -- deleteMax to remove the dummy start state
-      let (_,finalState) = IM.findMax (IM.deleteMax (snd $ IM.findMax chart))
+      let (_,finalState) = IM.findMax (snd $ IM.findMax chart)
       let preds = concatMap (predState chart) `iterate` [finalState]
       let preds' = nub $ concat $ take 10 preds
+
+      putStrLn "---------"
+      putStrLn ""
       mapM_ print preds'
+
       putStrLn "---------"
       putStrLn ""
       putStrLn "now some states that didn't make it to the final parse tree"
 
       let deadends = concatMap (unluckyAlternative chart) preds'
-      mapM_ (\(x,y) -> putStrLn ("\n" ++ show x ++ "\nblocks\n" ++ show y)) deadends
+      mapM_ (\(x,y) -> putStrLn ("\n" ++ show x ++ "\nblocks\n" ++ showNice y)) deadends
 
-
+showNice :: (Show a) => (Int,Int,a) -> String
+showNice (n,k,a) = show n ++ "." ++ show k ++ " " ++ show a
+ 
 --------------------------------------------------------------------------------
 
 n = POS "N"
@@ -222,7 +234,7 @@ dt = POS "Det"
 
 grammar = [ S  :-> [NT NP, NT VP]
           , NP :-> [NT dt, NT n]
-         -- , NP :-> [NT NP, NT n]
+          , NP :-> [NT NP, NT n]
           , NP :-> [NT n]
           , VP :-> [NT v,  NT NP]
           , VP :-> [NT v]
