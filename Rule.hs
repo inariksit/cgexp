@@ -57,7 +57,9 @@ cohort ss = unlines ( [ "   \""     ++ s ++ "\" "     ++ s | s <- ss ] ++
 --------------------------------------------------------------------------------
 -- Include states in tags
 
-data TagPlus = T Tag | TS State | BOS | EOS deriving (Eq)
+--data TagPlus = T Tag | TS State | BOS | EOS deriving (Eq)
+data TagPlus = T Tag | NoT Tag | TS State | NoTS State | BOS | EOS deriving (Eq)
+
 
 stateToTag :: State -> TagPlus
 stateToTag = TS  --Makes states also into special tags; 
@@ -71,6 +73,8 @@ alltps = map T alltags
 instance Show TagPlus where
   show (T tag) = show tag
   show (TS s)  = "(s" ++ show s ++ ")"
+  show (NoT tag) = "No" ++ show tag
+  show (NoTS s)  = "(not_s" ++ show s ++ ")"
   show BOS     = ">>>"
   show EOS     = "<<<"
 
@@ -112,9 +116,13 @@ instance Show Rule where
 definitions :: [String]
 definitions = "SET >>> = (>>>) ;":
               "SET <<< = (<<<) ;":
-              [ "SET " ++ (x:xs) ++ " = (" ++ (toLower x:xs) ++ ") ;" 
-                | (x:xs) <- map show alltags ] 
-              ++ [ anySet ]
+              [ "SET " ++ tag ++ " = (" ++ tagName ++ ") ;\n" ++
+                "SET " ++ noTag ++ " = (" ++ noTagName ++ ") ;"
+                | tag@(x:xs) <- map show alltags 
+                , let tagName = toLower x:xs
+                , let noTag = "No"++tag 
+                , let noTagName = "not_"++tagName ] ++ 
+              [ anySet ]
  where anySet = "SET Any = " ++ showTS alltps ++ " ;"
 
 
@@ -125,9 +133,7 @@ definitions = "SET >>> = (>>>) ;":
 baseRules :: Automaton Tag -> [Rule]
 baseRules a = [ R allButStart [bos]   --[noPrec] 
               , R allButEnd   [eos] ] --[noFoll] 
-                  -- should test: if there is no transition to the start state
               ++ [ R onlyStart [hasPrec] | not (null onlyStart) ] 
-
               ++ [ R onlyEnd   [hasFoll] | not (null onlyEnd) ] 
 
  where
@@ -160,11 +166,18 @@ baseRules a = [ R allButStart [bos]   --[noPrec]
 -- "Doesn't work" means it still disambiguates, but nonsensically.
 
 removeTag :: Automaton Tag -> Tag -> [Rule]
-removeTag a t = [ R [T t] [c] | c <- contexts ]
+removeTag a t = ( R [NoT t] . context) `map` withSymbol a t 
  where 
-  (statesFrom,statesTo) = unzip $ withSymbol a t       
-  contexts = [ No nc_1 (TS `map` nub statesFrom) | not (null statesFrom) ] ++
-             [ No nc1  (TS `map` nub statesTo) | not (null statesTo) ]
+
+  context :: (State,State) -> [Context]
+  context (from,to) = [No nc_1 [NoTS from], No nc1 [NoTS to]]
+
+--old version
+--removeTag a t = [ R [T t] [c] | c <- contexts ]
+-- where 
+--  (statesFrom,statesTo) = unzip $ withSymbol a t       
+--  contexts = [ No nc_1 (TS `map` nub statesFrom) | not (null statesFrom) ] ++
+--             [ No nc1  (TS `map` nub statesTo) | not (null statesTo) ]
 
 ------
 
