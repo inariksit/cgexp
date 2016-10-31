@@ -33,7 +33,8 @@ printRules a =
           , pr (baseRules a)
           , "SECTION\n"
           , "# Remove tags NOT between certain states"
-          , concatMap (pr . removeTag a) alltags
+--          , concatMap (pr . removeTag a) alltags
+          , concatMap ((\x -> show x ++ "\n") . removeTag a) alltags          
           , "# Remove states between certain tags"
           , concatMap (pr . removeState a) [0..bound a]
           ]
@@ -88,9 +89,10 @@ showTS = intercalate " OR " . map show
 data Rule = R { target  :: [TagPlus]
               , context :: [Context] } deriving (Eq)
 
+rule :: [TagPlus] -> [Context] -> Rule
+rule trg ctx = R trg ctx
 
-data Context = Yes Position [TagPlus] | No Position [TagPlus] deriving (Eq)
-
+data Context = Yes Position [TagPlus] | No Position [TagPlus] | NegTempl [[Context]] deriving (Eq)
 data Position = C Int | NC Int deriving (Eq)
 
 -- Shorthands, we'll write these a lot
@@ -100,9 +102,14 @@ c_1  = C (-1)
 nc1  = NC 1
 nc_1 = NC (-1)
 
+
 instance Show Context where
   show (Yes pos ts) = "(" ++ show pos ++ " " ++ showTS ts ++ ")"
   show (No pos ts)  = "(NOT " ++ show pos ++ " " ++ showTS ts ++ ")"
+  show (NegTempl cs) = "NEGATE (" ++ intercalate " OR " (map showCtxAnd cs) ++ ")"
+
+showCtxAnd :: [Context] -> String
+showCtxAnd = unwords . map show
 
 instance Show Position where
   show (C i)  = show i ++ "C"
@@ -110,18 +117,18 @@ instance Show Position where
  
 instance Show Rule where
   show (R trg ctxs) = "REMOVE " ++ showTS trg ++ 
-                      " IF " ++ unwords (map show ctxs) ++ " ;"
+                           " IF " ++ unwords (map show ctxs) ++ " ;"
 
 
 definitions :: [String]
 definitions = "SET >>> = (>>>) ;":
               "SET <<< = (<<<) ;":
-              [ "SET " ++ tag ++ " = (" ++ tagName ++ ") ;\n" ++
-                "SET " ++ noTag ++ " = (" ++ noTagName ++ ") ;"
+              [ "SET " ++ tag ++ " = (" ++ tagName ++ ") ;\n" -- ++
+             --   "SET " ++ noTag ++ " = (" ++ noTagName ++ ") ;"
                 | tag@(x:xs) <- map show alltags 
                 , let tagName = toLower x:xs
-                , let noTag = "No"++tag 
-                , let noTagName = "not_"++tagName ] ++ 
+             --   , let noTag = "No"++tag 
+             --   , let noTagName = "not_"++tagName ] ++ 
               [ anySet ]
  where anySet = "SET Any = " ++ showTS alltps ++ " ;"
 
@@ -131,10 +138,10 @@ definitions = "SET >>> = (>>>) ;":
 -- Automaton to Rules
 
 baseRules :: Automaton Tag -> [Rule]
-baseRules a = [ R allButStart [bos]   --[noPrec] 
-              , R allButEnd   [eos] ] --[noFoll] 
-              ++ [ R onlyStart [hasPrec] | not (null onlyStart) ] 
-              ++ [ R onlyEnd   [hasFoll] | not (null onlyEnd) ] 
+baseRules a = [ rule allButStart [bos]   --[noPrec] 
+              , rule allButEnd   [eos] ] --[noFoll] 
+              ++ [ rule onlyStart [hasPrec] | not (null onlyStart) ] 
+              ++ [ rule onlyEnd   [hasFoll] | not (null onlyEnd) ] 
 
  where
   allButStart = [ TS s | s <- [1..bound a] ] --all states excluding 0 
@@ -165,12 +172,18 @@ baseRules a = [ R allButStart [bos]   --[noPrec]
 -- than the automaton needs transitions to reach accepting state.
 -- "Doesn't work" means it still disambiguates, but nonsensically.
 
-removeTag :: Automaton Tag -> Tag -> [Rule]
-removeTag a t = ( R [NoT t] . context) `map` withSymbol a t 
- where 
+--removeTag :: Automaton Tag -> Tag -> [Rule]
+--removeTag a t = ( R [NoT t] . context) `map` withSymbol a t 
 
-  context :: (State,State) -> [Context]
-  context (from,to) = [No nc_1 [NoTS from], No nc1 [NoTS to]]
+removeTag :: Automaton Tag -> Tag -> Rule
+removeTag a t = R [T t] [templ]
+ where 
+  
+  context :: (State,State) -> [[Context]]
+  context (from,to) = [[ Yes nc_1 [TS from], Yes nc1 [TS to] ]]
+
+  templ = NegTempl (context `concatMap` withSymbol a t)
+--  context (from,to) = [No nc_1 [NoTS from], No nc1 [NoTS to]]
 
 --old version
 --removeTag a t = [ R [T t] [c] | c <- contexts ]
@@ -182,7 +195,7 @@ removeTag a t = ( R [NoT t] . context) `map` withSymbol a t
 ------
 
 removeState :: Automaton Tag -> State -> [Rule]
-removeState a s = [ R [TS s] (c:notEos)
+removeState a s = [ rule [TS s] (c:notEos)
                     | c@(No pos cs) <- contexts
                     , not $ null cs
 
