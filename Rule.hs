@@ -39,19 +39,21 @@ printRules a =
           ]
 
 printCohorts :: Int -> String
-printCohorts bnd = unlines $ cohortS bnd : replicate bnd (cohortW ++ cohortS bnd)
+printCohorts bnd = unlines $ cohortS bnd : replicate bnd (cohortW tags ++ cohortS bnd)
+ where tags = ["det", "adj", "noun", "verb"]
 
-cohortW :: String 
-cohortW = unlines [ "\n\"<w>\""
-                  , "   \"det\" det"
-                  , "   \"adj\" adj"
-                  , "   \"noun\" noun"
-                  , "   \"verb\" verb" ]
+cohortW :: [String] -> String
+cohortW as = "\n\"<w>\"\n" ++ cohort as
 
+           
 cohortS :: Int -> String
-cohortS i = unlines ([ "\n\"<s>\"" ] ++
-                    [ "   \"s" ++ n ++ "\" s" ++ n 
-                      | n <- map show [0..i] ])
+cohortS i = "\n\"<s>\"\n" ++ cohort [ "s" ++ show n | n <- [0..i] ]
+
+
+cohort :: [String] -> String
+cohort ss = unlines ( [ "   \""     ++ s ++ "\" "     ++ s | s <- ss ] ++
+                      [ "   \"not_" ++ s ++ "\" not_" ++ s | s <- ss ] )
+
 --------------------------------------------------------------------------------
 -- Include states in tags
 
@@ -123,7 +125,9 @@ definitions = "SET >>> = (>>>) ;":
 baseRules :: Automaton Tag -> [Rule]
 baseRules a = [ R allButStart [bos]   --[noPrec] 
               , R allButEnd   [eos] ] --[noFoll] 
+                  -- should test: if there is no transition to the start state
               ++ [ R onlyStart [hasPrec] | not (null onlyStart) ] 
+
               ++ [ R onlyEnd   [hasFoll] | not (null onlyEnd) ] 
 
  where
@@ -131,8 +135,9 @@ baseRules a = [ R allButStart [bos]   --[noPrec]
   allButEnd   = [ TS s | s <- [0..bound a]
                        , not $ final a s ]
 
-  --remove start state from all but first (state) cohort;
-  onlyStart = [ TS 0 | not $ final a 0 ] --EXCEPT if start also accepts
+  --if the start state has no transitions leading to it,
+  --we can remove it from all but first (state) cohort
+  onlyStart = [ TS 0 | noTransitionsTo a 0 ]
 
   --remove accepting & sink states from all but last (state) cohort
   onlyEnd = [ TS s | s <- [0..bound a]
