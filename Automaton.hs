@@ -79,6 +79,9 @@ transitionTo (A f b _) to symb = [ from | from <- [0..b]
 sink :: Automaton a -> State -> Bool
 sink a s = all null [ symb $ trans a s t | t <- [0..bound a] ]
 
+noTransitionsTo :: Automaton a -> State -> Bool
+noTransitionsTo a s = all null [ symb $ trans a t s | t <- [0..bound a] ]
+
 --------------------------------------------------------------------------------
 
 data Tag = Det | Adj | Noun | Verb deriving (Show,Eq,Enum,Bounded)
