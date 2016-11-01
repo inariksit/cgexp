@@ -4,31 +4,36 @@ SET Det = (det) ;
 SET Adj = (adj) ;
 SET Noun = (noun) ;
 SET Verb = (verb) ;
+SET S0 = (s0) ;
+SET S1 = (s1) ;
+SET S2 = (s2) ;
+SET S3 = (s3) ;
 SET Any = Det OR Adj OR Noun OR Verb ;
+
+TEMPLATE DetCtx = ( (-1 S0 LINK 2 S1) OR (-1 S0 LINK 2 S3) ) ;
+TEMPLATE AdjCtx = ( (-1 S1 LINK 2 S1) ) ;
+TEMPLATE NounCtx = ( (-1 S0 LINK 2 S2) OR (-1 S0 LINK 2 S3) OR (-1 S1 LINK 2 S2) OR (-1 S1 LINK 2 S3) ) ;
+TEMPLATE VerbCtx = ( (-1 S0 LINK 2 S3) OR (-1 S2 LINK 2 S3) ) ;
 
 BEFORE-SECTIONS
 
-REMOVE (s1) OR (s2) OR (s3) IF (-1 >>>) ;
-REMOVE (s0) OR (s1) IF (0 <<<) ;
-REMOVE (s0) IF (-1 Det OR Adj OR Noun OR Verb) ;
-REMOVE (s3) IF (1 Det OR Adj OR Noun OR Verb) ;
+REMOVE S1 OR S2 OR S3 IF (-1 >>>) ;
+REMOVE S0 OR S1 IF (0 <<<) ;
+REMOVE S0 IF (-1 Det OR Adj OR Noun OR Verb) ;
+REMOVE S3 IF (1 Det OR Adj OR Noun OR Verb) ;
 
 SECTION
 
 # Remove tags NOT between certain states
-REMOVE Det IF (NOT -1 (s0)) ;
-REMOVE Det IF (NOT 1 (s1) OR (s3)) ;
-REMOVE Adj IF (NOT -1 (s1)) ;
-REMOVE Adj IF (NOT 1 (s1)) ;
-REMOVE Noun IF (NOT -1 (s0) OR (s1)) ;
-REMOVE Noun IF (NOT 1 (s2) OR (s3)) ;
-REMOVE Verb IF (NOT -1 (s0) OR (s2)) ;
-REMOVE Verb IF (NOT 1 (s3)) ;
+REMOVE Det IF (NEGATE T:DetCtx) ;
+REMOVE Adj IF (NEGATE T:AdjCtx) ;
+REMOVE Noun IF (NEGATE T:NounCtx) ;
+REMOVE Verb IF (NEGATE T:VerbCtx) ;
 
 # Remove states between certain tags
-REMOVE (s0) IF (NOT 1 Det OR Noun OR Verb) ;
-REMOVE (s1) IF (NOT 1 Adj OR Noun) ;
-REMOVE (s1) IF (NOT -1 Det OR Adj) ;
-REMOVE (s2) IF (NOT 1 Verb) (NOT 0 <<<) ;
-REMOVE (s2) IF (NOT -1 Noun) ;
-REMOVE (s3) IF (NOT -1 Det OR Noun OR Verb) ;
+REMOVE S0 IF (NOT 1 Det OR Noun OR Verb) ;
+REMOVE S1 IF (NOT 1 Adj OR Noun) ;
+REMOVE S1 IF (NOT -1 Det OR Adj) ;
+REMOVE S2 IF (NOT 1 Verb) (NOT 0 <<<) ;
+REMOVE S2 IF (NOT -1 Noun) ;
+REMOVE S3 IF (NOT -1 Det OR Noun OR Verb) ;
