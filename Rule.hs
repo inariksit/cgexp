@@ -125,25 +125,26 @@ baseRules a = [ R (OrList allButStart) bos
   eos = AndList [Yes nc0  (OrList [EOS])]
 
   alpha' = OrList . map T . alpha
+
 -----
 
 removeTag :: Automaton Tag -> Tag -> (Rule,String)
 removeTag a t = (R target templ, templString)
  where 
   target = OrList [T t]
-  froms_tos = withSymbol a t
-  --context = [[ Yes nc_1 [TS from], Yes nc1 [TS to] ] | (from,to) <- froms_tos ]
-
   templ = AndList [NegTempl templLhs]
-  templLhs = show t ++ "Ctx"
+
+  froms_tos = withSymbol a t
 
   rhs :: (State,State) -> String
-  rhs (f,t) = printf "(-1 %s LINK 2 %s)" (show $ TS f) (show $ TS t)
+  rhs (f,t) = printf "(-1 %s LINK 2 %s)" (showTS f) (showTS t)
 
-  templRhs = show (OrList $ map rhs froms_tos)
-
+  templLhs = show t ++ "Ctx"
+  templRhs = showOr (map rhs froms_tos)
   templString = printf "TEMPLATE %s = ( %s ) ;" templLhs templRhs
 
+  showOr = show . OrList
+  showTS = show . TS
 
 -----
 
@@ -151,10 +152,9 @@ removeState :: Automaton Tag -> State -> (Rule,String)
 removeState a s = (R target templ, templString)
  where
   target = OrList [TS s]
-  froms_tos = withState a s
-
   templ = AndList [NegTempl templLhs]
-  templLhs = show (TS s) ++ "Ctx"
+
+  froms_tos = withState a s
 
   rhs :: ([Tag], [Tag]) -> String
   rhs ([],[]) = "(0 (*))" --something trivial to make it not crash
@@ -162,31 +162,8 @@ removeState a s = (R target templ, templString)
   rhs ([],ts) = printf "(1 %s)"  (showOr ts)
   rhs (fs,ts) = printf "(-1 %s LINK 2 %s)" (showOr fs) (showOr ts)
 
+  templLhs = show (TS s) ++ "Ctx"
   templRhs = rhs froms_tos
-
   templString = printf "TEMPLATE %s = ( %s ) ;" templLhs templRhs
+
   showOr = show . OrList
-
-{-
- [ R [TS s] (c:notEos)
-                    | c@(No pos cs) <- contexts
-                    , not $ null cs
-
-                    --don't remove *final* state when not followed by something
-                    , let notEos = [ No (NC 0) [EOS] 
-                                     | final a s && pos == NC 1 ]
-
-                    -- We don't need a similar check for initial state.
-                    -- The rule `R allButStart [bos]' in BEFORE-SECTIONS 
-                    -- will remove everything but s0 from the first state cohort.
-                    -- A rule created here may target s0 in the first state cohort,
-                    -- but it is protected by "don't remove the last reading".
-                                 
-                  ] 
- where
-  (tagsFrom,_) = unzip $ fromState a s
-  (_,tagsTo)   = unzip $ toState a s 
-  contexts     = [ No nc1  (T `map` nub tagsFrom)
-                 , No nc_1 (T `map` nub tagsTo) ]
-                 
--}
