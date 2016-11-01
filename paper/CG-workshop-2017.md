@@ -81,7 +81,7 @@ This is how we can (maybe???) do it: [link](https://github.com/inariksit/cgexp/b
 #### A note about disjunction 
 
 One obvious flaw is the lack of disjunction in CG. Consider the regular expression `ab|ba`, accepting the language `{ab,ba}`.
-Given a symbolic sentence of size 2, this is the closest we could get in CG output:
+Given a maximally ambiguous sentence of size 2, this is the closest we could get in CG output:
 
 ```
 "<w>" 
@@ -95,7 +95,8 @@ Given a symbolic sentence of size 2, this is the closest we could get in CG outp
 If our alphabet consists of anything more than `{a,b}`, all the other readings would correctly be removed. But CG cannot express the disjunction any further: the description "either *ab* or *ba*" is translated into a coarser description: "the first character may be either *a* or *b*, and the second character may be either *a* or *b*".
 
 Another option would be to return a set of CGs: one that disambiguates into *ab* and other that disambiguates into *ba*. For this example, we could force just the first item into either *a* or *b*, by adding a rule `SELECT a IF (-1 >>>)` or `SELECT b IF (-1 >>>)`, and then some more C conditions will match, hence more rules will apply.
-But probably there are more complex REs where just fixing the first character is not enough: e.g. `(aab|b)*(ab|ba)`. I don't know (yet?) what to do with those.
+
+But probably there are more complex REs where just fixing the first character is not enough: e.g. `(aab|b)*(ab|ba)`, if we fix `a`, it can be the first `a` of `aab` or `ab`
 
 Another vague idea which is probably wrong: expand all the words in the language (up to some depth), and write constraint rules that will only select those words, nothing more. There's no C, so the rules start disambiguating right away. 
 
@@ -127,6 +128,7 @@ Can we go further? Yes! By same reasoning, we can show that CG extends at least 
 ### Practical benefits: derive CGs from perhaps more easily defined formalisms?
 
 CG can act as a preprocessing step for some more expensive parser. Then the rules can be non-human-oriented, and contain extra symbols. The rules would be derived from the grammar itself, with the sole purpose of making the parsing *faster*, not more accurate.
+
 
 #### Using templates
 
