@@ -1,56 +1,39 @@
 module Rule where
 
 import Automaton
-import Cohort (printCohorts)
-import Test
 import Data.Char ( toLower )
-import Text.Printf (printf)
-import Data.List
-import Control.Monad ( forM_ )
-import System.Environment ( getArgs )
+import Text.Printf ( printf )
+import Data.List ( intercalate, nub )
 
 import Debug.Trace
 
 
-main :: IO ()
-main = do
-  args <- getArgs
-  case args of 
-    ["detNounV"] -> putStrLn $ printRules detNounVerb
-    ["detAdjN"]  -> putStrLn $ printRules detAdjNoun
-    ["random"]   -> do a <- randomAutomaton
-                       print a
-                       --putStrLn $ printRules a
-
-                       let n = show (bound a)
-                       writeFile "examples/random/random.rlx" (printRules a)
-                       writeFile ("examples/random/ex-random-" ++ n ++ ".txt")
-                                 (printCohorts $ bound a)
-    _            -> mapM_ print [detAdjNoun, detNounVerb]
-
-printRules :: Automaton Tag -> String
-printRules a = 
+toRules :: Automaton Tag -> String
+toRules a = 
   unlines [ "DELIMITERS = \"<$.>\" \"<$?>\" \"<$!>\" \"<$:>\" \"<$\\;>\" ;"
           , "SET >>> = (>>>) ;"
           , "SET <<< = (<<<) ;"
           , ""
           , unlines [ printf "SET %s = (%s) ;" (t:ag) (toLower t:ag)
-                        | (t:ag) <- map show alltags ]
+                        | (t:ag) <- map show (alpha a) ]
           , unlines [ printf "SET %s = (%s) ;" ('S':tate) ('s':tate)
                         | tate <- map show [0..bound a] ]
-          , unlines templates
+          , unlines tagTemplates
+          , unlines stateTemplates
           , ""
           , "BEFORE-SECTIONS\n"
           , pr (baseRules a)
           , "SECTION\n"
           , "# Remove tags NOT between certain states"
---          , concatMap (pr . removeTag a) alltags
-          , pr rmTagRules         
+          , pr tagRules         
           , "# Remove states between certain tags"
-          , concatMap (pr . removeState a) [0..bound a]
+          , pr stateRules 
           ]
-  where (rmTagRules,templates) = unzip (removeTag a `map` alltags)
+  where (tagRules,tagTemplates) = unzip (removeTag a `map` alpha a)
+        (stateRules,stateTemplates) = unzip (removeState a `map` [0..bound a])
 
+        pr :: (Show a) => [a] -> String
+        pr = unlines . map show
 
 --------------------------------------------------------------------------------
 -- Include states in tags
@@ -59,37 +42,29 @@ printRules a =
 data TagPlus = T Tag | TS State | BOS | EOS deriving (Eq)
 
 
-stateToTag :: State -> TagPlus
-stateToTag = TS  --Makes states also into special tags; 
-                 --these will be inserted between each word.
-
-
-alltps :: [TagPlus] --All normal tags as TagPlus, ie. no states nor BOS/EOS
-alltps = map T alltags
-
-
 instance Show TagPlus where
   show (T tag) = show tag
-  show (TS s)  = "(s" ++ show s ++ ")"
-  show (NoT tag) = "No" ++ show tag
-  show (NoTS s)  = "(not_s" ++ show s ++ ")"
+  show (TS s)  = "S" ++ show s
+  --show (NoT tag) = "No" ++ show tag
+  --show (NoTS s)  = "(not_s" ++ show s ++ ")"
   show BOS     = ">>>"
   show EOS     = "<<<"
-
-
-showTS :: [TagPlus] -> String
-showTS = intercalate " OR " . map show 
 
 --------------------------------------------------------------------------------
 -- Rules, contexts & positions
 
-data Rule = R { target  :: [TagPlus]
-              , context :: [Context] } deriving (Eq)
+newtype OrList a = OrList { getOrList :: [a] } deriving (Eq)
+newtype AndList a = AndList { getAndList :: [a] } deriving (Eq)
+
+data Rule = R { target  :: OrList TagPlus
+              , context :: AndList Context } deriving (Eq) 
 
 type Name = String
 
-data Context = Yes Position [TagPlus] | No Position [TagPlus] 
-                | Templ Name [[Context]] | NegTempl Name [[Context]] deriving (Eq)
+data Context = Yes Position (OrList TagPlus)
+                | No Position (OrList TagPlus)
+                | Templ Name --this is kinda crap, I'm generating the content in removeTag function and throwing it away
+                | NegTempl Name deriving (Eq)
 
 data Position = C Int | NC Int deriving (Eq)
 
@@ -102,33 +77,33 @@ nc_1 = NC (-1)
 
 
 instance Show Context where
-  show (Yes pos ts) = printf     "(%s %s)" (show pos) (showOr ts)
-  show (No pos ts)  = printf "(NOT %s %s)" (show pos) (showOr ts)
-  show (Templ name _cs) = "(T:" ++ name ++ ")"
-  show (NegTempl name _cs) = "(NEGATE T:" ++ name ++ ")"
+  show (Yes pos ts) = printf     "(%s %s)" (show pos) (show ts)
+  show (No pos ts)  = printf "(NOT %s %s)" (show pos) (show ts)
+  show (Templ name) = "(T:" ++ name ++ ")"
+  show (NegTempl name) = "(NEGATE T:" ++ name ++ ")"
 
 instance Show Position where
   show (C i)  = show i ++ "C"
   show (NC i) = show i
  
 instance Show Rule where
-  show (R trg ctxs) = "REMOVE " ++ showOr trg ++ 
-                           " IF " ++ showAnd ctxs ++ " ;"
+  show (R trg ctxs) = printf "REMOVE %s IF %s ;" (show trg) (show ctxs)
 
-showAnd :: (Show a) => [a] -> String
-showAnd = filter (/='"')  . unwords . map show
+instance (Show a) => Show (AndList a) where
+  show = filter (/='"') . unwords . map show . getAndList
 
-showOr :: (Show a) => [a] -> String
-showOr = filter (/='"') . intercalate " or " . map show 
+instance (Show a) => Show (OrList a) where
+  show = filter (/='"') . intercalate " or " . map show . getOrList
+
 
 --------------------------------------------------------------------------------
 -- Automaton to Rules
 
 baseRules :: Automaton Tag -> [Rule]
-baseRules a = [ R allButStart [bos]   --[noPrec] 
-              , R allButEnd   [eos] ] --[noFoll] 
-              ++ [ R onlyStart [hasPrec] | not (null onlyStart) ] 
-              ++ [ R onlyEnd   [hasFoll] | not (null onlyEnd) ] 
+baseRules a = [ R (OrList allButStart) bos  
+              , R (OrList allButEnd)   eos ]
+              ++ [ R (OrList onlyStart) hasPrec | not (null onlyStart) ] 
+              ++ [ R (OrList onlyEnd)   hasFoll | not (null onlyEnd) ] 
 
  where
   allButStart = [ TS s | s <- [1..bound a] ] --all states excluding 0 
@@ -144,35 +119,56 @@ baseRules a = [ R allButStart [bos]   --[noPrec]
                    , final a s 
                    , sink a s ]
 
-  noPrec = No nc_1 alltps
-  noFoll = No nc1  alltps
-  hasPrec = Yes nc_1 alltps
-  hasFoll = Yes nc1  alltps
+  hasPrec = AndList [Yes nc_1 (alpha' a)]
+  hasFoll = AndList [Yes nc1  (alpha' a)]
+  bos = AndList [Yes nc_1 (OrList [BOS])]
+  eos = AndList [Yes nc0  (OrList [EOS])]
 
-  --alternative to noPrec and noFoll
-  bos = Yes nc_1 [BOS]
-  eos = Yes nc0  [EOS]
-
+  alpha' = OrList . map T . alpha
 -----
 
 removeTag :: Automaton Tag -> Tag -> (Rule,String)
-removeTag a t = (R [T t] [templ], templString)
- where   
-  context :: (State,State) -> [[Context]]
-  context (from,to) = [[ Yes nc_1 [TS from], Yes nc1 [TS to] ]]
+removeTag a t = (R target templ, templString)
+ where 
+  target = OrList [T t]
+  froms_tos = withSymbol a t
+  --context = [[ Yes nc_1 [TS from], Yes nc1 [TS to] ] | (from,to) <- froms_tos ]
 
-  templ = NegTempl templLhs (context `concatMap` withSymbol a t)
+  templ = AndList [NegTempl templLhs]
   templLhs = show t ++ "Ctx"
-  templRhs = showOr [ "(-1 " ++ show (TS from) ++ " LINK 2 " ++ show (TS to) ++ ")" 
-                        | (from,to) <- withSymbol a t]
+
+  rhs :: (State,State) -> String
+  rhs (f,t) = printf "(-1 %s LINK 2 %s)" (show $ TS f) (show $ TS t)
+
+  templRhs = show (OrList $ map rhs froms_tos)
 
   templString = printf "TEMPLATE %s = ( %s ) ;" templLhs templRhs
 
 
 -----
 
-removeState :: Automaton Tag -> State -> [Rule]
-removeState a s = [ R [TS s] (c:notEos)
+removeState :: Automaton Tag -> State -> (Rule,String)
+removeState a s = (R target templ, templString)
+ where
+  target = OrList [TS s]
+  froms_tos = withState a s
+
+  templ = AndList [NegTempl templLhs]
+  templLhs = show (TS s) ++ "Ctx"
+
+  rhs :: ([Tag], [Tag]) -> String
+  rhs ([],[]) = "(0 (*))" --something trivial to make it not crash
+  rhs (fs,[]) = printf "(-1 %s)" (showOr fs)
+  rhs ([],ts) = printf "(1 %s)"  (showOr ts)
+  rhs (fs,ts) = printf "(-1 %s LINK 2 %s)" (showOr fs) (showOr ts)
+
+  templRhs = rhs froms_tos
+
+  templString = printf "TEMPLATE %s = ( %s ) ;" templLhs templRhs
+  showOr = show . OrList
+
+{-
+ [ R [TS s] (c:notEos)
                     | c@(No pos cs) <- contexts
                     , not $ null cs
 
@@ -193,21 +189,4 @@ removeState a s = [ R [TS s] (c:notEos)
   contexts     = [ No nc1  (T `map` nub tagsFrom)
                  , No nc_1 (T `map` nub tagsTo) ]
                  
-
-
---------------------------------------------------------------------------------
--- General utilities
-
-pr :: (Show a) => [a] -> String
-pr = unlines . map show
-
-compl :: (Bounded a, Eq a, Enum a) => [a] -> [a]
-compl as = [minBound..maxBound] \\ as
-
---mergeFst [(a,1), (b,2), (c,1), (d,2)] = [([a,c],1),([b,d],2)] 
-mergeFst :: (Ord b, Eq b) => [(a,[b])] -> [([a],[b])]
-mergeFst a_bs = [ (as, bs) 
-                  | as_bs <- groupBy (\(_,b) (_,b') -> b==b') $ sortOn snd a_bs -- :: [[(a,[b])]]
-                  , let as = map fst as_bs
-                  , let bs = snd $ head as_bs 
-                ]
+-}
