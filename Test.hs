@@ -25,7 +25,8 @@ randomAutomaton = generate (arbitrary :: Gen (Automaton Tag))
 --------------------------------------------------------------------------------
 
 instance Arbitrary (Automaton Tag) where
-  arbitrary = liftM3 A arbitrary -- trans :: Gen (State -> State -> [a]))
+  arbitrary = liftM4 A arbitrary -- trans :: Gen (State -> State -> [a]))
+					   (return [minBound..maxBound]) -- alpha :: Gen [State]
                        (elements [1..10]) -- bound :: Gen State)
                        arbitrary -- final :: Gen (State -> Bool))
 
