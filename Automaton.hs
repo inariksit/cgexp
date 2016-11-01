@@ -1,5 +1,7 @@
 module Automaton where
 
+import Data.List(delete)
+
 --------------------------------------------------------------------------------
 
 type State = Int
@@ -10,9 +12,9 @@ newtype Symbols a = S { symb :: [a] }
 
 {- Nicer for random generating automata to have the transition function
    as State->State->[a], instead of State->a->State.
-
 -}
 data Automaton a = A { trans :: State -> State -> Symbols a 
+                     , alpha :: [a]
                      , bound :: State 
                      , final :: State -> Bool }
 
@@ -22,7 +24,6 @@ tr a s s' = symb $ trans a s s'
 
 instance (Show a) => Show (Automaton a) where
   show = showAutomaton
-
 
 showAutomaton :: (Show a) => Automaton a -> String
 showAutomaton a = unlines  
@@ -86,7 +87,7 @@ alltags :: [Tag]
 alltags = [minBound..maxBound]
 
 detAdjNoun :: Automaton Tag
-detAdjNoun = A t 2 fin
+detAdjNoun = A t alph 2 fin
  where 
   t 0 1 = S [Det]
   t 0 2 = S [Adj]
@@ -97,9 +98,10 @@ detAdjNoun = A t 2 fin
   fin 2 = True
   fin _ = False
 
+  alph = delete Verb alltags
 
 detNounVerb :: Automaton Tag
-detNounVerb = A t 3 fin
+detNounVerb = A t alltags 3 fin
  where
   t 0 1 = S [Det]
   t 0 2 = S [Noun]
