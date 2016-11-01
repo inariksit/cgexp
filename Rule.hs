@@ -86,10 +86,11 @@ showTS = intercalate " OR " . map show
 data Rule = R { target  :: [TagPlus]
               , context :: [Context] } deriving (Eq)
 
-rule :: [TagPlus] -> [Context] -> Rule
-rule trg ctx = R trg ctx
+type Name = String
 
-data Context = Yes Position [TagPlus] | No Position [TagPlus] | NegTempl [[Context]] deriving (Eq)
+data Context = Yes Position [TagPlus] | No Position [TagPlus] 
+                | Templ Name [[Context]] | NegTempl Name [[Context]] deriving (Eq)
+
 data Position = C Int | NC Int deriving (Eq)
 
 -- Shorthands, we'll write these a lot
