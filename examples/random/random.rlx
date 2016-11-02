@@ -10,22 +10,25 @@ SET Verb = (verb) ;
 SET S0 = (s0) ;
 SET S1 = (s1) ;
 SET S2 = (s2) ;
+SET S3 = (s3) ;
+SET S4 = (s4) ;
 
-TEMPLATE DetCtx = ( (-1 S0 LINK 2 S0) or (-1 S2 LINK 2 S1) ) ;
-TEMPLATE AdjCtx = ( (-1 S2 LINK 2 S1) ) ;
-TEMPLATE NounCtx = ( (-1 S0 LINK 2 S0) or (-1 S2 LINK 2 S0) or (-1 S2 LINK 2 S1) or (-1 S2 LINK 2 S2) ) ;
-TEMPLATE VerbCtx = ( (-1 S2 LINK 2 S0) ) ;
+TEMPLATE DetCtx = ( (-1 S1 LINK 2 S2) or (-1 S1 LINK 2 S4) or (-1 S4 LINK 2 S2) ) ;
+TEMPLATE AdjCtx = ( (-1 S1 LINK 2 S0) or (-1 S4 LINK 2 S2) ) ;
+TEMPLATE NounCtx = ( (-1 S1 LINK 2 S2) or (-1 S1 LINK 2 S4) ) ;
+TEMPLATE VerbCtx = ( (-1 S1 LINK 2 S2) or (-1 S1 LINK 2 S4) or (-1 S4 LINK 2 S2) ) ;
 
-TEMPLATE S0Ctx = ( (-1 Det or Noun LINK 2 Det or Noun or Verb) ) ;
-TEMPLATE S1Ctx = ( (1 Det or Adj or Noun) ) ;
-TEMPLATE S2Ctx = ( (-1 Noun or Verb or Det or Adj LINK 2 Noun) ) ;
+TEMPLATE S0Ctx = ( (1 Adj) ) ;
+TEMPLATE S1Ctx = ( (-1 Adj or Det or Noun or Verb) ) ;
+TEMPLATE S2Ctx = ( (1 Det or Noun or Verb or Adj) ) ;
+TEMPLATE S3Ctx = ( (0 (*)) ) ;
+TEMPLATE S4Ctx = ( (-1 Det or Adj or Verb LINK 2 Det or Noun or Verb) ) ;
 
 
 BEFORE-SECTIONS
 
-REMOVE S1 or S2 IF (-1 >>>) ;
-REMOVE S2 IF (0 <<<) ;
-REMOVE S1 IF (1 Det or Adj or Noun or Verb) ;
+REMOVE S1 or S2 or S3 or S4 IF (-1 >>>) ;
+REMOVE S0 or S2 or S3 or S4 IF (0 <<<) ;
 
 SECTION
 
@@ -39,4 +42,6 @@ REMOVE Verb IF (NEGATE T:VerbCtx) ;
 REMOVE S0 IF (NEGATE T:S0Ctx) ;
 REMOVE S1 IF (NEGATE T:S1Ctx) ;
 REMOVE S2 IF (NEGATE T:S2Ctx) ;
+REMOVE S3 IF (NEGATE T:S3Ctx) ;
+REMOVE S4 IF (NEGATE T:S4Ctx) ;
 
