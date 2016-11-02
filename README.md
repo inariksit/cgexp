@@ -14,6 +14,18 @@ Assume an automaton like the following:
 -> s0 -----> s1 -----> (s2)
 ```
 
+ [Det]
+0----->1
+
+ [Adj]
+0----->(2)
+
+ [Adj]
+1----->1
+
+ [Adj,Noun]
+1---------->(2)
+
 If our tag set is [det,adj,n], then we have *word cohorts* like the following:
 
 ```
@@ -75,61 +87,83 @@ The only possible outcome on a sequence of 2 word cohorts should be the followin
 
 -----
 
-### Example
+### Example: actual CG code
 
-The following is a short, randomly generated automaton (using `randomAutomaton` in `Test.hs`):
+Now we show (relevant parts of) the CG produced from the automaton in Figure 1.
 
 ```
-$ runghc Rule.hs random
+TEMPLATE DetCtx = (-1 S0 LINK 2 S1) ;
+TEMPLATE AdjCtx = (-1 S1 LINK 2 S1) ;
+TEMPLATE NounCtx = (-1 S1 LINK 2 S2) ;
+```
 
-   [Det]
+For each tag in the automaton's alphabet, we form a CG template. For this particular automaton, it's fairly straightforward: a determiner can be surrounded by `s0` and `s1`, and so on. But if we had another transition with the symbol `det`, we'd add that into our template: `TEMPLATE DetCtx = (-1 S0 LINK 2 S1) OR (-1 someState LINK 2 otherState)`. 
+
+```
+TEMPLATE S0Ctx = (-1 >>> LINK 2 1 Det) ;
+TEMPLATE S1Ctx = (-1 Det OR Adj LINK 2 Adj OR Noun) ;
+TEMPLATE S2Ctx = (-1 Noun) ;
+```
+
+We make templates for the possible contexts of the states. The state `s0` is only allowed as the first cohort -- there are no transitions *to* it, so it cannot have any cohort as a predecessor. Symmetrically, the state `s2` is only allowed as the last cohort, so it cannot have a follower. But the state `s1` can have both predecessors and successors. We can enter `s1` from two states: `s0` or `s1`, and we can exit from it into `s1` or `s2`. 
+
+These templates will be used in the actual rules later on.
+
+### Getting started
+
+Now some rules! The maximally ambiguous words start off as maximally ambiguous (duh), but we can get rid of some states trivially, just based on their placement.
+
+```
+BEFORE-SECTIONS
+
+REMOVE S1 or S2 IF (-1 >>>) ;
+REMOVE S0 or S1 IF (0 <<<) ;
+```
+
+In the first rule, we remove all non-starting states from the first state cohort. In the second rule, we remove all non-final states from the last state cohort. We use VISL CG-3 magic tags to match; but as easily we could've written a contextual test `(NOT -1 Det OR Adj OR Noun).`
+
+```
+SECTION
+
+# Remove tags NOT between certain states
+REMOVE Det IF (NEGATE T:DetCtx) ;
+REMOVE Adj IF (NEGATE T:AdjCtx) ;
+REMOVE Noun IF (NEGATE T:NounCtx) ;
+
+# Remove states between certain tags
+REMOVE S0 IF (NEGATE T:S0Ctx) ;
+REMOVE S1 IF (NEGATE T:S1Ctx) ;
+REMOVE S2 IF (NEGATE T:S2Ctx) ;
+```
+
+
+#### Sidetrack: distributivity
+
+In the templates for states, we don't need to enumerate all pairs: `(-1 Det OR Adj LINK 2 Adj OR Noun)` is equivalent to `(-1 Det LINK 2 Adj) OR (-1 Det LINK 2 Noun) OR (-1 Adj LINK 2 Adj) OR (-1 Adj LINK 2 Noun) ;`. But we do need to do so for the tag contexts: `TEMPLATE DetCtx = (-1 S0 LINK 2 S1) OR (-1 someState LINK 2 otherState)` is not equivalent to `TEMPLATE DetCtx = (-1 S0 OR someState LINK 2 S1 OR otherState)`, because the latter would match also the contexts `(-1 S0) (1 otherState)` and `(-1 someState) (1 S1)`
+
+
+### Matching more than one word
+
+If the regex gives more than one possible output for a sentence of n words, we have to model those in the CG output.
+
+Let's have a little bit more complex automaton:
+
+```
+    Det
 (0)----->1
 
- [Verb]
+  Verb
 1------>(0)
 
  [Noun,Verb]
 1----------->(2)
 
-   [Verb]
+    Verb
 (2)------>(0)
 
    [Det,Adj,Noun]
 (2)-------------->1
 ```
-
-This automaton produces the following CG: 
-
-```
-$ cat -n examples/random/random.rlx
-    ...
-     9	BEFORE-SECTIONS
-    10	
-    11	REMOVE (s1) OR (s2) IF (-1 >>>) ;
-    12	REMOVE (s1) IF (0 <<<) ;
-    13	
-    14	SECTION
-    15	
-    16	# Remove tags NOT between certain states
-    17	REMOVE Det IF (NOT -1 (s0) OR (s2)) ;
-    18	REMOVE Det IF (NOT 1 (s1)) ;
-    19	REMOVE Adj IF (NOT -1 (s2)) ;
-    20	REMOVE Adj IF (NOT 1 (s1)) ;
-    21	REMOVE Noun IF (NOT -1 (s1) OR (s2)) ;
-    22	REMOVE Noun IF (NOT 1 (s2) OR (s1)) ;
-    23	REMOVE Verb IF (NOT -1 (s1) OR (s2)) ;
-    24	REMOVE Verb IF (NOT 1 (s0) OR (s2)) ;
-    25	
-    26	# Remove states between certain tags
-    27	REMOVE (s0) IF (NOT 1 Det) (NOT 0 <<<) ;
-    28	REMOVE (s0) IF (NOT -1 Verb) ;
-    29	REMOVE (s1) IF (NOT 1 Verb OR Noun) ;
-    30	REMOVE (s1) IF (NOT -1 Det OR Adj OR Noun) ;
-    31	REMOVE (s2) IF (NOT 1 Verb OR Det OR Adj OR Noun) (NOT 0 <<<) ;
-    32	REMOVE (s2) IF (NOT -1 Noun OR Verb) ;
-```
-
-Then we apply it to a symbolic sentence, where every word cohort has initially all tags, and every state cohort has all states.
 
 From the automaton we see that a sequence of 2 transitions can take two paths:
 
@@ -159,32 +193,4 @@ $ ./runExample.sh random 2
 "<s>"
 	"s0" s0
 	"s2" s2
-```
-
-Running with a trace, we can see which rules have removed which readings:
-
-```
-$ ./runExample.sh random 2 -t
-"<s>"
-	"s0" s0
-;	"s1" s1 REMOVE:11
-;	"s2" s2 REMOVE:11
-"<w>"
-	"det" det
-;	"adj" adj REMOVE:19
-;	"noun" noun REMOVE:21
-;	"verb" verb REMOVE:23
-"<s>"
-	"s1" s1
-;	"s0" s0 REMOVE:27
-;	"s2" s2 REMOVE:32
-"<w>"
-	"verb" verb
-	"noun" noun
-;	"det" det REMOVE:18
-;	"adj" adj REMOVE:20
-"<s>"
-	"s0" s0
-	"s2" s2
-;	"s1" s1 REMOVE:12
 ```
