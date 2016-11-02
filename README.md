@@ -14,18 +14,6 @@ Assume an automaton like the following:
 -> s0 -----> s1 -----> (s2)
 ```
 
- [Det]
-0----->1
-
- [Adj]
-0----->(2)
-
- [Adj]
-1----->1
-
- [Adj,Noun]
-1---------->(2)
-
 If our tag set is [det,adj,n], then we have *word cohorts* like the following:
 
 ```
@@ -87,7 +75,7 @@ The only possible outcome on a sequence of 2 word cohorts should be the followin
 
 -----
 
-### Example: actual CG code
+### Producing CG rules
 
 Now we show (relevant parts of) the CG produced from the automaton in Figure 1.
 
@@ -97,7 +85,7 @@ TEMPLATE AdjCtx = (-1 S1 LINK 2 S1) ;
 TEMPLATE NounCtx = (-1 S1 LINK 2 S2) ;
 ```
 
-For each tag in the automaton's alphabet, we form a CG template. For this particular automaton, it's fairly straightforward: a determiner can be surrounded by `s0` and `s1`, and so on. But if we had another transition with the symbol `det`, we'd add that into our template: `TEMPLATE DetCtx = (-1 S0 LINK 2 S1) OR (-1 someState LINK 2 otherState)`. 
+For each tag in the automaton's alphabet, we create a CG template. For this particular automaton, it's very straightforward: a determiner can be surrounded by `(s0-->s1)`, adjective by `(s1-->s1)`, and a noun by `(s1-->s2)`. If we had a larger automaton, with another transition on the symbol `det`, we would add that into our template like this: `TEMPLATE DetCtx = (-1 S0 LINK 2 S1) OR (-1 someState LINK 2 otherState)`. 
 
 ```
 TEMPLATE S0Ctx = (-1 >>> LINK 2 1 Det) ;
@@ -105,13 +93,13 @@ TEMPLATE S1Ctx = (-1 Det OR Adj LINK 2 Adj OR Noun) ;
 TEMPLATE S2Ctx = (-1 Noun) ;
 ```
 
-We make templates for the possible contexts of the states. The state `s0` is only allowed as the first cohort -- there are no transitions *to* it, so it cannot have any cohort as a predecessor. Symmetrically, the state `s2` is only allowed as the last cohort, so it cannot have a follower. But the state `s1` can have both predecessors and successors. We can enter `s1` from two states: `s0` or `s1`, and we can exit from it into `s1` or `s2`. 
+Next, we create templates for the possible contexts of the states. The state `s0` is only allowed as the first cohort -- there are no transitions *to* it, so it cannot have any cohort as a predecessor. Symmetrically, the state `s2` is only allowed as the last cohort, so it cannot have a follower. But the state `s1` can have both predecessors and successors. We can enter `s1` from two states: `s0` or `s1`, and we can exit from it into `s1` or `s2`. 
 
 These templates will be used in the actual rules later on.
 
 ### Getting started
 
-Now some rules! The maximally ambiguous words start off as maximally ambiguous (duh), but we can get rid of some states trivially, just based on their placement.
+Now some rules! The maximally ambiguous words start off as maximally ambiguous (duh), but we can get rid of some states trivially, just based on their place in the sentence.
 
 ```
 BEFORE-SECTIONS
@@ -120,7 +108,10 @@ REMOVE S1 or S2 IF (-1 >>>) ;
 REMOVE S0 or S1 IF (0 <<<) ;
 ```
 
-In the first rule, we remove all non-starting states from the first state cohort. In the second rule, we remove all non-final states from the last state cohort. We use VISL CG-3 magic tags to match; but as easily we could've written a contextual test `(NOT -1 Det OR Adj OR Noun).`
+In the first rule, we remove all non-starting states from the first state cohort. In the second rule, we remove all non-final states from the last state cohort. We use VISL CG-3 magic tags for BOS/EOS to match them; but as easily we could've written a contextual test `(NOT -1 Det OR Adj OR Noun).` 
+
+After these rules have applied, we move on to the core of the grammar.
+
 
 ```
 SECTION
@@ -136,6 +127,9 @@ REMOVE S1 IF (NEGATE T:S1Ctx) ;
 REMOVE S2 IF (NEGATE T:S2Ctx) ;
 ```
 
+There is one rule for each state and each symbol, and all of them have the same form: *remove* a reading if its only allowed context does *not* hold. We are using the `NEGATE` keyword from VISL CG-3, which negates the whole chain of conditions. `NEGATE T:DetCtx` means that if the context does *not* match `DetCtx`: either the previous state has no `s0` reading, or the following state has no `s1` reading, then we should remove the `det` reading.
+
+If a template has multiple contexts, separated by ORs, `NEGATE` still treats it correctly. The negation of a template such as `(-1 S0 LINK 2 S1) OR (-1 someState LINK 2 otherState)` means "anything that is not `s0--s1`, nor `someState--otherState`".
 
 #### Sidetrack: distributivity
 
