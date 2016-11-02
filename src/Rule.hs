@@ -151,19 +151,22 @@ removeTag a t = (R target templ, templString)
 removeState :: Automaton Tag -> State -> (Rule,String)
 removeState a s = (R target templ, templString)
  where
+
   target = OrList [TS s]
   templ = AndList [NegTempl templLhs]
 
-  froms_tos = withState a s
+  froms_tos = mapTuple (map T) (withState a s)
 
-  rhs :: ([Tag], [Tag]) -> String
+  rhs :: ([TagPlus], [TagPlus]) -> String
   rhs ([],[]) = "(0 (*))" --something trivial to make it not crash
   rhs (fs,[]) = printf "(-1 %s)" (showOr fs)
-  rhs ([],ts) = printf "(1 %s)"  (showOr ts)
-  rhs (fs,ts) = printf "(-1 %s LINK 2 %s)" (showOr fs) (showOr ts)
+  --rhs ([],ts) = printf "(1 %s)"  (showOr ts)
+  rhs (fs,ts) | s==0      = printf "(-1 %s LINK 2 %s)" (showOr (BOS:fs)) (showOr ts)
+              | otherwise = printf "(-1 %s LINK 2 %s)" (showOr fs) (showOr ts)
 
   templLhs = show (TS s) ++ "Ctx"
   templRhs = rhs froms_tos
   templString = printf "TEMPLATE %s = ( %s ) ;" templLhs templRhs
 
   showOr = show . OrList
+  mapTuple f (a,b) = (f a, f b)
