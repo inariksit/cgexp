@@ -4,12 +4,9 @@ module Arbitrary
     ( randomAutomaton 
     ) where
 
-import Automaton
+import Automaton 
 import Test.QuickCheck
-
-import Control.Monad
-import Debug.Trace
-
+import Control.Monad ( liftM4 )
 
 
 
@@ -20,7 +17,7 @@ randomAutomaton = generate (arbitrary :: Gen (Automaton Tag))
 
 instance Arbitrary (Automaton Tag) where
   arbitrary = liftM4 A arbitrary -- trans :: Gen (State -> State -> [a]))
-					   (return [minBound..maxBound]) -- alpha :: Gen [State]
+                       (return [minBound..maxBound]) -- alpha :: Gen [State]
                        (elements [1..10]) -- bound :: Gen State)
                        arbitrary -- final :: Gen (State -> Bool))
 
