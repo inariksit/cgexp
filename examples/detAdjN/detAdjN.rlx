@@ -1,24 +1,30 @@
+DELIMITERS = "<$.>" "<$?>" "<$!>" "<$:>" "<$\;>" ;
 SET >>> = (>>>) ;
 SET <<< = (<<<) ;
+
 SET Det = (det) ;
 SET Adj = (adj) ;
 SET Noun = (noun) ;
-SET Verb = (verb) ;
+
 SET S0 = (s0) ;
 SET S1 = (s1) ;
 SET S2 = (s2) ;
-SET Any = Det OR Adj OR Noun OR Verb ;
 
 TEMPLATE DetCtx = ( (-1 S0 LINK 2 S1) ) ;
-TEMPLATE AdjCtx = ( (-1 S0 LINK 2 S2) OR (-1 S1 LINK 2 S1) OR (-1 S1 LINK 2 S2) ) ;
+TEMPLATE AdjCtx = ( (-1 S0 LINK 2 S2) or (-1 S1 LINK 2 S1) or (-1 S1 LINK 2 S2) ) ;
 TEMPLATE NounCtx = ( (-1 S1 LINK 2 S2) ) ;
+
+TEMPLATE S0Ctx = ( (-1 Det or Adj) ) ;
+TEMPLATE S1Ctx = ( (-1 Adj or Noun LINK 2 Det or Adj) ) ;
+TEMPLATE S2Ctx = ( (1 Adj or Noun) ) ;
+
 
 BEFORE-SECTIONS
 
-REMOVE S1 OR S2 IF (-1 >>>) ;
-REMOVE S0 OR S1 IF (0 <<<) ;
-REMOVE S0 IF (-1 Det OR Adj OR Noun OR Verb) ;
-REMOVE S2 IF (1 Det OR Adj OR Noun OR Verb) ;
+REMOVE S1 or S2 IF (-1 >>>) ;
+REMOVE S0 or S1 IF (0 <<<) ;
+REMOVE S0 IF (-1 Det or Adj or Noun) ;
+REMOVE S2 IF (1 Det or Adj or Noun) ;
 
 SECTION
 
@@ -27,9 +33,8 @@ REMOVE Det IF (NEGATE T:DetCtx) ;
 REMOVE Adj IF (NEGATE T:AdjCtx) ;
 REMOVE Noun IF (NEGATE T:NounCtx) ;
 
-
 # Remove states between certain tags
-REMOVE S0 IF (NOT 1 Det OR Adj) ;
-REMOVE S1 IF (NOT 1 Adj OR Noun) ;
-REMOVE S1 IF (NOT -1 Det OR Adj) ;
-REMOVE S2 IF (NOT -1 Adj OR Noun) ;
+REMOVE S0 IF (NEGATE T:S0Ctx) ;
+REMOVE S1 IF (NEGATE T:S1Ctx) ;
+REMOVE S2 IF (NEGATE T:S2Ctx) ;
+

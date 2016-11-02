@@ -1,9 +1,9 @@
 module Main where
 
 import Automaton 
-import Rule (toRules)
-import Test (randomAutomaton)
-import Cohort
+import Rule ( toRules )
+import Arbitrary ( randomAutomaton )
+import Cohort ( printCohorts )
 
 import System.Environment ( getArgs )
 
