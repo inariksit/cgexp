@@ -143,47 +143,35 @@ If the regex gives more than one possible output for a sentence of n words, we h
 Let's have a little bit more complex automaton:
 
 ```
-    Det
-(0)----->1
-
-  Verb
-1------>(0)
-
- [Noun,Verb]
-1----------->(2)
-
-    Verb
-(2)------>(0)
-
-   [Det,Adj,Noun]
-(2)-------------->1
+    a        c
+(0)----> 1 -----> (2)
+   ^____/
+     b
 ```
 
 From the automaton we see that a sequence of 2 transitions can take two paths:
 
-```             Noun
-        Det     Verb       
-a.  (0) ----> 1 -----> (2) 
+```
+         a      b      
+i.   (0)---> 1 --->(0) 
 
-        Det     Verb
-b.  (0) ----> 1 -----> (0)
+         a      c      
+ii.  (0)---> 1 --->(2) 
 
 ```
 
 Now when we run the example on a sequence with 3 state cohorts and 2 word cohorts, this is the result:
 
 ```
-$ ./runExample.sh random 2 
-
 "<s>"
 	"s0" s0
 "<w>"
-	"det" det
+	"a" 
 "<s>"
 	"s1" s1
 "<w>"
-	"verb" verb
-	"noun" noun
+	"b"
+	"c"
 "<s>"
 	"s0" s0
 	"s2" s2
