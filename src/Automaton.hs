@@ -63,7 +63,7 @@ withSymbol a s = [ (from,to) | from <- [0..bound a]
 
 --which symbols lead to the state, and which symbols go out from it.
 withState :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> ([a],[a])
-withState a s = tupleMap (nub . concat) $ unzip [ (tr a s t, tr a t s) | t <- [0..bound a] ]
+withState a s = tupleMap (nub . concat) $ unzip [ (tr a t s, tr a s t) | t <- [0..bound a] ]
  where tupleMap f (a,b) = (f a , f b)
 
 {---
@@ -94,9 +94,8 @@ detAdjNoun :: Automaton Tag
 detAdjNoun = A t alph 2 fin
  where 
   t 0 1 = S [Det]
-  t 0 2 = S [Adj]
   t 1 1 = S [Adj]
-  t 1 2 = S [Adj,Noun]
+  t 1 2 = S [Noun]
   t _ _ = S []
 
   fin 2 = True

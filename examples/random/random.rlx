@@ -12,23 +12,32 @@ SET S1 = (s1) ;
 SET S2 = (s2) ;
 SET S3 = (s3) ;
 SET S4 = (s4) ;
+SET S5 = (s5) ;
+SET S6 = (s6) ;
+SET S7 = (s7) ;
+SET S8 = (s8) ;
 
-TEMPLATE DetCtx = ( (-1 S1 LINK 2 S2) or (-1 S1 LINK 2 S4) or (-1 S4 LINK 2 S2) ) ;
-TEMPLATE AdjCtx = ( (-1 S1 LINK 2 S0) or (-1 S4 LINK 2 S2) ) ;
-TEMPLATE NounCtx = ( (-1 S1 LINK 2 S2) or (-1 S1 LINK 2 S4) ) ;
-TEMPLATE VerbCtx = ( (-1 S1 LINK 2 S2) or (-1 S1 LINK 2 S4) or (-1 S4 LINK 2 S2) ) ;
+TEMPLATE DetCtx = ( (-1 S0 LINK 2 S0) or (-1 S0 LINK 2 S1) or (-1 S0 LINK 2 S8) or (-1 S2 LINK 2 S2) or (-1 S2 LINK 2 S5) or (-1 S3 LINK 2 S1) ) ;
+TEMPLATE AdjCtx = ( (-1 S0 LINK 2 S1) or (-1 S0 LINK 2 S4) or (-1 S1 LINK 2 S5) or (-1 S2 LINK 2 S4) or (-1 S2 LINK 2 S5) or (-1 S2 LINK 2 S8) or (-1 S3 LINK 2 S2) or (-1 S4 LINK 2 S6) or (-1 S4 LINK 2 S7) or (-1 S5 LINK 2 S1) ) ;
+TEMPLATE NounCtx = ( (-1 S0 LINK 2 S0) or (-1 S0 LINK 2 S4) or (-1 S0 LINK 2 S8) or (-1 S1 LINK 2 S5) or (-1 S2 LINK 2 S3) or (-1 S2 LINK 2 S8) or (-1 S3 LINK 2 S1) or (-1 S3 LINK 2 S2) or (-1 S5 LINK 2 S1) or (-1 S8 LINK 2 S8) ) ;
+TEMPLATE VerbCtx = ( (-1 S0 LINK 2 S0) or (-1 S1 LINK 2 S2) or (-1 S1 LINK 2 S4) or (-1 S1 LINK 2 S5) or (-1 S2 LINK 2 S3) or (-1 S3 LINK 2 S1) or (-1 S4 LINK 2 S7) or (-1 S5 LINK 2 S1) or (-1 S8 LINK 2 S0) or (-1 S8 LINK 2 S8) ) ;
 
-TEMPLATE S0Ctx = ( (1 Adj) ) ;
-TEMPLATE S1Ctx = ( (-1 Adj or Det or Noun or Verb) ) ;
-TEMPLATE S2Ctx = ( (1 Det or Noun or Verb or Adj) ) ;
-TEMPLATE S3Ctx = ( (0 (*)) ) ;
-TEMPLATE S4Ctx = ( (-1 Det or Adj or Verb LINK 2 Det or Noun or Verb) ) ;
+TEMPLATE S0Ctx = ( (-1 >>> or Det or Noun or Verb LINK 2 Det or Noun or Verb or Adj) ) ;
+TEMPLATE S1Ctx = ( (-1 Det or Adj or Noun or Verb LINK 2 Verb or Adj or Noun) ) ;
+TEMPLATE S2Ctx = ( (-1 Verb or Det or Adj or Noun LINK 2 Det or Noun or Verb or Adj) ) ;
+TEMPLATE S3Ctx = ( (-1 Noun or Verb LINK 2 Det or Noun or Verb or Adj) ) ;
+TEMPLATE S4Ctx = ( (-1 Adj or Noun or Verb LINK 2 Adj or Verb) ) ;
+TEMPLATE S5Ctx = ( (-1 Adj or Noun or Verb or Det LINK 2 Adj or Noun or Verb) ) ;
+TEMPLATE S6Ctx = ( (-1 Adj) ) ;
+TEMPLATE S7Ctx = ( (-1 Adj or Verb) ) ;
+TEMPLATE S8Ctx = ( (-1 Det or Noun or Adj or Verb LINK 2 Verb or Noun) ) ;
 
 
 BEFORE-SECTIONS
 
-REMOVE S1 or S2 or S3 or S4 IF (-1 >>>) ;
-REMOVE S0 or S2 or S3 or S4 IF (0 <<<) ;
+REMOVE S1 or S2 or S3 or S4 or S5 or S6 or S7 or S8 IF (-1 >>>) ;
+REMOVE S0 or S1 or S3 or S4 or S6 IF (0 <<<) ;
+REMOVE S7 IF (1 Det or Adj or Noun or Verb) ;
 
 SECTION
 
@@ -44,4 +53,8 @@ REMOVE S1 IF (NEGATE T:S1Ctx) ;
 REMOVE S2 IF (NEGATE T:S2Ctx) ;
 REMOVE S3 IF (NEGATE T:S3Ctx) ;
 REMOVE S4 IF (NEGATE T:S4Ctx) ;
+REMOVE S5 IF (NEGATE T:S5Ctx) ;
+REMOVE S6 IF (NEGATE T:S6Ctx) ;
+REMOVE S7 IF (NEGATE T:S7Ctx) ;
+REMOVE S8 IF (NEGATE T:S8Ctx) ;
 

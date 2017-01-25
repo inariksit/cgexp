@@ -160,7 +160,8 @@ removeState a s = (R target templ, templString)
   rhs :: ([TagPlus], [TagPlus]) -> String
   rhs ([],[]) = "(0 (*))" --something trivial to make it not crash
   rhs (fs,[]) = printf "(-1 %s)" (showOr fs)
-  --rhs ([],ts) = printf "(1 %s)"  (showOr ts)
+  rhs ([],ts) | s==0      = printf "(-1 %s LINK 2 %s)" (showOr [BOS]) (showOr ts)
+              | otherwise = printf "(1 %s)"  (showOr ts)
   rhs (fs,ts) | s==0      = printf "(-1 %s LINK 2 %s)" (showOr (BOS:fs)) (showOr ts)
               | otherwise = printf "(-1 %s LINK 2 %s)" (showOr fs) (showOr ts)
 

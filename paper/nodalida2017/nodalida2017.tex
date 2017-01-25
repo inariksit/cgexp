@@ -1,0 +1,107 @@
+%
+% File nodalida2017.tex
+%
+% Contact beata.megyesi@lingfil.uu.se
+%
+% Based on the instruction file for Nodalida 2015 and EACL 2014
+% which in turn was based on the instruction files for previous 
+% ACL and EACL conferences.
+
+\documentclass[11pt]{article}
+\usepackage{nodalida2017}
+%\usepackage{times}
+\usepackage{mathptmx}
+%\usepackage{txfonts}
+\usepackage{url}
+\usepackage{latexsym}
+\special{papersize=210mm,297mm} % to avoid having to use "-t a4" with dvips 
+%\setlength\titlebox{6.5cm}  % You can expand the title box if you really have to
+
+\title{Exploring the Expressivity of Constraint Grammar}
+
+% \author{First Author \\
+%   Affiliation / Address line 1 \\
+%   Affiliation / Address line 2 \\
+%   Affiliation / Address line 3 \\
+%   {\tt email@domain} \\\And
+%   Second Author \\
+%   Affiliation / Address line 1 \\
+%   Affiliation / Address line 2 \\
+%   Affiliation / Address line 3 \\
+%   {\tt email@domain} \\}
+
+\date{}
+
+\begin{document}
+\maketitle
+
+% \begin{abstract}
+%   This document contains the instructions for preparing a camera-ready
+%   manuscript for the proceedings of Nodalida-2017. The document itself
+%   conforms to its own specifications, and is therefore an example of
+%   what your manuscript should look like. These instructions should be
+%   used for both papers submitted for review and for final versions of
+%   accepted papers.  Authors are asked to conform to all the directions
+%   reported in this document.
+% \end{abstract}
+
+
+\section{Introduction}
+
+Traditionally, CG is seen as a practical and language-oriented approach to NLP; it is a tool rather than a formalism, framework or anything of the sort. Since the beginning of CG \cite{karlsson1995constraint}, its authors do not envision CG being capable of generation, only for analysis. Despite its decidedly linguistic roots, we argue that CG is interesting to look at also from a computational perspective. For the theoretically inclined, making a description of a formalism more precise is an end of its own. However, even a practically oriented reader should appreciate the applications: better understanding of a formalism may lead to novel uses and implementation techniques. In this paper, we address the question of the expressivity of CG. We do not reach a definite answer, but hope to create new ways to reason about reductionistic grammar formalisms.
+
+\section{Background and previous work}
+
+
+The standard measure of formal languages is the Chomsky hierarchy~\cite{chomsky1956hierarchy}, with its four
+classes of grammars and languages, in order from most expressive to least expressive:
+recursively enumerable (Type 0), context-sensitive (Type 1), context-free (Type 2), and
+regular (Type 3).
+The notion of expressive power, ``which constructs can we express in the language'', is coupled with parsing complexity, ``how much time and memory do we need to parse sentences in the language''; more expressive power corresponds to greater parsing complexity.
+
+Previous work covers the expressivity of single rules, such as \texttt{IF (NOT 1* Verb OR Noun)}: just seeing this contextual test hints that we can express a subset of regular languages that contains at least disjunction, complement and Kleene star. 
+Tapanainen~\shortcite{tapanainen1999phd} gives a precise definition of the expressivity of a single rule for 4 different constraint formalisms. In addition, parsing complexity can be easily defined for a given variant and implementation of CG; see for instance Nemeskey~et~al.~\shortcite{nemeskey14}.
+
+However, the expressivity of the whole grammar is harder to define. 
+A given grammar in CG does not describe a language, but a \emph{relation} between an input language and an output language. In the following section, we introduce our approach to emulating generation, and in the rest of the paper, we present some preliminary results.
+
+\section{Expressivity of a grammar}
+
+We view a constraint grammar as a formal language $\mathcal{L}$, generated over an 
+alphabet $\Sigma$. We generate the strings in our language by passing 
+\emph{maximally ambiguous strings} of every length to the grammar. 
+With maximally ambiguous, we mean  those strings where each position contains the 
+entire alphabet, so $\langle \Sigma \rangle_n$. 
+A constraint grammar is said to accept a string $w$ of length $n$ if, 
+when we pass $\langle \Sigma \rangle_n$ as an input to the CG,
+$w$ is one of the possible interpretations of its output.
+
+\section{Is CG regular?}
+
+Nice pictures, speculation of the shape of CG. Is CG like PCRE, or does it neatly fall into some categories? Nobody knows!
+
+\section{CG is beyond regular}
+
+We can express $a^nb^n$, here's the grammar.
+
+\section{CG is beyond context-free}
+
+We can express $a^nb^nc^n$, here's the grammar.  
+
+\section{Discussion}
+
+Practical benefits: derive CGs from perhaps more easily defined formalisms?
+
+CG can act as a preprocessing step for some more expensive parser. Then the rules can be non-human-oriented, and contain extra symbols. The rules would be derived from the grammar itself, with the sole purpose of making the parsing \emph{faster}, not more accurate.
+
+% \section*{Acknowledgments}
+
+% Do not number the acknowledgment section. Do not include this section
+% when submitting your paper for review.
+
+
+\bibliographystyle{acl}
+\bibliography{cg}
+
+
+\end{document}

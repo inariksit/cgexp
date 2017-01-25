@@ -239,16 +239,16 @@ grammar = [ S  :-> [NT NP, NT VP]
           , VP :-> [NT v,  NT NP]
           , VP :-> [NT v]
           , dt :-> [T "the"]
-          , n  :-> [T "cat"]
+          , n  :-> [T "fish"]
           , n  :-> [T "marks"]
           , n  :-> [T "leaves"]
           , n  :-> [T "essays"]
-          , v  :-> [T "cat"]
+          , v  :-> [T "fish"]
           , v  :-> [T "marks"]
           , v  :-> [T "leaves"]
           ]
 
-sentence = words "the cat marks leaves"
+sentence = words "the fish marks leaves"
 
 
 wordIsLegit :: Symbol -> Symbol -> Grammar -> Bool

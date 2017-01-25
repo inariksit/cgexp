@@ -11,20 +11,20 @@ SET S1 = (s1) ;
 SET S2 = (s2) ;
 
 TEMPLATE DetCtx = ( (-1 S0 LINK 2 S1) ) ;
-TEMPLATE AdjCtx = ( (-1 S0 LINK 2 S2) or (-1 S1 LINK 2 S1) or (-1 S1 LINK 2 S2) ) ;
+TEMPLATE AdjCtx = ( (-1 S1 LINK 2 S1) ) ;
 TEMPLATE NounCtx = ( (-1 S1 LINK 2 S2) ) ;
 
-TEMPLATE S0Ctx = ( (-1 Det or Adj) ) ;
-TEMPLATE S1Ctx = ( (-1 Adj or Noun LINK 2 Det or Adj) ) ;
-TEMPLATE S2Ctx = ( (1 Adj or Noun) ) ;
+TEMPLATE S0Ctx = ( (-1 >>> LINK 2 Det) ) ;
+TEMPLATE S1Ctx = ( (-1 Det OR Adj LINK 2 Adj OR Noun) ) ;
+TEMPLATE S2Ctx = ( (-1 Noun) ) ;
 
 
 BEFORE-SECTIONS
 
-REMOVE S1 or S2 IF (-1 >>>) ;
-REMOVE S0 or S1 IF (0 <<<) ;
-REMOVE S0 IF (-1 Det or Adj or Noun) ;
-REMOVE S2 IF (1 Det or Adj or Noun) ;
+REMOVE S1 OR S2 IF (-1 >>>) ;
+REMOVE S0 OR S1 IF (0 <<<) ;
+REMOVE S0 IF (-1 Det OR Adj OR Noun) ;
+REMOVE S2 IF (1 Det OR Adj OR Noun) ;
 
 SECTION
 
