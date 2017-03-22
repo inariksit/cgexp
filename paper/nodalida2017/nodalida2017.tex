@@ -12,6 +12,7 @@
 %\usepackage{times}
 \usepackage{mathptmx}
 %\usepackage{txfonts}
+\usepackage{graphicx}
 \usepackage{url}
 \usepackage{latexsym}
 \special{papersize=210mm,297mm} % to avoid having to use "-t a4" with dvips 
@@ -31,6 +32,8 @@
 %   {\tt email@domain} \\}
 
 \date{}
+
+\def\t#1{\texttt{#1}}
 
 \begin{document}
 \maketitle
@@ -60,31 +63,116 @@ regular (Type 3).
 The notion of expressive power, ``which constructs can we express in the language'', is coupled with parsing complexity, ``how much time and memory do we need to parse sentences in the language''; more expressive power corresponds to greater parsing complexity.
 
 Previous work covers the expressivity of single rules, such as \texttt{IF (NOT 1* Verb OR Noun)}: just seeing this contextual test hints that we can express a subset of regular languages that contains at least disjunction, complement and Kleene star. 
-Tapanainen~\shortcite{tapanainen1999phd} gives a precise definition of the expressivity of a single rule for 4 different constraint formalisms. In addition, parsing complexity can be easily defined for a given variant and implementation of CG; see for instance Nemeskey~et~al.~\shortcite{nemeskey14}.
+\newcite{tapanainen1999phd} gives a precise definition of the expressivity of a single rule for 4 different constraint formalisms. In addition, parsing complexity can be easily defined for a given variant and implementation of CG; see for instance \newcite{nemeskey14}.
 
 However, the expressivity of the whole grammar is harder to define. 
-A given grammar in CG does not describe a language, but a \emph{relation} between an input language and an output language. In the following section, we introduce our approach to emulating generation, and in the rest of the paper, we present some preliminary results.
+A given grammar in CG does not describe a language, but a \emph{relation} between an input language and an output language. 
+In the following section, we introduce our approach to emulating generation, and in the rest of the paper, we present some preliminary results.
 
 \section{Expressivity of a grammar}
 
 We view a constraint grammar as a formal language $\mathcal{L}$, generated over an 
 alphabet $\Sigma$. We generate the strings in our language by passing 
 \emph{maximally ambiguous strings} of every length to the grammar. 
-With maximally ambiguous, we mean  those strings where each position contains the 
-entire alphabet, so $\langle \Sigma \rangle_n$. 
+With maximally ambiguous, we mean those strings where each cohort contains the 
+entire alphabet, written as $\langle \Sigma \rangle_n$ in the remainder of the paper. 
 A constraint grammar is said to accept a string $w$ of length $n$ if, 
 when we pass $\langle \Sigma \rangle_n$ as an input to the CG,
 $w$ is one of the possible interpretations of its output.
 
+For example, consider the language $a*$ over $\Sigma = \{a,b\}$,
+shown in Figure~\ref{fig:astar}.
+%The initial sentence consists of cohorts with two readings, $a$ and $b$, and the disambiguated sentence has only cohorts with a single reading, $a$. 
+The grammar that accepts this language is simply \texttt{SELECT (a)}.
+
+\def\wwf{~~~~\t{"<w>"}}
+\def\alm{\t{"a"}~~~~~~}
+\def\blm{\t{"b"}~~~~~~}
+
+\begin{figure}[h]
+\centering
+
+%\begin{tabular}{cl @{\hspace{2cm}} rl}
+\begin{tabular}{cl |  rl}
+\multicolumn{2}{c|}{\textbf{Input}} & \multicolumn{2}{c}{\textbf{Output}} \\ \hline
+
+\wwf  &        &  \wwf &        \\
+         & \alm  &          & \alm  \\
+         & \blm  &          &        \\
+\wwf  &        &  \wwf &        \\
+         & \alm  &          & \alm  \\
+         & \blm  &          &        \\
+\wwf  &        &  \wwf &        \\
+         & \alm  &          & \alm  \\
+         & \blm  &          &        \\
+\end{tabular}
+
+\caption{Language $a*$ for input $\langle \Sigma \rangle_3$.}
+\label{fig:astar}
+\end{figure}
+
+
+
+\begin{figure}[t]
+  \centering
+    \includegraphics[width=0.4\textwidth]{venn-2.png}
+  \caption{A (hypothetical) formalism that does not correspond to any single category in Chomsky hierarchy, but covers some languages in regular, some in context-free and some in context-sensitive class.}
+ \label{fig:nocorr}
+\end{figure}
+
+
+
+
+
+We start exploring the expressivity without any previous assumptions. 
+For all we know, CG may be in no particular category at all, as shown 
+in Figure~\ref{fig:nocorr}. Rather than enumerating individual grammars 
+for a given class, we need a method that can transform all languages 
+in that class into CG, or prove that there is no such method.
+
 \section{Is CG regular?}
 
-Nice pictures, speculation of the shape of CG. Is CG like PCRE, or does it neatly fall into some categories? Nobody knows!
+Regular languages can be expressed in the form of finite automata.
+We model finite automata in CG as follows. 
 
-\section{CG is beyond regular}
+The transitions are modelled as $\langle \Sigma \rangle$, but in between each
+cohort, we insert a maximally ambiguous \emph{state cohort}, $\langle S \rangle$.
+An initial sentence may look like follows:
+
+\begin{tabular}{cl  rl  rl}
+
+\t{"<s>"}  &               &  \t{"<w>"}  &               & \t{"<s>"} &             & \\
+           & \t{"s0" s0}   &             & \t{"det" det} &           &\t{"s0" s0}  & \\
+           & \blm  &       &             &               &           &             & \\
+
+\end{tabular}
+
+\begin{itemize}
+\item[\t{"<s>"}] ~\\
+				 \\
+		      	 \t{"s1" s1 } \\
+			     \t{"s2" s2 }
+\item [\t{"<w>"}] ~\\
+				\t{"det" det} \\
+				\t{"adj" adj} \\
+				\t{"n"   n}
+
+\item[\t{"<s>"}] ~\\
+				 \t{"s0" s0} \\
+		      	 \t{"s1" s1 } \\
+			     \t{"s2" s2 }
+\end{itemize}
+
+\section{Beyond regular}
+
+We have not found a general method for other classes. 
+However, we can write some example grammars that go beyond regular and context-free.
+
+\subsection{CG is beyond regular}
 
 We can express $a^nb^n$, here's the grammar.
 
-\section{CG is beyond context-free}
+\subsection{CG is beyond context-free}
 
 We can express $a^nb^nc^n$, here's the grammar.  
 
@@ -98,6 +186,14 @@ CG can act as a preprocessing step for some more expensive parser. Then the rule
 
 % Do not number the acknowledgment section. Do not include this section
 % when submitting your paper for review.
+
+
+% \begin{figure}
+%   \centering
+%     \includegraphics[width=0.4\textwidth]{venn-1.png}
+%   \caption{A formalism that covers all languages that are context-sensitive or less expressive.}
+% \end{figure}
+
 
 
 \bibliographystyle{acl}
