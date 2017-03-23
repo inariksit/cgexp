@@ -1,12 +1,3 @@
-%
-% File nodalida2017.tex
-%
-% Contact beata.megyesi@lingfil.uu.se
-%
-% Based on the instruction file for Nodalida 2015 and EACL 2014
-% which in turn was based on the instruction files for previous 
-% ACL and EACL conferences.
-
 \documentclass[11pt]{article}
 \usepackage{nodalida2017}
 %\usepackage{times}
@@ -16,46 +7,35 @@
 \usepackage{graphicx}
 \usepackage{url}
 \usepackage{latexsym}
-\special{papersize=210mm,297mm} % to avoid having to use "-t a4" with dvips 
-%\setlength\titlebox{6.5cm}  % You can expand the title box if you really have to
+\special{papersize=210mm,297mm} 
 
 \title{Exploring the Expressivity of Constraint Grammar}
 
 % \author{First Author \\
 %   Affiliation / Address line 1 \\
-%   Affiliation / Address line 2 \\
-%   Affiliation / Address line 3 \\
 %   {\tt email@domain} \\\And
 %   Second Author \\
 %   Affiliation / Address line 1 \\
-%   Affiliation / Address line 2 \\
-%   Affiliation / Address line 3 \\
-%   {\tt email@domain} \\}
+%   {\tt email@domain} }
 
-\date{}
+\date{\today}
 
 \def\t#1{\texttt{#1}}
-
 \def\maxAmb#1{$\langle \Sigma \rangle_#1$}
-
 \def\maxAmbFSA#1{$\langle \Sigma,S \rangle_#1$}
 
 \begin{document}
 \maketitle
 
-% \begin{abstract}
-%   This document contains the instructions for preparing a camera-ready
-%   manuscript for the proceedings of Nodalida-2017. The document itself
-%   conforms to its own specifications, and is therefore an example of
-%   what your manuscript should look like. These instructions should be
-%   used for both papers submitted for review and for final versions of
-%   accepted papers.  Authors are asked to conform to all the directions
-%   reported in this document.
-% \end{abstract}
-
+\begin{abstract}
+  %%% WEN: Yeah, I realise more has to go here ^^
+  We believe that for any formalism which has its roots in linguistics, it is a
+  natural question to ask ``how expressive is it?''
+  Therefore, in this paper, we begin to address the question of the expressivity
+  of CG.  
+\end{abstract}
 
 \section{Introduction}
-
 Traditionally, CG is seen as a practical and language-oriented approach to NLP;
 it is a tool rather than a formalism, framework or anything of the sort.
 %%% WEN: What's the purpose of this sentence?
@@ -97,17 +77,17 @@ techniques.
 %%%      future version of your CGexp library which could be used to
 %%%      automatically generate CG code which disambiguates based on some
 %%%      regular expressions? You may be the better person to phrase this
-%%%      though. But I'll have a go.
+%%%      though. But I'll have a go:
 For instance, we hope that the \texttt{cgexp} tool, described in later sections
 of this paper, could eventually be developed to generate human-readable CG code
-which attempts to disambiguate pharses based on regular expressions or a
+which to disambiguate pharses based on regular expressions or a
 context-free grammar. 
 % ... hope to create new ways to reason about reductionistic grammar formalisms. 
 
+%%% Screw introductions, that's a pretty good abstract ^^
 
-\section{Background and previous work}
-
-
+\section{Introduction}
+%%% WEN: Tell the world what CG is! ^^
 The standard measure of formal languages is the Chomsky hierarchy~\cite{chomsky1956hierarchy}, with its four
 classes of grammars and languages, in order from most expressive to least expressive:
 recursively enumerable (Type 0), context-sensitive (Type 1), context-free (Type 2), and
