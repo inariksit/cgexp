@@ -12,6 +12,7 @@
 %\usepackage{times}
 \usepackage{mathptmx}
 %\usepackage{txfonts}
+\usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{url}
 \usepackage{latexsym}
@@ -34,6 +35,10 @@
 \date{}
 
 \def\t#1{\texttt{#1}}
+
+\def\maxAmb#1{$\langle \Sigma \rangle_#1$}
+
+\def\maxAmbFSA#1{$\langle \Sigma,S \rangle_#1$}
 
 \begin{document}
 \maketitle
@@ -75,9 +80,9 @@ We view a constraint grammar as a formal language $\mathcal{L}$, generated over 
 alphabet $\Sigma$. We generate the strings in our language by passing 
 \emph{maximally ambiguous strings} of every length to the grammar. 
 With maximally ambiguous, we mean those strings where each cohort contains the 
-entire alphabet, written as $\langle \Sigma \rangle_n$. 
+entire alphabet, written as \maxAmb{n}. 
 A constraint grammar is said to accept a string $w$ of length $n$ if, 
-when we pass $\langle \Sigma \rangle_n$ as an input to the CG,
+when we pass \maxAmb{n} as an input to the CG,
 $w$ is one of the possible interpretations of its output.
 
 For example, consider the language $a*$ over $\Sigma = \{a,b\}$,
@@ -85,7 +90,8 @@ shown in Figure~\ref{fig:astar}.
 %The initial sentence consists of cohorts with two readings, $a$ and $b$, and the disambiguated sentence has only cohorts with a single reading, $a$. 
 The grammar that accepts this language is simply \texttt{SELECT (a)}.
 
-\def\wwf{~~~~\t{"<w>"}}
+\def\wwf{\t{"<w>"}}
+\def\swf{\t{"<s>"}}
 \def\alm{\t{"a" a}~~~~~~}
 \def\blm{\t{"b" b}~~~~~~}
 
@@ -107,7 +113,7 @@ The grammar that accepts this language is simply \texttt{SELECT (a)}.
          & \blm  &          &        \\
 \end{tabular}
 
-\caption{Language $a*$ for input $\langle \Sigma \rangle_3$.}
+\caption{Language $a*$ for input \maxAmb{3}.}
 \label{fig:astar}
 \end{figure}
 
@@ -128,69 +134,50 @@ The grammar that accepts this language is simply \texttt{SELECT (a)}.
 % for a given class, we need a method that can transform all languages 
 % in that class into CG.
 
+% Even if CG can express the language $a*$, it is not yet evidence 
+% that whole CG is regular: for all we know, CG could just have a common subset 
+% with regular languages, such as the hypothetical formalism in Figure~\ref{fig:nocorr}.
+
+Is CG in any particular category? It clearly covers some regular languages, but 
+it may just have a common subset with regular languages, such as Figure~\ref{fig:nocorr}.
+Rather than enumerating individual grammars for a given class, we need a method 
+that can transform all languages in that class into CG.
+
+
 \section{Is CG regular?}
 
-In order to claim that a formal language belongs to a certain class, 
-we need to show that it can express all constructs in the said class. 
-Even if CG can express the language $a*$, it is not yet evidence 
-that whole CG is regular: for all we know, CG could just have a common subset 
-with regular languages, such as the hypothetical formalism in Figure~\ref{fig:nocorr}.
+We present a method to transform arbitrary finite-state automata into CG.
+Figure~\ref{fig:fsa} presents an example automaton, with $\Sigma = \{$\emph{det,adj,noun}$\}$,
+for which we implement a corresponding CG as follows.
 
-Rather than enumerating individual grammars for a given class, we need a method 
-that can transform all languages in that class into CG. In the case of regular
-languages, we describe a transformation from finite-state automata to CG.
-Figure~\ref{fig:fsa} presents an example automaton, with $\Sigma = \{$\emph{det,adj,noun}$\}$ for which we implement a corresponding 
-CG as follows.
-
-We have \emph{word cohorts}
-$\langle \Sigma \rangle_1$, with \emph{state cohorts} $\langle S \rangle_1$
-
-The transitions are modelled as $\langle \Sigma \rangle_1$ each, but in between each
-cohort, we insert a maximally ambiguous \emph{state cohort}, $\langle S \rangle_1$.
-
-
+As a modification to \maxAmb{n}, we use \maxAmbFSA{n}:
+$\Sigma$ stands for maximally ambiguous \emph{word cohorts}, and $S$ for maximally ambiguous 
+\emph{state cohorts}, which are inserted between each $\langle \Sigma \rangle$.
 For example, a sequence with two transitions would be modelled with the following 
-``sentence'' $\langle S+\Sigma \rangle_2$, with two word cohorts, three state cohorts:
+sentence \maxAmbFSA{2}, with two word cohorts:
 
 \begin{table}[h]
 \centering
 \begin{tabular}{lllll}
-      \t{"<s>"} &  \t{"<w>"}   &      \t{"<s>"} &     \t{"<w>"} &     \t{"<s>"} \\
- ~~~~~~\t{s1}   & ~~~~\t{det}  &  ~~~~\t{ s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}   \\
- ~~~~~~\t{s2}   & ~~~~\t{adj}  &  ~~~~\t{ s2}   &  ~~~~\t{adj}  &  ~~~~\t{s2}    \\
- ~~~~~~         & ~~~~\t{noun} &                &  ~~~~\t{noun} &  
+      \swf    &    \wwf      &      \swf      &     \wwf      &     \swf     \\
+ ~~~~~~\t{s1} & ~~~~\t{det}  &  ~~~~\t{ s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}  \\
+ ~~~~~~\t{s2} & ~~~~\t{adj}  &  ~~~~\t{ s2}   &  ~~~~\t{adj}  &  ~~~~\t{s2}  \\
+              & ~~~~\t{noun} &                &  ~~~~\t{noun} &  
 \end{tabular}
 \end{table}
 
-The rules of the grammar disambiguate both word cohorts and state cohorts. 
-Given that every transition happens between two states, and every state 
-has a transition to and from, we can write every rule with exactly
-two contextual tests: -1 and 1. 
 
-We begin the disambiguation from the first state cohort, which can only be
-the start state. Likewise, the last state cohort may only contain allowed end states.
+The rules of the grammar disambiguate both word cohorts and state cohorts.
+Thus the desired result shows both the accepted string and the path in the automaton.
 
+\begin{table}[h]
+\centering
+\begin{tabular}{lllll}
+      \swf    &  \wwf       &      \swf     & \wwf           & \swf \\
+ ~~~~~~\t{s1} & ~~~~\t{det} &  ~~~~\t{s2}   &  ~~~~\t{noun}  &  ~~~~\t{s1} 
 
-The start and end states naturally
-correspond to the first and last state cohort in the  $\langle S+\Sigma \rangle_n$,
-and can be 
-
-
-% \begin{itemize}
-% \item[\t{"<s>"}] ~\\
-% 				 \\
-% 		      	 \t{"s1" s1 } \\
-% 			     \t{"s2" s2 }
-% \item [\t{"<w>"}] ~\\
-% 				\t{"det" det} \\
-% 				\t{"adj" adj} \\
-% 				\t{"n"   n}
-
-% \item[\t{"<s>"}] ~\\
-% 				 \t{"s0" s0} \\
-% 		      	 \t{"s1" s1 } \\
-% 			     \t{"s2" s2 }
-% \end{itemize}
+\end{tabular}
+\end{table}
 
 
 
@@ -200,6 +187,105 @@ and can be
   \caption{A finite-state automaton describing the regular language \t{det (adj)* noun}.}
  \label{fig:fsa}
 \end{figure}
+
+
+\subsection{Disambiguation process}
+
+We describe the process on a high level. We have a working implementation that
+produces the rules for arbitrary automata, but the following is by no means a formal proof.
+
+Given that every transition happens between two states, and every state 
+has an incoming and outgoing transition, every rule needs no more than
+positions -1 and 1 in their contextual tests. 
+The semantics of the rules are ``remove a POS tag, if it is \emph{not} surrounded by allowed states'',
+and ``remove a state, if it is \emph{not} surrounded by allowed transitions''.
+For the example automaton, the POS-rules are as follows.
+
+\begin{verbatim}
+REMOVE...
+   Det  IF (NEGATE -1 S1 LINK 2 S2) ;
+   Adj  IF (NEGATE -1 S2 LINK 2 S2) ;
+   Noun IF (NEGATE -1 S2 LINK 2 S1) ;
+\end{verbatim}
+
+The start and end states naturally correspond to the first and last state cohort 
+in the \maxAmbFSA{n}, and can be trivially disambiguated, in this case both into \t{s1}.
+Once we remove a reading from either side of a cohort, some more rules 
+can take action---the context ``\t{s1} on the left side and \t{s2} on the right side''
+may be broken by removing either \t{s1} or \t{s2}.
+As a chain reaction, the whole sentence gets eventually disambiguated.
+
+\subsection{Disjunction}
+
+One obvious flaw is the lack of disjunction in CG. Consider the regular 
+language with two strings $\{ab,ba\}$. Given \maxAmb{2} for any $\Sigma$,
+this is the closest we could get in CG output:
+
+\begin{table}[h]
+\begin{tabular}{l l}
+
+ \wwf          &  \wwf  \\
+ ~~~~~~~~~~\t{a}  &  ~~~~~~~~~~\t{a}  \\
+ ~~~~~~~~~~\t{b}  &  ~~~~~~~~~~\t{b}
+\end{tabular}
+\end{table}
+
+
+If our alphabet consists of anything more than $\{a,b\}$, at least all the other 
+readings would be removed. But CG cannot express the disjunction any further---the 
+description ``either $ab$ or $ba$'' is translated into a coarser description:
+ ``the first character may be either $a$ or $b$, and the second character may be either $a$ or $b$''.
+
+Another option would be to return a set of CGs: one that disambiguates any input
+into $ab$ and other that disambiguates into $ba$. But this is just speculation, 
+we have not investigated the idea further. 
+
+% The start and end states naturally correspond to the first and last state cohort 
+% in the \maxAmbFSA{n}, and can be trivially disambiguated, in this case both into \t{s1}.
+% The intermediate result is shown below:
+
+% \def\rmd#1{{\tt \color{gray} #1}}
+
+% \begin{table}[h]
+% \centering
+% \begin{tabular}{lllll}
+%      \swf &  \wwf   &      \swf &     \wwf &     \swf \\
+% ~~~~~~\t{s1}   & ~~~~\t{det}  &  ~~~~\t{s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}   \\
+% ~~~~~~\rmd{s2} & ~~~~\t{adj}  &  ~~~~\t{s2}   &  ~~~~\t{adj}  &  ~~~~\rmd{s2}   \\
+% ~~~~~~         & ~~~~\t{noun} &                &  ~~~~\t{noun} &  
+% \end{tabular}
+% \end{table}
+
+% Once we remove a reading from either side of a cohort, some more rules may take action.
+% Now that the first state is no longer a possible \t{s2}, the rules that remove \t{adj}
+% and \t{noun} readings will apply to the first word.
+
+% \begin{table}[h]
+% \centering
+% \begin{tabular}{lllll}
+%      \swf &  \wwf     &      \swf &     \wwf &     \swf \\
+% ~~~~~~\t{s1}   & ~~~~\t{det}    &  ~~~~\t{ s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}   \\
+% ~~~~~~\rmd{s2} & ~~~~\rmd{adj}  &  ~~~~\t{ s2}   &  ~~~~\t{adj}  &  ~~~~\rmd{s2}   \\
+% ~~~~~~         & ~~~~\rmd{noun} &                &  ~~~~\t{noun} &  
+% \end{tabular}
+% \end{table}
+
+% Now the second state cohort can be disambiguated: transitions from \t{det} may only lead to \t{s2}, 
+% so we remove \t{s1}. After that, we disambiguate the second word cohort, leaving only \t{noun}.
+% No more rules may apply, so this is the final result.
+
+% \begin{table}[h]
+% \centering
+% \begin{tabular}{lllll}
+%       \swf &  \wwf     &      \swf &     \wwf  &     \swf \\
+%  ~~~~~~\t{s1}   & ~~~~\t{det}    &  ~~~~\rmd{s1}  &  ~~~~\rmd{det} &  ~~~~\t{s1}   \\
+%  ~~~~~~\rmd{s2} & ~~~~\rmd{adj}  &  ~~~~\t{s2}    &  ~~~~\rmd{adj} &  ~~~~\rmd{s2}   \\
+%  ~~~~~~         & ~~~~\rmd{noun} &                &  ~~~~\t{noun}  &  
+% \end{tabular}
+% \end{table}
+
+
+
 
 
 \section{Beyond regular}
@@ -215,11 +301,21 @@ We can express $a^nb^n$, here's the grammar.
 
 We can express $a^nb^nc^n$, here's the grammar.  
 
-\section{Discussion}
+\section{Applications}
 
-Practical benefits: derive CGs from perhaps more easily defined formalisms?
+Does such an idea provide any foreseeable practical benefits?
+The grammars derived from FSAs look clumsy, and involve extra symbols.
+But if it turned out that CGs can express some interesting subset of context-free 
+or context-sensitive grammars, then we could derive CGs from already existing formalisms.
+This could be an alternative for learning CGs from corpus.
 
-CG can act as a preprocessing step for some more expensive parser. Then the rules can be non-human-oriented, and contain extra symbols. The rules would be derived from the grammar itself, with the sole purpose of making the parsing \emph{faster}, not more accurate.
+Compared to high-level grammar formalisms, such as (insert your favourite), CG processing
+is generally faster. So a CG derived in this manner could act as a preprocessing step 
+for some more expensive parser---then the rules need not be human-legible. 
+The rules would be derived from the grammar itself, with the sole purpose of 
+making the parsing \emph{faster}, not more accurate.
+
+
 
 % \section*{Acknowledgments}
 
