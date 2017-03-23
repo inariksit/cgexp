@@ -122,21 +122,27 @@ The grammar that accepts this language is simply \texttt{SELECT (a)}.
 
 
 
-
-
-We start exploring the expressivity without any previous assumptions. 
-For all we know, CG may be in no particular category at all, as shown 
-in Figure~\ref{fig:nocorr}. Rather than enumerating individual grammars 
-for a given class, we need a method that can transform all languages 
-in that class into CG, or prove that there is no such method.
+% We start exploring the expressivity without any previous assumptions. 
+% For all we know, CG may be in no particular category at all, as shown 
+% in Figure~\ref{fig:nocorr}. Rather than enumerating individual grammars 
+% for a given class, we need a method that can transform all languages 
+% in that class into CG.
 
 \section{Is CG regular?}
 
-Regular languages can be expressed in the form of finite automata.
-For the automaton given in Figure~\ref{fig:fsa}, we implement a corresponding 
+In order to claim that a formal language belongs to a certain class, 
+we need to show that it can express all constructs in the said class. 
+Even if CG can express the language $a*$, it is not yet evidence 
+that whole CG is regular: for all we know, CG could just have a common subset 
+with regular languages, such as the hypothetical formalism in Figure~\ref{fig:nocorr}.
+
+Rather than enumerating individual grammars for a given class, we need a method 
+that can transform all languages in that class into CG. In the case of regular
+languages, we describe a transformation from finite-state automata to CG.
+Figure~\ref{fig:fsa} presents an example automaton, with $\Sigma = \{$\emph{det,adj,noun}$\}$ for which we implement a corresponding 
 CG as follows.
 
-Assume our alphabet is $\Sigma = \{det,adj,noun\}$. Then we have \emph{word cohorts}
+We have \emph{word cohorts}
 $\langle \Sigma \rangle_1$, with \emph{state cohorts} $\langle S \rangle_1$
 
 The transitions are modelled as $\langle \Sigma \rangle_1$ each, but in between each
@@ -150,15 +156,15 @@ For example, a sequence with two transitions would be modelled with the followin
 \centering
 \begin{tabular}{lllll}
       \t{"<s>"} &  \t{"<w>"}   &      \t{"<s>"} &     \t{"<w>"} &     \t{"<s>"} \\
- ~~~~~~\t{s0}   & ~~~~\t{det}  &  ~~~~\t{ s0}   &  ~~~~\t{det}  &  ~~~~\t{s0}   \\
- ~~~~~~\t{s1}   & ~~~~\t{adj}  &  ~~~~\t{ s1}   &  ~~~~\t{adj}  &  ~~~~\t{s1}    \\
- ~~~~~~\t{s2}   & ~~~~\t{noun} &  ~~~~\t{ s2}   &  ~~~~\t{noun} &  ~~~~\t{s2}  
+ ~~~~~~\t{s1}   & ~~~~\t{det}  &  ~~~~\t{ s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}   \\
+ ~~~~~~\t{s2}   & ~~~~\t{adj}  &  ~~~~\t{ s2}   &  ~~~~\t{adj}  &  ~~~~\t{s2}    \\
+ ~~~~~~         & ~~~~\t{noun} &                &  ~~~~\t{noun} &  
 \end{tabular}
 \end{table}
 
 The rules of the grammar disambiguate both word cohorts and state cohorts. 
-Given that every transition happens between two states, and every state is 
-in between some transition to and from, we can write every rule with exactly
+Given that every transition happens between two states, and every state 
+has a transition to and from, we can write every rule with exactly
 two contextual tests: -1 and 1. 
 
 We begin the disambiguation from the first state cohort, which can only be
@@ -190,7 +196,7 @@ and can be
 
 \begin{figure}[t]
   \centering
-    \includegraphics[width=0.4\textwidth]{fsa.png}
+    \includegraphics[width=0.3\textwidth]{fsa.png}
   \caption{A finite-state automaton describing the regular language \t{det (adj)* noun}.}
  \label{fig:fsa}
 \end{figure}
