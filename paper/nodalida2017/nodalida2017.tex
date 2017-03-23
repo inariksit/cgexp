@@ -75,7 +75,7 @@ We view a constraint grammar as a formal language $\mathcal{L}$, generated over 
 alphabet $\Sigma$. We generate the strings in our language by passing 
 \emph{maximally ambiguous strings} of every length to the grammar. 
 With maximally ambiguous, we mean those strings where each cohort contains the 
-entire alphabet, written as $\langle \Sigma \rangle_n$ in the remainder of the paper. 
+entire alphabet, written as $\langle \Sigma \rangle_n$. 
 A constraint grammar is said to accept a string $w$ of length $n$ if, 
 when we pass $\langle \Sigma \rangle_n$ as an input to the CG,
 $w$ is one of the possible interpretations of its output.
@@ -86,8 +86,8 @@ shown in Figure~\ref{fig:astar}.
 The grammar that accepts this language is simply \texttt{SELECT (a)}.
 
 \def\wwf{~~~~\t{"<w>"}}
-\def\alm{\t{"a"}~~~~~~}
-\def\blm{\t{"b"}~~~~~~}
+\def\alm{\t{"a" a}~~~~~~}
+\def\blm{\t{"b" b}~~~~~~}
 
 \begin{figure}[h]
 \centering
@@ -115,7 +115,7 @@ The grammar that accepts this language is simply \texttt{SELECT (a)}.
 
 \begin{figure}[t]
   \centering
-    \includegraphics[width=0.4\textwidth]{venn-2.png}
+    \includegraphics[width=0.4\textwidth]{chomsky.png}
   \caption{A (hypothetical) formalism that does not correspond to any single category in Chomsky hierarchy, but covers some languages in regular, some in context-free and some in context-sensitive class.}
  \label{fig:nocorr}
 \end{figure}
@@ -133,35 +133,68 @@ in that class into CG, or prove that there is no such method.
 \section{Is CG regular?}
 
 Regular languages can be expressed in the form of finite automata.
-We model finite automata in CG as follows. 
+For the automaton given in Figure~\ref{fig:fsa}, we implement a corresponding 
+CG as follows.
 
-The transitions are modelled as $\langle \Sigma \rangle$, but in between each
-cohort, we insert a maximally ambiguous \emph{state cohort}, $\langle S \rangle$.
-An initial sentence may look like follows:
+Assume our alphabet is $\Sigma = \{det,adj,noun\}$. Then we have \emph{word cohorts}
+$\langle \Sigma \rangle_1$, with \emph{state cohorts} $\langle S \rangle_1$
 
-\begin{tabular}{cl  rl  rl}
+The transitions are modelled as $\langle \Sigma \rangle_1$ each, but in between each
+cohort, we insert a maximally ambiguous \emph{state cohort}, $\langle S \rangle_1$.
 
-\t{"<s>"}  &               &  \t{"<w>"}  &               & \t{"<s>"} &             & \\
-           & \t{"s0" s0}   &             & \t{"det" det} &           &\t{"s0" s0}  & \\
-           & \blm  &       &             &               &           &             & \\
 
+For example, a sequence with two transitions would be modelled with the following 
+``sentence'' $\langle S+\Sigma \rangle_2$, with two word cohorts, three state cohorts:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lllll}
+      \t{"<s>"} &  \t{"<w>"}   &      \t{"<s>"} &     \t{"<w>"} &     \t{"<s>"} \\
+ ~~~~~~\t{s0}   & ~~~~\t{det}  &  ~~~~\t{ s0}   &  ~~~~\t{det}  &  ~~~~\t{s0}   \\
+ ~~~~~~\t{s1}   & ~~~~\t{adj}  &  ~~~~\t{ s1}   &  ~~~~\t{adj}  &  ~~~~\t{s1}    \\
+ ~~~~~~\t{s2}   & ~~~~\t{noun} &  ~~~~\t{ s2}   &  ~~~~\t{noun} &  ~~~~\t{s2}  
 \end{tabular}
+\end{table}
 
-\begin{itemize}
-\item[\t{"<s>"}] ~\\
-				 \\
-		      	 \t{"s1" s1 } \\
-			     \t{"s2" s2 }
-\item [\t{"<w>"}] ~\\
-				\t{"det" det} \\
-				\t{"adj" adj} \\
-				\t{"n"   n}
+The rules of the grammar disambiguate both word cohorts and state cohorts. 
+Given that every transition happens between two states, and every state is 
+in between some transition to and from, we can write every rule with exactly
+two contextual tests: -1 and 1. 
 
-\item[\t{"<s>"}] ~\\
-				 \t{"s0" s0} \\
-		      	 \t{"s1" s1 } \\
-			     \t{"s2" s2 }
-\end{itemize}
+We begin the disambiguation from the first state cohort, which can only be
+the start state. Likewise, the last state cohort may only contain allowed end states.
+
+
+The start and end states naturally
+correspond to the first and last state cohort in the  $\langle S+\Sigma \rangle_n$,
+and can be 
+
+
+% \begin{itemize}
+% \item[\t{"<s>"}] ~\\
+% 				 \\
+% 		      	 \t{"s1" s1 } \\
+% 			     \t{"s2" s2 }
+% \item [\t{"<w>"}] ~\\
+% 				\t{"det" det} \\
+% 				\t{"adj" adj} \\
+% 				\t{"n"   n}
+
+% \item[\t{"<s>"}] ~\\
+% 				 \t{"s0" s0} \\
+% 		      	 \t{"s1" s1 } \\
+% 			     \t{"s2" s2 }
+% \end{itemize}
+
+
+
+\begin{figure}[t]
+  \centering
+    \includegraphics[width=0.4\textwidth]{fsa.png}
+  \caption{A finite-state automaton describing the regular language \t{det (adj)* noun}.}
+ \label{fig:fsa}
+\end{figure}
+
 
 \section{Beyond regular}
 
@@ -188,11 +221,6 @@ CG can act as a preprocessing step for some more expensive parser. Then the rule
 % when submitting your paper for review.
 
 
-% \begin{figure}
-%   \centering
-%     \includegraphics[width=0.4\textwidth]{venn-1.png}
-%   \caption{A formalism that covers all languages that are context-sensitive or less expressive.}
-% \end{figure}
 
 
 
