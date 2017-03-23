@@ -56,7 +56,54 @@
 
 \section{Introduction}
 
-Traditionally, CG is seen as a practical and language-oriented approach to NLP; it is a tool rather than a formalism, framework or anything of the sort. Since the beginning of CG \cite{karlsson1995constraint}, its authors do not envision CG being capable of generation, only for analysis. Despite its decidedly linguistic roots, we argue that CG is interesting to look at also from a computational perspective. For the theoretically inclined, making a description of a formalism more precise is an end of its own. However, even a practically oriented reader should appreciate the applications: better understanding of a formalism may lead to novel uses and implementation techniques. In this paper, we address the question of the expressivity of CG. We do not reach a definite answer, but hope to create new ways to reason about reductionistic grammar formalisms.
+Traditionally, CG is seen as a practical and language-oriented approach to NLP;
+it is a tool rather than a formalism, framework or anything of the sort.
+%%% WEN: What's the purpose of this sentence?
+Since the beginning of CG~\cite{karlsson1995constraint}, its authors do not
+see it as a tool for generating strings, only for analysing and disambiguating
+them.
+%%% WEN: Well, I'm giving the sentence above purpose here:
+It is for these reasons, we believe, that the question of the expressivity of CG
+as a generative formalism went unasked and unanswered for so long.
+%%% WEN: ^Is this actually true? Or have folks looked into this before?^
+
+We believe that for any formalism which has its roots in linguistics, it is a
+natural question to ask ``how expressive is it?''
+Therefore, in this paper, we begin to address the question of the expressivity
+of CG. 
+%%% WEN: We are OBLIGED to make the point here---or at very least NOT too far
+%%%      into the paper---that this question has an obvious answer. There is a
+%%%      command that allows you to call an arbitrary process, so it is
+%%%      obviously Turing complete. However, what we are interested in is how
+%%%      expressive the separate COMMANDS in CG are. What can we do with just
+%%%      REMOVE---the most common CG command? What can we do if we allow
+%%%      ourselves the use of REMOVE and some other command? Etc.
+%%% WEN: I'd say it's interesting to look at the formal language aspects BECAUSE
+%%%      it's a linguistic tool and therefore comes from a tradition of formal
+%%%      language.
+% Despite its decidedly linguistic roots, we argue that CG is interesting to look
+% at also from a computational perspective.
+%%% WEN: So basically you're saying ``we decided to have an academic wank'' it
+%%%      was definitely great. ^^
+For those theoretically inclined, describing the expressivity of a new language
+formalism might be a reward onto itself. 
+%%% WEN: This is, like, a super weak claim. xD
+However, even the more practical reader could appreciate that a better
+understanding of a formalism can lead to novel uses and implementation
+techniques. 
+%%% WEN: Maybe we could take some of these hopes expressed in the following
+%%%      sentence, and rephrase them as novel uses and implementation techniques
+%%%      to satisfy our more practical readers? For instance, we could hint at a
+%%%      future version of your CGexp library which could be used to
+%%%      automatically generate CG code which disambiguates based on some
+%%%      regular expressions? You may be the better person to phrase this
+%%%      though. But I'll have a go.
+For instance, we hope that the \texttt{cgexp} tool, described in later sections
+of this paper, could eventually be developed to generate human-readable CG code
+which attempts to disambiguate pharses based on regular expressions or a
+context-free grammar. 
+% ... hope to create new ways to reason about reductionistic grammar formalisms. 
+
 
 \section{Background and previous work}
 
