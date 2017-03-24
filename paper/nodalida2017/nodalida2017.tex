@@ -23,6 +23,7 @@
 \def\t#1{\texttt{#1}}
 \def\maxAmb#1{$\langle \Sigma \rangle_#1$}
 \def\maxAmbFSA#1{$\langle \Sigma,S \rangle_#1$}
+\def\maxAmbCFG#1{$\langle \Sigma,\Sigma^{\prime} \rangle_#1$}
 
 \begin{document}
 \maketitle
@@ -33,14 +34,15 @@
   natural question to ask ``how expressive is it?''
   Therefore, in this paper, we begin to address the question of the expressivity
   of CG. 
-  For those theoretically inclined, describing the expressivity of a new language
-  formalism is a reward onto itself. 
-  However, even the more practical reader could appreciate that a better
-  understanding of a formalism can lead to novel uses and implementation
-  techniques. 
+  % For those theoretically inclined, describing the expressivity of a new language
+  % formalism is a reward onto itself. 
+  % However, even the more practical reader could appreciate that a better
+  % understanding of a formalism can lead to novel uses and implementation
+  % techniques. 
+  Aside from the obvious theoretical interest, we envision also practical benefits.
   For instance, we hope that the \texttt{cgexp} tool, described in later sections
   of this paper, could eventually be developed to generate human-readable CG code
-  which disambiguates phrases based on regular expressions or a context-free grammar. 
+  from regular expressions or a context-free grammar. 
 
 \end{abstract}
 
@@ -103,8 +105,8 @@ The notion of expressive power, ``which constructs can we express in the languag
 
 Previous work covers the expressivity of single rules, such as \texttt{IF (NOT 1* Verb OR Noun)}: 
 just seeing this contextual test hints that we can express a subset of 
-regular languages that contains at least disjunction, complement and Kleene star. 
-\newcite{tapanainen1999phd} gives an account of the expressivity of 
+regular languages that contains at least disjunction, complement and 
+Kleene star. \newcite{tapanainen1999phd} gives an account of the expressivity of 
 a single rule for 4 different constraint formalisms. In addition, parsing 
 complexity can be easily defined for a given variant and implementation of CG; 
 see for instance \newcite{nemeskey14}.
@@ -118,8 +120,8 @@ paper, we present some preliminary results.
 \section{Expressivity of a grammar}
 
 We view a constraint grammar as a formal language $\mathcal{L}$, generated over an 
-alphabet $\Sigma$. We generate the strings in our language by passing 
-\emph{maximally ambiguous strings} of every length to the grammar. 
+alphabet $\Sigma$. We generate the strings in our language by passing \emph{maximally 
+ambiguous strings} of every length to the grammar. 
 With maximally ambiguous, we mean those strings where each cohort contains the 
 entire alphabet, written as \maxAmb{n}. 
 A constraint grammar is said to accept a string $w$ of length $n$ if, 
@@ -180,7 +182,7 @@ The grammar that accepts this language is simply \texttt{SELECT (a)}.
 % with regular languages, such as the hypothetical formalism in Figure~\ref{fig:nocorr}.
 
 Is CG in any particular category? It clearly covers some regular languages, but 
-it may just have a common subset with regular languages, such as Figure~\ref{fig:nocorr}.
+it may just have a common subset with regular languages, as in Figure~\ref{fig:nocorr}.
 Rather than enumerating individual grammars for a given class, we need a method 
 that can transform all languages in that class into CG.
 
@@ -192,19 +194,19 @@ Figure~\ref{fig:fsa} presents an example automaton, with $\Sigma = \{$\emph{det,
 for which we implement a corresponding CG as follows.
 
 As a modification to \maxAmb{n}, we use \maxAmbFSA{n}:
-$\Sigma$ stands for maximally ambiguous \emph{word cohorts}, and $S$ for maximally ambiguous 
-\emph{state cohorts}, which are inserted between each $\langle \Sigma \rangle$.
-For example, a sequence with two transitions would be modelled with the following 
-sentence \maxAmbFSA{2}, with two word cohorts:
+$\Sigma$ stands for maximally ambiguous \emph{word cohorts}, and $S$ for 
+maximally ambiguous  \emph{state cohorts}, which are inserted between 
+each $\langle \Sigma \rangle$. For example, a sequence with two transitions 
+would be modelled with the following sentence \maxAmbFSA{2}, with two word cohorts:
 
-
+\begin{table}[h]
 \begin{tabular}{lllll}
       \swf    &    \wwf      &      \swf      &     \wwf      &     \swf     \\
  ~~~~~~\t{s1} & ~~~~\t{det}  &  ~~~~\t{ s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}  \\
  ~~~~~~\t{s2} & ~~~~\t{adj}  &  ~~~~\t{ s2}   &  ~~~~\t{adj}  &  ~~~~\t{s2}  \\
               & ~~~~\t{noun} &                &  ~~~~\t{noun} &  
 \end{tabular}
-
+\end{table}
 
 The rules of the grammar disambiguate both word cohorts and state cohorts.
 Thus the desired result shows both the accepted string and the path in the automaton.
@@ -230,8 +232,8 @@ Thus the desired result shows both the accepted string and the path in the autom
 
 \subsection{Disambiguation process}
 
-We describe the process on a high level. We have a working implementation that
-produces the rules for arbitrary automata, but the following is by no means a formal proof.
+% We describe the process on a high level. We have a working implementation that
+% produces the rules for arbitrary automata, but the following is by no means a formal proof.
 
 Given that every transition happens between two states, and every state 
 has an incoming and outgoing transition, every rule needs no more than
@@ -250,8 +252,8 @@ REMOVE...
 The start and end states naturally correspond to the first and last state cohort 
 in the \maxAmbFSA{n}, and can be trivially disambiguated, in this case both into \t{s1}.
 Once we remove a reading from either side of a cohort, some more rules 
-can take action---the context ``\t{s1} on the left side and \t{s2} on the right side''
-may be broken by removing either \t{s1} or \t{s2}.
+can take action---the context ``\t{s2} on the left side and \t{s1} on the right side''
+may be broken by removing either \t{s2} or \t{s1}.
 As a chain reaction, the whole sentence gets eventually disambiguated.
 
 \subsection{Disjunction}
@@ -275,9 +277,9 @@ readings would be removed. But CG cannot express the disjunction any further---t
 description ``either $ab$ or $ba$'' is translated into a coarser description:
 ``the first character may be either $a$ or $b$, and the second character may be either $a$ or $b$''.
 
-Another option would be to return a set of CGs: one that disambiguates any input
-into $ab$ and other that disambiguates into $ba$. But this is just speculation, 
-we have not investigated the idea further. 
+An alternative would be to model languages with disjunction as a set of CGs: 
+one that disambiguates any input into $ab$ and other that disambiguates 
+into $ba$. But this is just speculation, we have not investigated the idea further. 
 
 % The start and end states naturally correspond to the first and last state cohort 
 % in the \maxAmbFSA{n}, and can be trivially disambiguated, in this case both into \t{s1}.
@@ -331,10 +333,25 @@ we have not investigated the idea further.
 
 We have not found a general method for other classes. 
 However, we can write some example grammars that go beyond regular and context-free.
+Due to space limitations, we describe only the rough outlines of the method.
 
 \subsection{CG is beyond regular}
 
-We can express $a^nb^n$, here's the grammar.
+We can express the language $a^nb^n$ as a CG which disambiguates
+any \maxAmb{{2n}} into $\langle a \rangle_n \langle b \rangle_n$.
+In addition, we allow ourselves a hidden alphabet of helper readings, 
+$\Sigma^{\prime} = \{\t{even}, \t{odd}, \t{>>>}, \t{<<<}, \t{opt\_a}, \t{opt\_b}\}$. 
+%In this \maxAmbCFG{{m}}, 
+Every cohort starts off with full $\Sigma$ and $\Sigma^{\prime}$.
+The process goes as follows:
+\begin{itemize}
+\item Check if the sentence has an even number of cohorts. We know the first cohort
+      is odd, and the rest is handled with rules of the form \t{REMOVE even IF (NOT -1 odd)}.
+      If the last cohort is odd, then discard the sentence; otherwise continue.
+\item Disambiguate edges: first one is certainly $a$ and last is certainly $b$.
+\item Grow $a$s and $b$s until they meet in the middle. The disambiguation is done in two 
+      passes, first removing the helper reading \t{opt\_a}, and then selecting the main reading $a$.
+\end{itemize}
 
 \subsection{CG is beyond context-free}
 
