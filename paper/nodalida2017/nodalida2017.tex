@@ -355,7 +355,11 @@ The process goes as follows:
 
 \subsection{CG is beyond context-free}
 
-We can express $a^nb^nc^n$, here's the grammar.  
+We can extend the previous approach to write a grammar that accepts $a^nb^nc^n$.
+We use three counting symbols, three \t{opt\_X} symbols, and initially we disambiguate
+the two edges and the middle. The result is the same: any \maxAmb{{3n}} gets disambiguated
+into $\langle a \rangle_n \langle b \rangle_n \langle c \rangle_n$.
+
 
 \section{Applications}
 
