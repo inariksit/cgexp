@@ -162,32 +162,56 @@ The grammar that accepts this language is simply \texttt{SELECT (a)}.
 
 
 
-\begin{figure}[t]
+
+\begin{figure}[h]
   \centering
     \includegraphics[width=0.4\textwidth]{chomsky.png}
-  \caption{A (hypothetical) formalism that does not correspond to any single category in Chomsky hierarchy, but covers some languages in regular, some in context-free and some in context-sensitive class.}
+  \caption{One possibility for the coverage of CG.}
+  %{A (hypothetical) formalism that does not correspond to any single category in Chomsky hierarchy,
+  % but covers some languages in regular, some in context-free and some in context-sensitive class.}
  \label{fig:nocorr}
 \end{figure}
 
 
+\section{CG is beyond regular}
 
-% We start exploring the expressivity without any previous assumptions. 
-% For all we know, CG may be in no particular category at all, as shown 
-% in Figure~\ref{fig:nocorr}. Rather than enumerating individual grammars 
-% for a given class, we need a method that can transform all languages 
-% in that class into CG.
+In this section, we demonstrate some non-regular languages that can be expressed in CG.
+Due to space limitations, we describe only the rough outlines of the grammars.
 
-% Even if CG can express the language $a*$, it is not yet evidence 
-% that whole CG is regular: for all we know, CG could just have a common subset 
-% with regular languages, such as the hypothetical formalism in Figure~\ref{fig:nocorr}.
+\subsection{Example grammar: $a^nb^n$ }
 
-Is CG in any particular category? It clearly covers some regular languages, but 
-it may just have a common subset with regular languages, as in Figure~\ref{fig:nocorr}.
-Rather than enumerating individual grammars for a given class, we need a method 
-that can transform all languages in that class into CG.
+We can express the language $a^nb^n$ as a CG which disambiguates
+any \maxAmb{{2n}} into $\langle a \rangle_n \langle b \rangle_n$.
+In addition, we allow ourselves a hidden alphabet of helper readings, 
+$\Sigma^{\prime} = \{\t{even}, \t{odd}, \t{>>>}, \t{<<<}, \t{opt\_a}, \t{opt\_b}\}$. 
+%In this \maxAmbCFG{{m}}, 
+Every cohort starts off with full $\Sigma$ and $\Sigma^{\prime}$.
+The process goes as follows:
+\begin{itemize}
+\item Check if the sentence has an even number of cohorts. We know the first cohort
+      is odd, and the rest is handled with rules of the form \t{REMOVE even IF (NOT -1 odd)}.
+      If the last cohort is odd, then discard the sentence; otherwise continue.
+\item Disambiguate edges: first one is certainly $a$ and last is certainly $b$.
+\item Grow $a$s and $b$s until they meet in the middle. The disambiguation is done in two 
+      passes, first removing the helper reading \t{opt\_a}, and then selecting the main reading $a$.
+\end{itemize}
+
+\subsection{Example grammar: $a^nb^nc^n$}
+
+We can extend the previous approach to write a grammar that accepts $a^nb^nc^n$.
+We use three counting symbols, three \t{opt\_X} symbols, and initially we disambiguate
+the two edges and the middle. The result is the same: any \maxAmb{{3n}} gets disambiguated
+into $\langle a \rangle_n \langle b \rangle_n \langle c \rangle_n$.
 
 
 \section{Is CG regular?}
+
+Is CG in any particular category? It clearly covers some regular, context-free
+and context-sensitive languages, but it may just have a common subset with those 
+classes, as in Figure~\ref{fig:nocorr}.
+Rather than enumerating individual grammars for a given class, we need a method 
+that can transform all languages in that class into CG.
+
 
 We present a method to transform arbitrary finite-state automata into CG.
 Figure~\ref{fig:fsa} presents an example automaton, with $\Sigma = \{$\emph{det,adj,noun}$\}$,
@@ -326,39 +350,6 @@ into $ba$. But this is just speculation, we have not investigated the idea furth
 % \end{table}
 
 
-
-
-
-\section{Beyond regular}
-
-We have not found a general method for other classes. 
-However, we can write some example grammars that go beyond regular and context-free.
-Due to space limitations, we describe only the rough outlines of the method.
-
-\subsection{CG is beyond regular}
-
-We can express the language $a^nb^n$ as a CG which disambiguates
-any \maxAmb{{2n}} into $\langle a \rangle_n \langle b \rangle_n$.
-In addition, we allow ourselves a hidden alphabet of helper readings, 
-$\Sigma^{\prime} = \{\t{even}, \t{odd}, \t{>>>}, \t{<<<}, \t{opt\_a}, \t{opt\_b}\}$. 
-%In this \maxAmbCFG{{m}}, 
-Every cohort starts off with full $\Sigma$ and $\Sigma^{\prime}$.
-The process goes as follows:
-\begin{itemize}
-\item Check if the sentence has an even number of cohorts. We know the first cohort
-      is odd, and the rest is handled with rules of the form \t{REMOVE even IF (NOT -1 odd)}.
-      If the last cohort is odd, then discard the sentence; otherwise continue.
-\item Disambiguate edges: first one is certainly $a$ and last is certainly $b$.
-\item Grow $a$s and $b$s until they meet in the middle. The disambiguation is done in two 
-      passes, first removing the helper reading \t{opt\_a}, and then selecting the main reading $a$.
-\end{itemize}
-
-\subsection{CG is beyond context-free}
-
-We can extend the previous approach to write a grammar that accepts $a^nb^nc^n$.
-We use three counting symbols, three \t{opt\_X} symbols, and initially we disambiguate
-the two edges and the middle. The result is the same: any \maxAmb{{3n}} gets disambiguated
-into $\langle a \rangle_n \langle b \rangle_n \langle c \rangle_n$.
 
 
 \section{Applications}
