@@ -32,61 +32,68 @@
   We believe that for any formalism which has its roots in linguistics, it is a
   natural question to ask ``how expressive is it?''
   Therefore, in this paper, we begin to address the question of the expressivity
-  of CG.  
+  of CG. 
+  For those theoretically inclined, describing the expressivity of a new language
+  formalism is a reward onto itself. 
+  However, even the more practical reader could appreciate that a better
+  understanding of a formalism can lead to novel uses and implementation
+  techniques. 
+  For instance, we hope that the \texttt{cgexp} tool, described in later sections
+  of this paper, could eventually be developed to generate human-readable CG code
+  which disambiguates phrases based on regular expressions or a context-free grammar. 
+
 \end{abstract}
 
-\section{Introduction}
-Traditionally, CG is seen as a practical and language-oriented approach to NLP;
-it is a tool rather than a formalism, framework or anything of the sort.
-%%% WEN: What's the purpose of this sentence?
-Since the beginning of CG~\cite{karlsson1995constraint}, its authors do not
-see it as a tool for generating strings, only for analysing and disambiguating
-them.
+% \section{Introduction}
+
+% We believe that for any formalism which has its roots in linguistics, it is a
+% natural question to ask ``how expressive is it?''
+% Therefore, in this paper, we begin to address the question of the expressivity
+% of CG. 
+% %%% WEN: We are OBLIGED to make the point here---or at very least NOT too far
+% %%%      into the paper---that this question has an obvious answer. There is a
+% %%%      command that allows you to call an arbitrary process, so it is
+% %%%      obviously Turing complete. However, what we are interested in is how
+% %%%      expressive the separate COMMANDS in CG are. What can we do with just
+% %%%      REMOVE---the most common CG command? What can we do if we allow
+% %%%      ourselves the use of REMOVE and some other command? Etc.
+% %%% WEN: I'd say it's interesting to look at the formal language aspects BECAUSE
+% %%%      it's a linguistic tool and therefore comes from a tradition of formal
+% %%%      language.
+% % Despite its decidedly linguistic roots, we argue that CG is interesting to look
+% % at also from a computational perspective.
+% %%% WEN: So basically you're saying ``we decided to have an academic wank'' it
+% %%%      was definitely great. ^^
+% For those theoretically inclined, describing the expressivity of a new language
+% formalism is a reward onto itself. 
+% %%% WEN: This is, like, a super weak claim. xD
+% However, even the more practical reader could appreciate that a better
+% understanding of a formalism can lead to novel uses and implementation
+% techniques. 
+% %%% WEN: Maybe we could take some of these hopes expressed in the following
+% %%%      sentence, and rephrase them as novel uses and implementation techniques
+% %%%      to satisfy our more practical readers? For instance, we could hint at a
+% %%%      future version of your CGexp library which could be used to
+% %%%      automatically generate CG code which disambiguates based on some
+% %%%      regular expressions? You may be the better person to phrase this
+% %%%      though. But I'll have a go:
+% For instance, we hope that the \texttt{cgexp} tool, described in later sections
+% of this paper, could eventually be developed to generate human-readable CG code
+% which disambiguates phrases based on regular expressions or a context-free grammar. 
+
+% %%% Screw introductions, that's a pretty good abstract ^^
+
+\section{Introduction and previous work}
+
+CG~\cite{karlsson1995constraint} was born as a practical, rather than formal, 
+approach to NLP. 
+Since the beginning, its authors do not envision it as a tool for 
+generating strings, only for analysing and disambiguating them.
 %%% WEN: Well, I'm giving the sentence above purpose here:
 It is for these reasons, we believe, that the question of the expressivity of CG
 as a generative formalism went unasked and unanswered for so long.
 %%% WEN: ^Is this actually true? Or have folks looked into this before?^
 
-We believe that for any formalism which has its roots in linguistics, it is a
-natural question to ask ``how expressive is it?''
-Therefore, in this paper, we begin to address the question of the expressivity
-of CG. 
-%%% WEN: We are OBLIGED to make the point here---or at very least NOT too far
-%%%      into the paper---that this question has an obvious answer. There is a
-%%%      command that allows you to call an arbitrary process, so it is
-%%%      obviously Turing complete. However, what we are interested in is how
-%%%      expressive the separate COMMANDS in CG are. What can we do with just
-%%%      REMOVE---the most common CG command? What can we do if we allow
-%%%      ourselves the use of REMOVE and some other command? Etc.
-%%% WEN: I'd say it's interesting to look at the formal language aspects BECAUSE
-%%%      it's a linguistic tool and therefore comes from a tradition of formal
-%%%      language.
-% Despite its decidedly linguistic roots, we argue that CG is interesting to look
-% at also from a computational perspective.
-%%% WEN: So basically you're saying ``we decided to have an academic wank'' it
-%%%      was definitely great. ^^
-For those theoretically inclined, describing the expressivity of a new language
-formalism might be a reward onto itself. 
-%%% WEN: This is, like, a super weak claim. xD
-However, even the more practical reader could appreciate that a better
-understanding of a formalism can lead to novel uses and implementation
-techniques. 
-%%% WEN: Maybe we could take some of these hopes expressed in the following
-%%%      sentence, and rephrase them as novel uses and implementation techniques
-%%%      to satisfy our more practical readers? For instance, we could hint at a
-%%%      future version of your CGexp library which could be used to
-%%%      automatically generate CG code which disambiguates based on some
-%%%      regular expressions? You may be the better person to phrase this
-%%%      though. But I'll have a go:
-For instance, we hope that the \texttt{cgexp} tool, described in later sections
-of this paper, could eventually be developed to generate human-readable CG code
-which to disambiguate pharses based on regular expressions or a
-context-free grammar. 
-% ... hope to create new ways to reason about reductionistic grammar formalisms. 
-
-%%% Screw introductions, that's a pretty good abstract ^^
-
-\section{Introduction}
 %%% WEN: Tell the world what CG is! ^^
 The standard measure of formal languages is the Chomsky hierarchy~\cite{chomsky1956hierarchy}, with its four
 classes of grammars and languages, in order from most expressive to least expressive:
@@ -94,12 +101,19 @@ recursively enumerable (Type 0), context-sensitive (Type 1), context-free (Type 
 regular (Type 3).
 The notion of expressive power, ``which constructs can we express in the language'', is coupled with parsing complexity, ``how much time and memory do we need to parse sentences in the language''; more expressive power corresponds to greater parsing complexity.
 
-Previous work covers the expressivity of single rules, such as \texttt{IF (NOT 1* Verb OR Noun)}: just seeing this contextual test hints that we can express a subset of regular languages that contains at least disjunction, complement and Kleene star. 
-\newcite{tapanainen1999phd} gives a precise definition of the expressivity of a single rule for 4 different constraint formalisms. In addition, parsing complexity can be easily defined for a given variant and implementation of CG; see for instance \newcite{nemeskey14}.
+Previous work covers the expressivity of single rules, such as \texttt{IF (NOT 1* Verb OR Noun)}: 
+just seeing this contextual test hints that we can express a subset of 
+regular languages that contains at least disjunction, complement and Kleene star. 
+\newcite{tapanainen1999phd} gives an account of the expressivity of 
+a single rule for 4 different constraint formalisms. In addition, parsing 
+complexity can be easily defined for a given variant and implementation of CG; 
+see for instance \newcite{nemeskey14}.
 
 However, the expressivity of the whole grammar is harder to define. 
-A given grammar in CG does not describe a language, but a \emph{relation} between an input language and an output language. 
-In the following section, we introduce our approach to emulating generation, and in the rest of the paper, we present some preliminary results.
+A given grammar in CG does not describe a language, but a \emph{relation} 
+between an input language and an output language. In the following section, 
+we introduce our approach to emulating generation, and in the rest of the 
+paper, we present some preliminary results.
 
 \section{Expressivity of a grammar}
 
@@ -183,15 +197,13 @@ $\Sigma$ stands for maximally ambiguous \emph{word cohorts}, and $S$ for maximal
 For example, a sequence with two transitions would be modelled with the following 
 sentence \maxAmbFSA{2}, with two word cohorts:
 
-\begin{table}[h]
-\centering
+
 \begin{tabular}{lllll}
       \swf    &    \wwf      &      \swf      &     \wwf      &     \swf     \\
  ~~~~~~\t{s1} & ~~~~\t{det}  &  ~~~~\t{ s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}  \\
  ~~~~~~\t{s2} & ~~~~\t{adj}  &  ~~~~\t{ s2}   &  ~~~~\t{adj}  &  ~~~~\t{s2}  \\
               & ~~~~\t{noun} &                &  ~~~~\t{noun} &  
 \end{tabular}
-\end{table}
 
 
 The rules of the grammar disambiguate both word cohorts and state cohorts.
@@ -261,7 +273,7 @@ this is the closest we could get in CG output:
 If our alphabet consists of anything more than $\{a,b\}$, at least all the other 
 readings would be removed. But CG cannot express the disjunction any further---the 
 description ``either $ab$ or $ba$'' is translated into a coarser description:
- ``the first character may be either $a$ or $b$, and the second character may be either $a$ or $b$''.
+``the first character may be either $a$ or $b$, and the second character may be either $a$ or $b$''.
 
 Another option would be to return a set of CGs: one that disambiguates any input
 into $ab$ and other that disambiguates into $ba$. But this is just speculation, 
