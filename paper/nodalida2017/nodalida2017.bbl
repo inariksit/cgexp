@@ -1,0 +1,49 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citename{Chomsky}1956]{chomsky1956hierarchy}
+Noam Chomsky.
+\newblock 1956.
+\newblock Three models for the description of language.
+\newblock {\em {IRE} Transactions on Information Theory}, 2(3):113--124,
+  September.
+
+\bibitem[\protect\citename{Karlsson \bgroup et al.\egroup
+  }1995]{karlsson1995constraint}
+Fred Karlsson, Atro Voutilainen, Juha Heikkil{\"{a}}, and Arto Anttila.
+\newblock 1995.
+\newblock {\em {Constraint Grammar}: a language-independent system for parsing
+  unrestricted text}, volume~4.
+\newblock Walter de Gruyter.
+
+\bibitem[\protect\citename{Koskenniemi}1990]{koskenniemi90}
+Kimmo Koskenniemi.
+\newblock 1990.
+\newblock Finite-state parsing and disambiguation.
+\newblock In {\em Proceedings of 13th International Conference on Computational
+  Linguistics (COLING 1990)}, volume~2, pages 229--232, Stroudsburg, PA, USA.
+  Association for Computational Linguistics.
+
+\bibitem[\protect\citename{Lager and Nivre}2001]{lager_nivre01}
+Torbj{\"{o}}rn Lager and Joakim Nivre.
+\newblock 2001.
+\newblock {Part of speech tagging from a logical point of view}.
+\newblock In {\em {Logical Aspects of Computational Linguistics, 4th
+  International Conference (LACL 2001)}}, pages 212--227.
+
+\bibitem[\protect\citename{Nemeskey \bgroup et al.\egroup }2014]{nemeskey14}
+D\'{a}vid~M\'{a}rk Nemeskey, Francis Tyers, and Mans Hulden.
+\newblock 2014.
+\newblock Why implementation matters: Evaluation of an open-source constraint
+  grammar parser.
+\newblock In {\em Proceedings of the 25th International Conference on
+  Computational Linguistics (COLING 2014)}, pages 772--780, Dublin, Ireland,
+  August.
+
+\bibitem[\protect\citename{Tapanainen}1999]{tapanainen1999phd}
+Pasi Tapanainen.
+\newblock 1999.
+\newblock {\em Parsing in two frameworks: Finite-state and Functional
+  dependency grammar}.
+\newblock {Ph.D.} thesis, {University of Helsinki}.
+
+\end{thebibliography}
