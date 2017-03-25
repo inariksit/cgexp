@@ -166,17 +166,17 @@ The grammar that accepts this language is simply \texttt{SELECT (a)}.
 \begin{figure}[h]
   \centering
     \includegraphics[width=0.4\textwidth]{chomsky.png}
-  \caption{One possibility for the coverage of CG.}
-  %{A (hypothetical) formalism that does not correspond to any single category in Chomsky hierarchy,
-  % but covers some languages in regular, some in context-free and some in context-sensitive class.}
+  \caption{Lower bound for the expressivity of CG.}
  \label{fig:nocorr}
 \end{figure}
 
 
 \section{CG is beyond regular}
 
-In this section, we demonstrate some non-regular languages that can be expressed in CG.
-Due to space limitations, we describe only the rough outlines of the grammars.
+In this section, we demonstrate some non-regular languages 
+that can be expressed in CG.\footnote{More specifically, a subset that consists of
+the operations \t{REMOVE, SECTION, IF, OR, NOT}.}
+Due to space limitations, we describe only the rough outlines.
 
 \subsection{Example grammar: $a^nb^n$ }
 
@@ -213,7 +213,7 @@ Rather than enumerating individual grammars for a given class, we need a method
 that can transform all languages in that class into CG.
 
 
-We present a method to transform arbitrary finite-state automata into CG.
+We present a method to transform arbitrary finite-state automata into CG.\footnote{A subset which includes \t{LINK}, \t{NEGATE} and \t{TEMPLATE}, in addition to the previous.}
 Figure~\ref{fig:fsa} presents an example automaton, with $\Sigma = \{$\emph{det,adj,noun}$\}$,
 for which we implement a corresponding CG as follows.
 
@@ -282,9 +282,8 @@ As a chain reaction, the whole sentence gets eventually disambiguated.
 
 \subsection{Disjunction}
 
-One obvious flaw is the lack of disjunction in CG. Consider the regular 
-language with two strings $\{ab,ba\}$. Given \maxAmb{2} for any $\Sigma$,
-this is the closest we could get in CG output:
+Consider the regular language with two strings $\{ab,ba\}$. 
+Given \maxAmb{2} for any $\Sigma$, this is the closest we could get in CG output:
 
 \begin{table}[h]
 \begin{tabular}{l l}
@@ -295,10 +294,10 @@ this is the closest we could get in CG output:
 \end{tabular}
 \end{table}
 
-
-If our alphabet consists of anything more than $\{a,b\}$, at least all the other 
-readings would be removed. But CG cannot express the disjunction any further---the 
-description ``either $ab$ or $ba$'' is translated into a coarser description:
+As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
+Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent this language
+faithfully, CG substitutes uncertainty on the sentence level (``either $ab$ or $ba$'')
+with uncertainty in the cohorts:
 ``the first character may be either $a$ or $b$, and the second character may be either $a$ or $b$''.
 
 An alternative would be to model languages with disjunction as a set of CGs: 
