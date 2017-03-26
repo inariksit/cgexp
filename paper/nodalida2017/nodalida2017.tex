@@ -7,6 +7,7 @@
 \usepackage{graphicx}
 \usepackage{url}
 \usepackage{latexsym}
+\usepackage{listings}
 \special{papersize=210mm,297mm} 
 
 \title{Exploring the Expressivity of Constraint Grammar}
@@ -119,50 +120,38 @@ paper, we present some preliminary results.
 
 \section{Expressivity of a grammar}
 
-We view a constraint grammar as a formal language $\mathcal{L}$, generated over an 
-alphabet $\Sigma$. We generate the strings in our language by passing
-``maximally ambiguous strings'' of every length to the grammar. 
-%%% WEN: This section is misleading. If we were to talk about the language a*b*,
-%%%      and we pass in \maxAmb{n} over $\{a,b\}$, then we get back \maxAmb{n}.
-%%%      However, this also contains, as possible strings, abab..abab, which is
-%%%      definitely not in the language a*b*.
-With maximally ambiguous, we mean those strings where each cohort contains the 
-entire alphabet, which we write as \maxAmb{n}. 
-A constraint grammar is said to accept a string $w$ of length $n$ if, 
-when we pass \maxAmb{n} as an input to the CG,
-$w$ is one of the possible interpretations of its output.
+For this paper, we will view a constraint grammar CG as generating a formal
+language $\mathcal{L}$ over an alphabet $\Sigma$ as follows:
+A constraint grammar CG rejects a word $w \in \Sigma^\star$ if, when we encode
+the word as a sequence of cohorts, and pass it through the CG, we get back the
+dedicated rejection symbol \texttt{REJECT}. A constraint grammar CG accepts a
+word $w \in \Sigma^\star$ if it does not reject it.
 
-For example, consider the language $a*$ over $\Sigma = \{a,b\}$,
-shown in Figure~\ref{fig:astar}.
-%The initial sentence consists of cohorts with two readings, $a$ and $b$, and the disambiguated sentence has only cohorts with a single reading, $a$. 
-The grammar that accepts this language is simply \texttt{SELECT (a)}.
+As an example, consider the language $a*$ over $\Sigma = \{a,b\}$. This language
+can be encoded as a constraint grammar as \texttt{ADDCOHORT ("<REJECT>") BEFORE >>> IF (1* B)}.
 
-\def\wwf{\t{"<w>"}}
-\def\swf{\t{"<s>"}}
-\def\alm{\t{"a" a}~~~~~~}
-\def\blm{\t{"b" b}~~~~~~}
-
-\begin{figure}[h]
-\centering
-
-%\begin{tabular}{cl @{\hspace{2cm}} rl}
-\begin{tabular}{cl |  rl}
-\multicolumn{2}{c|}{\textbf{Input}} & \multicolumn{2}{c}{\textbf{Output}} \\ \hline
-
-\wwf  &        &  \wwf &        \\
-         & \alm  &          & \alm  \\
-         & \blm  &          &        \\
-\wwf  &        &  \wwf &        \\
-         & \alm  &          & \alm  \\
-         & \blm  &          &        \\
-\wwf  &        &  \wwf &        \\
-         & \alm  &          & \alm  \\
-         & \blm  &          &        \\
-\end{tabular}
-
-\caption{Language $a*$ for input \maxAmb{3}.}
-\label{fig:astar}
-\end{figure}
+%\def\wwf{\t{"<w>"}}
+%\def\swf{\t{"<s>"}}
+%\def\alm{\t{"a" a}~~~~~~}
+%\def\blm{\t{"b" b}~~~~~~}
+%\begin{figure}[h]
+%  \centering
+%  \begin{tabular}{cl|rl}
+%    \multicolumn{2}{c|}{\textbf{Input}}  &
+%    \multicolumn{2}{c|}{\textbf{Output}} \\ \hline
+%    \wwf  &       & \wwf  &      \\
+%          & \alm  &       & \alm \\
+%          & \blm  &       &      \\
+%    \wwf  &       &  \wwf &      \\
+%          & \alm  &       & \alm \\
+%          & \blm  &       &      \\
+%    \wwf  &       &  \wwf &      \\
+%          & \alm  &       & \alm \\
+%          & \blm  &       &      \\
+%  \end{tabular}
+%  \caption{Language $a*$ for input \maxAmb{3}.}
+%  \label{fig:astar}
+%\end{figure}
 
 
 

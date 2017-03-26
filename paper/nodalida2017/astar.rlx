@@ -1,0 +1,15 @@
+DELIMITERS = "<.>";
+
+LIST A = "a";
+LIST B = "b";
+LIST >>> = "^";
+LIST <<< = "$";
+SET ANY = A OR B;
+SET NOT_OK = B;
+
+BEFORE-SECTIONS
+REMOVE >>> (-1 ANY)
+REMOVE <<< ( 1 ANY)
+
+# check if the input is in a*
+ADDCOHORT ("<REJECT>") BEFORE >>> IF (1* NOT_OK);
