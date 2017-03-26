@@ -167,13 +167,13 @@ The CG operates as follows:
   rest is handled with rules of the form \t{REMOVE even IF (NOT -1 odd)}. If the
   last cohort is odd, then discard the sentence. Otherwise continue\dots
 \item
-  Disambiguate the edges. The first one is certainly $a$ and last is certainly
-  $b$\dots
+  Disambiguate the edges. The first cohort is certainly $a$ and last is
+  certainly $b$\dots
 \item
-  Disambiguate the second as $a$ and second-to-last as $b$, the third as $a$ and
-  third-to-last as $b$, etc, until the two ends meet in the middle. If every
-  \t{"<a>"} is marked with \t{"opt\_a"}, and every \t{"<b>"} with \t{"opt\_b"},
-  we accept. Otherwise, we reject. 
+  Disambiguate the second cohort as $a$ and second-to-last as $b$, the third as
+  $a$ and third-to-last as $b$, etc, until the two ends meet in the middle. If
+  every \t{"<a>"} is marked with \t{"opt\_a"}, and every \t{"<b>"} with
+  \t{"opt\_b"}, we accept. Otherwise, we reject.  
 \end{enumerate}
 
 \subsection{Example grammar: $a^nb^nc^n$}
