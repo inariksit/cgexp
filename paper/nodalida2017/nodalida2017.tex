@@ -158,8 +158,8 @@ This CG uses the hidden alphabet \{\t{odd}, \t{even}, \t{>>>}, \t{<<<}\footnote{
   Therefore, whichever is chosen does not matter for the expressivity.
 }, \t{opt\_a}, \t{opt\_b}\}.
 These symbols mean that the cohort they are attached to is in an even or odd
-position, in first or last position, or that $a$ or $b$ is a legal option for
-this cohort. 
+position, in first or last position, and that $a$ or $b$ is a legal option for
+this cohort, respectively. 
 The CG operates as follows:
 \begin{enumerate}
 \item
@@ -175,6 +175,8 @@ The CG operates as follows:
   every \t{"<a>"} is marked with \t{"opt\_a"}, and every \t{"<b>"} with
   \t{"opt\_b"}, we accept. Otherwise, we reject.  
 \end{enumerate}
+The language $a^nb^n$ is context-free, and therefore CG must at least partly
+overlap with the context-free languages.
 
 \subsection{Example grammar: $a^nb^nc^n$}
 
@@ -187,7 +189,8 @@ If this ends with all \t{"<a>"}s marked with \t{"opt\_a"}, all \t{"<b>"}s marked
 with \t{"opt\_b"}, and all \t{"<c>"}s marked with \t{"opt\_c"}, we accept.
 Otherwise, we reject.
 
- 
+The language $a^nb^nc^n$ is context-sensitive, and therefore CG must at least
+partly overlap with the context-sensitive languages. 
 
 
 \section{Are all regular languages in CG?}
