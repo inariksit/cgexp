@@ -9,6 +9,8 @@
 \usepackage{latexsym}
 \usepackage{listings}
 \special{papersize=210mm,297mm} 
+\def\wwf{\t{"<w>"}}
+\def\swf{\t{"<s>"}}
 
 \title{Exploring the Expressivity of Constraint Grammar}
 
@@ -30,61 +32,14 @@
 \maketitle
 
 \begin{abstract}
-  %%% WEN: Yeah, I realise more has to go here ^^
   We believe that for any formalism which has its roots in linguistics, it is a
-  natural question to ask ``how expressive is it?''
-  Therefore, in this paper, we begin to address the question of the expressivity
-  of CG. 
-  % For those theoretically inclined, describing the expressivity of a new language
-  % formalism is a reward onto itself. 
-  % However, even the more practical reader could appreciate that a better
-  % understanding of a formalism can lead to novel uses and implementation
-  % techniques. 
-  Aside from the obvious theoretical interest, we envision also practical benefits.
-  For instance, we hope that the \texttt{cgexp} tool, described in later sections
-  of this paper, could eventually be developed to generate human-readable CG code
-  from regular expressions or a context-free grammar. 
-
+  natural question to ask ``how expressive is it?'' Therefore, in this paper, we
+  begin to address the question of the expressivity of CG.
+  Aside from the obvious theoretical interest, we envision also practical
+  benefits. For instance, we hope that the \texttt{cgexp} tool, described in
+  later sections of this paper, could eventually be developed to generate
+  human-readable CG code from regular expressions or a context-free grammar. 
 \end{abstract}
-
-% \section{Introduction}
-
-% We believe that for any formalism which has its roots in linguistics, it is a
-% natural question to ask ``how expressive is it?''
-% Therefore, in this paper, we begin to address the question of the expressivity
-% of CG. 
-% %%% WEN: We are OBLIGED to make the point here---or at very least NOT too far
-% %%%      into the paper---that this question has an obvious answer. There is a
-% %%%      command that allows you to call an arbitrary process, so it is
-% %%%      obviously Turing complete. However, what we are interested in is how
-% %%%      expressive the separate COMMANDS in CG are. What can we do with just
-% %%%      REMOVE---the most common CG command? What can we do if we allow
-% %%%      ourselves the use of REMOVE and some other command? Etc.
-% %%% WEN: I'd say it's interesting to look at the formal language aspects BECAUSE
-% %%%      it's a linguistic tool and therefore comes from a tradition of formal
-% %%%      language.
-% % Despite its decidedly linguistic roots, we argue that CG is interesting to look
-% % at also from a computational perspective.
-% %%% WEN: So basically you're saying ``we decided to have an academic wank'' it
-% %%%      was definitely great. ^^
-% For those theoretically inclined, describing the expressivity of a new language
-% formalism is a reward onto itself. 
-% %%% WEN: This is, like, a super weak claim. xD
-% However, even the more practical reader could appreciate that a better
-% understanding of a formalism can lead to novel uses and implementation
-% techniques. 
-% %%% WEN: Maybe we could take some of these hopes expressed in the following
-% %%%      sentence, and rephrase them as novel uses and implementation techniques
-% %%%      to satisfy our more practical readers? For instance, we could hint at a
-% %%%      future version of your CGexp library which could be used to
-% %%%      automatically generate CG code which disambiguates based on some
-% %%%      regular expressions? You may be the better person to phrase this
-% %%%      though. But I'll have a go:
-% For instance, we hope that the \texttt{cgexp} tool, described in later sections
-% of this paper, could eventually be developed to generate human-readable CG code
-% which disambiguates phrases based on regular expressions or a context-free grammar. 
-
-% %%% Screw introductions, that's a pretty good abstract ^^
 
 \section{Introduction and previous work}
 
@@ -92,69 +47,92 @@ CG~\cite{karlsson1995constraint} was born as a practical, rather than formal,
 approach to NLP. 
 Since the beginning, its authors do not envision it as a tool for 
 generating strings, only for analysing and disambiguating them.
-%%% WEN: Well, I'm giving the sentence above purpose here:
 It is for these reasons, we believe, that the question of the expressivity of CG
 as a generative formalism went unasked and unanswered for so long.
-%%% WEN: ^Is this actually true? Or have folks looked into this before?^
 
-%%% WEN: Tell the world what CG is! ^^
-The standard measure of formal languages is the Chomsky hierarchy~\cite{chomsky1956hierarchy}, with its four
-classes of grammars and languages, in order from most expressive to least expressive:
-recursively enumerable (Type 0), context-sensitive (Type 1), context-free (Type 2), and
-regular (Type 3).
-The notion of expressive power, ``which constructs can we express in the language'', is coupled with parsing complexity, ``how much time and memory do we need to parse sentences in the language''; more expressive power corresponds to greater parsing complexity.
+The standard measure of formal languages is the Chomsky
+hierarchy~\cite{chomsky1956hierarchy}, with its four classes of grammars and
+languages, in order from most expressive to least expressive: recursively
+enumerable (Type 0), context-sensitive (Type 1), context-free (Type 2), and
+regular (Type 3). The notion of expressive power, ``which constructs can we
+express in the language'', is coupled with parsing complexity, ``how much time
+and memory do we need to parse sentences in the language''; more expressive
+power corresponds to greater parsing complexity.
 
-Previous work covers the expressivity of single rules, such as \texttt{IF (NOT 1* Verb OR Noun)}: 
-just seeing this contextual test hints that we can express a subset of 
-regular languages that contains at least disjunction, complement and 
-Kleene star. \newcite{tapanainen1999phd} gives an account of the expressivity of 
-a single rule for 4 different constraint formalisms. In addition, parsing 
-complexity can be easily defined for a given variant and implementation of CG; 
+
+Previous work covers the expressivity of single rules, such as \texttt{IF (NOT
+  1* Verb OR Noun)}: just seeing this contextual test hints that we can express
+a subset of regular languages that contains at least disjunction, complement and
+Kleene star. \newcite{tapanainen1999phd} gives an account of the expressivity of
+a single rule for 4 different constraint formalisms. In addition, parsing
+complexity can be easily defined for a given variant and implementation of CG;
 see for instance \newcite{nemeskey14}.
 
-However, the expressivity of the whole grammar is harder to define. 
-A given grammar in CG does not describe a language, but a \emph{relation} 
-between an input language and an output language. In the following section, 
-we introduce our approach to emulating generation, and in the rest of the 
-paper, we present some preliminary results.
+In the following section, we discuss our approach to CG as a formal language.
+Then, in the remainder or this paper, we discuss a number of preliminary
+results.
 
-\section{Expressivity of a grammar}
+\section{Expressivity of a constraint grammar}
 
 For this paper, we will view a constraint grammar CG as generating a formal
 language $\mathcal{L}$ over an alphabet $\Sigma$ as follows:
 A constraint grammar CG rejects a word $w \in \Sigma^\star$ if, when we encode
 the word as a sequence of cohorts, and pass it through the CG, we get back the
-dedicated rejection symbol \texttt{REJECT}. A constraint grammar CG accepts a
-word $w \in \Sigma^\star$ if it does not reject it.
+dedicated rejection cohort \texttt{<REJECT>}. A constraint grammar CG accepts a
+word $w \in \Sigma^\star$ if it does not reject it. 
 
 As an example, consider the language $a*$ over $\Sigma = \{a,b\}$. This language
-can be encoded as a constraint grammar as \texttt{ADDCOHORT ("<REJECT>") BEFORE >>> IF (1* B)}.
+can be encoded as a constraint grammar as in Figure~\ref{fig:astar}. We then
+encode the input as cohorts (e.g.\ \t{"<a>"}, \t{"<b>"}), and run the grammar.
+See Figure~\ref{fig:astario} for two example runs.
 
-\def\wwf{\t{"<w>"}}
-\def\swf{\t{"<s>"}}
-%\def\alm{\t{"a" a}~~~~~~}
-%\def\blm{\t{"b" b}~~~~~~}
-%\begin{figure}[h]
-%  \centering
-%  \begin{tabular}{cl|rl}
-%    \multicolumn{2}{c|}{\textbf{Input}}  &
-%    \multicolumn{2}{c|}{\textbf{Output}} \\ \hline
-%    \wwf  &       & \wwf  &      \\
-%          & \alm  &       & \alm \\
-%          & \blm  &       &      \\
-%    \wwf  &       &  \wwf &      \\
-%          & \alm  &       & \alm \\
-%          & \blm  &       &      \\
-%    \wwf  &       &  \wwf &      \\
-%          & \alm  &       & \alm \\
-%          & \blm  &       &      \\
-%  \end{tabular}
-%  \caption{Language $a*$ for input \maxAmb{3}.}
-%  \label{fig:astar}
-%\end{figure}
+\begin{figure}[h]
+  \begin{lstlisting}
+    LIST A = "<a>";
+    LIST B = "<b>";
+    SET LETTER = A OR B;
+    ADDCOHORT ("<REJECT>")
+      BEFORE LETTER 
+      IF (-1 (>>>) LINK 1* B);
+    REMCOHORT LETTER
+      IF (-1* ("<REJECT>"));
+  \end{lstlisting}
+  \caption{A constraint grammar which generates the language $a^\star$.}
+  \label{fig:astar}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \begin{tabular}{c|c}
+    \textbf{Input} & \textbf{Output} \\ \hline
+    \t{"<a>"}      & \t{"<REJECT>"} \\
+    \t{"<a>"}      \\
+    \t{"<b>"}      \\ \hline
+    \t{"<a>"}      & \t{"<a>"} \\
+    \t{"<a>"}      & \t{"<a>"} \\
+    \t{"<a>"}      & \t{"<a>"}
+  \end{tabular}
+  \caption{Examples of input and output for the grammar in
+    Figure~\ref{fig:astar}.}  
+  \label{fig:astario}
+\end{figure}
 
 
+\section{A lower bound for CG}
 
+It should be noted that vislcg3 supports commands such as \t{EXTERNAL}, which
+runs an external executable. It should therefore be obvious that the complete
+set of CG3 commands, at least theoretically, can generate any recursively
+enumerable language. For this reason, we restrict ourselves to a subset of the
+commands permitted by CG.
+
+In this section, we will only use the \t{REMOVE} command with sections, in
+addition to a single use of the \t{ADDCOHORT} command to add the special cohort
+\t{"<REJECT>"}, and a single use of the \t{REMCOHORT} command to clean up
+afterwards. 
+We show that, using only these commands, CG is capable of generating some
+context-free and context-sensitive languages, which establishes a lower bound on 
+the expressivity of CG (see Figure~\ref{fig:nocorr}).
 
 \begin{figure}[h]
   \centering
@@ -163,38 +141,53 @@ can be encoded as a constraint grammar as \texttt{ADDCOHORT ("<REJECT>") BEFORE 
   \label{fig:nocorr}
 \end{figure}
 
-
-\section{CG is beyond regular}
-
-In this section, we demonstrate some non-regular languages 
-that can be expressed in CG.\footnote{More specifically, a subset that consists of
-the operations \t{REMOVE, SECTION, IF, OR, NOT}.}
-Due to space limitations, we describe only the rough outlines.
-
 \subsection{Example grammar: $a^nb^n$ }
 
-We can express the language $a^nb^n$ as a CG which disambiguates
-any \maxAmb{{2n}} into $\langle a \rangle_n \langle b \rangle_n$.
-In addition, we allow ourselves a hidden alphabet of helper readings, 
-$\Sigma^{\prime} = \{\t{even}, \t{odd}, \t{>>>}, \t{<<<}, \t{opt\_a}, \t{opt\_b}\}$. 
-%In this \maxAmbCFG{{m}}, 
-Every cohort starts off with full $\Sigma$ and $\Sigma^{\prime}$.
-The process goes as follows:
-\begin{itemize}
-\item Check if the sentence has an even number of cohorts. We know the first cohort
-      is odd, and the rest is handled with rules of the form \t{REMOVE even IF (NOT -1 odd)}.
-      If the last cohort is odd, then discard the sentence; otherwise continue.
-\item Disambiguate edges: first one is certainly $a$ and last is certainly $b$.
-\item Grow $a$s and $b$s until they meet in the middle. The disambiguation is done in two 
-      passes, first removing the helper reading \t{opt\_a}, and then selecting the main reading $a$.
-\end{itemize}
+Below, we briefly describe the CG which generates the language $a^nb^n$.
+This CG is defined over the alphabet $\Sigma$, in addition to a hidden alphabet
+$\Sigma^\prime$. These hidden symbols are meant to serve as a simple form of
+memory. When we encode our input words, we tag each cohort with \emph{every}
+symbol in the hidden alphabet\footnote{
+  This can be implemented in CG using the \t{ADD} command.
+  Our approach, however, is more restricted. 
+} (e.g. \t{"<a>" "opt\_a" "opt\_b"}).
+
+This CG uses the hidden alphabet \{\t{odd}, \t{even}, \t{>>>}, \t{<<<}\footnote{
+  These \emph{can} be the magic begin and end tags provided by CG, however, they
+  can also be implemented using two hidden symbols and the \t{REMOVE} command.
+  Therefore, whichever is chosen does not matter for the expressivity.
+}, \t{opt\_a}, \t{opt\_b}\}.
+These symbols mean that the cohort they are attached to is in an even or odd
+position, in first or last position, or that $a$ or $b$ is a legal option for
+this cohort. 
+The CG operates as follows:
+\begin{enumerate}
+\item
+  Is the number of characters even? We know the first cohort is odd, and the
+  rest is handled with rules of the form \t{REMOVE even IF (NOT -1 odd)}. If the
+  last cohort is odd, then discard the sentence. Otherwise continue\dots
+\item
+  Disambiguate the edges. The first one is certainly $a$ and last is certainly
+  $b$\dots
+\item
+  Disambiguate the second as $a$ and second-to-last as $b$, the third as $a$ and
+  third-to-last as $b$, etc, until the two ends meet in the middle. If every
+  \t{"<a>"} is marked with \t{"opt\_a"}, and every \t{"<b>"} with \t{"opt\_b"},
+  we accept. Otherwise, we reject. 
+\end{enumerate}
 
 \subsection{Example grammar: $a^nb^nc^n$}
 
-We can extend the previous approach to write a grammar that accepts $a^nb^nc^n$.
-We use three counting symbols, three \t{opt\_X} symbols, and initially we disambiguate
-the two edges and the middle. The result is the same: any \maxAmb{{3n}} gets disambiguated
-into $\langle a \rangle_n \langle b \rangle_n \langle c \rangle_n$.
+We can extend the approach used in the previous grammar to write a gramma which
+accepts $a^nb^nc^n$. Essentially, we can adapt the above grammar to find the
+middle of any input string. Once we have the middle, we can ``grow'' $a$s from
+the top and $b$s up from the middle, and $b$s down from the middle and $c$s up
+from the bottom, until we divide the input into three even chunks.
+If this ends with all \t{"<a>"}s marked with \t{"opt\_a"}, all \t{"<b>"}s marked
+with \t{"opt\_b"}, and all \t{"<c>"}s marked with \t{"opt\_c"}, we accept.
+Otherwise, we reject.
+
+ 
 
 
 \section{Are all regular languages in CG?}
