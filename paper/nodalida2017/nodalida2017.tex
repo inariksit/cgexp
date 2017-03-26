@@ -120,10 +120,14 @@ paper, we present some preliminary results.
 \section{Expressivity of a grammar}
 
 We view a constraint grammar as a formal language $\mathcal{L}$, generated over an 
-alphabet $\Sigma$. We generate the strings in our language by passing \emph{maximally 
-ambiguous strings} of every length to the grammar. 
+alphabet $\Sigma$. We generate the strings in our language by passing
+``maximally ambiguous strings'' of every length to the grammar. 
+%%% WEN: This section is misleading. If we were to talk about the language a*b*,
+%%%      and we pass in \maxAmb{n} over $\{a,b\}$, then we get back \maxAmb{n}.
+%%%      However, this also contains, as possible strings, abab..abab, which is
+%%%      definitely not in the language a*b*.
 With maximally ambiguous, we mean those strings where each cohort contains the 
-entire alphabet, written as \maxAmb{n}. 
+entire alphabet, which we write as \maxAmb{n}. 
 A constraint grammar is said to accept a string $w$ of length $n$ if, 
 when we pass \maxAmb{n} as an input to the CG,
 $w$ is one of the possible interpretations of its output.
@@ -204,7 +208,7 @@ the two edges and the middle. The result is the same: any \maxAmb{{3n}} gets dis
 into $\langle a \rangle_n \langle b \rangle_n \langle c \rangle_n$.
 
 
-\section{Is CG regular?}
+\section{Are all regular languages in CG?}
 
 Is CG in any particular category? It clearly covers some regular, context-free
 and context-sensitive languages, but it may just have a common subset with those 
