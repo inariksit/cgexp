@@ -274,27 +274,30 @@ can take action---the context ``\t{s2} on the left side and \t{s1} on the right 
 may be broken by removing either \t{s2} or \t{s1}.
 
 If there is only one allowed string of length $n$ in the language, 
-then the result will have only one \t{opt\_POS} reading per cohort,
-and we proceed to check whether the original word forms correspond to those:
-\t{"<det>"} for \t{opt\_det}, and so on.
+then the result should have only one \t{opt\_POS} reading per cohort,
+and we proceed to check whether they correspond to the original word forms \t{"<POS>"}: 
+if \t{opt\_det} is the only reading, the word form must be \t{"<det>"}, and so on.
 
-If there are multiple strings of the same length, we'll have to lax our criteria:
-as long as there is a corresponding \t{opt\_POS} in the cohort, such as
- \t{"<det>"} and \{\t{opt\_det}, \t{opt\_adj}\}, we accept the string.
+If there are multiple strings of the same length, we'll have to relax our criteria:
+if every \t{"<POS>"} has a corresponding \t{opt\_POS} in the set of remaining readings, 
+such as \t{"<det>"} and \{\t{opt\_det}, \t{opt\_adj}\}, we accept the string.
 
 \subsection{Disjunction}
 
-% Consider the regular language with two strings $\{ab,ba\}$. 
-% Given \maxAmb{2} for any $\Sigma$, this is the closest we could get in CG output:
+Consider the regular language with two strings $\{ab,ba\}$. 
+With the previously described approach, this is the closest we could get in CG output:
 
-% \begin{table}[h]
-% \begin{tabular}{r|r}
 
-%  \t{"<a>"}    &    \t{"<b>"}  \\ \hline
-%   \t{opt\_a}  &  \t{opt\_a}  \\
-%   \t{opt\_b}  &  \t{opt\_b}
-% \end{tabular}
-% \end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{c|c|c|c|c}
+   \swf   &   \t{"<a>"}  &  \swf      & \t{"<b>"}    &  \swf     \\ \hline
+  \h{...}  & \t{opt\_a} &  \h{...}    &  \t{opt\_a}  &  \h{...} \\ 
+           & \t{opt\_b} &             &  \t{opt\_b}  &            
+
+\end{tabular}
+\end{table}
 
 As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
 Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent this language
@@ -302,11 +305,25 @@ faithfully, CG substitutes uncertainty on the sentence level (``either $ab$ or $
 with uncertainty in the cohorts:
 ``the first character may be either $a$ or $b$, and the second character may be either $a$ or $b$''.
 
-This may lead to trouble: consider, for instance, the regular languages (TODO: use Pepijn's example here)
+This will lead us to trouble quickly: the lax version,
+``accept if every \t{"<X>"} has a corresponding \t{opt\_X} in the readings'',
+would accept the strings $aa$ and $bb$, which obviously are not a part of the language.
 
-An alternative would be to model languages with disjunction as a set of CGs: 
-one that disambiguates any input into $ab$ and other that disambiguates 
-into $ba$. But this is just speculation, we have not investigated the idea further. 
+An alternative would be to model languages with disjunction as a set of CGs,
+in this case, one that generates only $ab$ and other that generates only $ba$;
+however, this would become extremely costly for anything more than a toy grammar.
+A solution to this problem---or a proof that there is no solution---is under development.
+
+%But this is just speculation, we have not investigated the idea further. 
+%This may lead to trouble, given the previous encoding.
+%Consider, for instance, the regular languages $a*b*$ and $(ab)*$.
+%For any length $> 2$, they accept different strings: 
+%$\{aaaa, aaab, \dots, bbbb\}$ and $\{abab\}$ have no common strings in them. 
+%For instance, given the language $a*b*$ and length 2, we would have 3 CGs,
+%generating the strings $aa$, $ab$ and $bb$.
+
+
+
 
 % The start and end states naturally correspond to the first and last state cohort 
 % in the \maxAmbFSA{n}, and can be trivially disambiguated, in this case both into \t{s1}.
