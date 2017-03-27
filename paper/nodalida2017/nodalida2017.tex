@@ -243,7 +243,7 @@ Thus the desired result shows both the accepted string and the path in the autom
 
 \begin{figure}[t]
   \centering
-    \includegraphics[width=0.7\linewidth]{fsa.png}
+    \includegraphics[width=0.6\linewidth]{fsa.png}
   \caption{A finite-state automaton describing the regular language \t{det (adj)* n}.}
  \label{fig:fsa}
 \end{figure}
@@ -251,15 +251,13 @@ Thus the desired result shows both the accepted string and the path in the autom
 
 \subsection{Disambiguation process}
 
-% We describe the process on a high level. We have a working implementation that
-% produces the rules for arbitrary automata, but the following is by no means a formal proof.
-
 Given that every transition happens between two states, and every state 
-has an incoming and outgoing transition, every rule needs no more than
-positions -1 and 1 in their contextual tests. 
-The semantics of the rules are ``remove a POS tag, if it is \emph{not} surrounded by allowed states'',
+has an incoming and outgoing transition, every rule needs only
+positions -1 and 1 in its contextual tests. 
+The semantics of the rules are ``remove an \t{opt\_POS} tag, if it is 
+\emph{not} surrounded by allowed states'',
 and ``remove a state, if it is \emph{not} surrounded by allowed transitions''.
-For the example automaton, the POS-rules are as follows.
+For the example automaton, the \t{opt\_POS}-rules are as follows.
 
 \begin{verbatim}
 REMOVE...
@@ -268,32 +266,43 @@ REMOVE...
    OptN   IF (NEGATE -1 S2 LINK 2 S1) ;
 \end{verbatim}
 
-The start and end states naturally correspond to the first and last state cohort 
-in the \maxAmbFSA{n}, and can be trivially disambiguated, in this case both into \t{s1}.
+The start and end states naturally correspond to the first and last state cohort, 
+%in the \maxAmbFSA{n}, 
+and can be trivially disambiguated, in this case both into \t{s1}.
 Once we remove a reading from either side of a cohort, some more rules 
 can take action---the context ``\t{s2} on the left side and \t{s1} on the right side''
 may be broken by removing either \t{s2} or \t{s1}.
-As a chain reaction, the whole sentence gets eventually disambiguated.
+
+If there is only one allowed string of length $n$ in the language, 
+then the result will have only one \t{opt\_POS} reading per cohort,
+and we proceed to check whether the original word forms correspond to those:
+\t{"<det>"} for \t{opt\_det}, and so on.
+
+If there are multiple strings of the same length, we'll have to lax our criteria:
+as long as there is a corresponding \t{opt\_POS} in the cohort, such as
+ \t{"<det>"} and \{\t{opt\_det}, \t{opt\_adj}\}, we accept the string.
 
 \subsection{Disjunction}
 
-Consider the regular language with two strings $\{ab,ba\}$. 
-Given \maxAmb{2} for any $\Sigma$, this is the closest we could get in CG output:
+% Consider the regular language with two strings $\{ab,ba\}$. 
+% Given \maxAmb{2} for any $\Sigma$, this is the closest we could get in CG output:
 
-\begin{table}[h]
-\begin{tabular}{r|r}
+% \begin{table}[h]
+% \begin{tabular}{r|r}
 
-  \t{"<a>"}    &    \t{"<b>"}  \\ \hline
-   \t{opt\_a}  &  \t{opt\_a}  \\
-   \t{opt\_b}  &  \t{opt\_b}
-\end{tabular}
-\end{table}
+%  \t{"<a>"}    &    \t{"<b>"}  \\ \hline
+%   \t{opt\_a}  &  \t{opt\_a}  \\
+%   \t{opt\_b}  &  \t{opt\_b}
+% \end{tabular}
+% \end{table}
 
 As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
 Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent this language
 faithfully, CG substitutes uncertainty on the sentence level (``either $ab$ or $ba$'')
 with uncertainty in the cohorts:
 ``the first character may be either $a$ or $b$, and the second character may be either $a$ or $b$''.
+
+This may lead to trouble: consider, for instance, the regular languages (TODO: use Pepijn's example here)
 
 An alternative would be to model languages with disjunction as a set of CGs: 
 one that disambiguates any input into $ab$ and other that disambiguates 
