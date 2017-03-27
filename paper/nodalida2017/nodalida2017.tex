@@ -24,6 +24,7 @@
 \date{\today}
 
 \def\t#1{\texttt{#1}}
+\def\hidden#1{{\tt \color{gray} #1}}
 \def\maxAmb#1{$\langle \Sigma \rangle_#1$}
 \def\maxAmbFSA#1{$\langle \Sigma,S \rangle_#1$}
 \def\maxAmbCFG#1{$\langle \Sigma,\Sigma^{\prime} \rangle_#1$}
@@ -150,7 +151,7 @@ memory. When we encode our input words, we tag each cohort with \emph{every}
 symbol in the hidden alphabet\footnote{
   This can be implemented in CG using the \t{ADD} command.
   Our approach, however, is more restricted. 
-} (e.g. \t{"<a>" "opt\_a" "opt\_b"}).
+} (e.g. \t{"<letter>"} \hidden{hidden$_1$} \dots \hidden{hidden$_n$}).
 
 This CG uses the hidden alphabet \{\t{odd}, \t{even}, \t{>>>}, \t{<<<}\footnote{
   These \emph{can} be the magic begin and end tags provided by CG, however, they
@@ -172,8 +173,8 @@ The CG operates as follows:
 \item
   Disambiguate the second cohort as $a$ and second-to-last as $b$, the third as
   $a$ and third-to-last as $b$, etc, until the two ends meet in the middle. If
-  every \t{"<a>"} is marked with \t{"opt\_a"}, and every \t{"<b>"} with
-  \t{"opt\_b"}, we accept. Otherwise, we reject.  
+  every \t{"<a>"} is marked with \t{opt\_a}, and every \t{"<b>"} with
+  \t{opt\_b}, we accept. Otherwise, we reject.  
 \end{enumerate}
 The language $a^nb^n$ is context-free, and therefore CG must at least partly
 overlap with the context-free languages.
@@ -185,8 +186,8 @@ accepts $a^nb^nc^n$. Essentially, we can adapt the above grammar to find the
 middle of any input string. Once we have the middle, we can ``grow'' $a$s from
 the top and $b$s up from the middle, and $b$s down from the middle and $c$s up
 from the bottom, until we divide the input into three even chunks.
-If this ends with all \t{"<a>"}s marked with \t{"opt\_a"}, all \t{"<b>"}s marked
-with \t{"opt\_b"}, and all \t{"<c>"}s marked with \t{"opt\_c"}, we accept.
+If this ends with all \t{"<a>"}s marked with \t{opt\_a}, all \t{"<b>"}s marked
+with \t{opt\_b}, and all \t{"<c>"}s marked with \t{opt\_c}, we accept.
 Otherwise, we reject.
 
 The language $a^nb^nc^n$ is context-sensitive, and therefore CG must at least
