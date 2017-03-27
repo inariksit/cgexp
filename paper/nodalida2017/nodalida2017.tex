@@ -202,19 +202,19 @@ partly overlap with the context-sensitive languages.
 
 \section{Are all regular languages in CG?}
 
-Is CG in any particular category? It clearly covers some regular, context-free
-and context-sensitive languages, but it may just have a common subset with those 
-classes, as in Figure~\ref{fig:nocorr}.
-Rather than enumerating individual grammars for a given class, we need a method 
-that can transform all languages in that class into CG.
+%Is CG in any particular category? It clearly covers some regular, context-free
+%and context-sensitive languages, but it may just have a common subset with those 
+%classes, as in Figure~\ref{fig:nocorr}.
+%Rather than enumerating individual grammars for a given class, we need a method 
+%that can transform all languages in that class into CG.
 
-
-We present a method to transform arbitrary finite-state automata into CG.\footnote{A subset which includes \t{LINK}, \t{NEGATE} and \t{TEMPLATE}, in addition to the previous.}
+In the present section, we propose a method to transform arbitrary finite-state automata into 
+CG.\footnote{A subset which includes \t{LINK}, \t{NEGATE} and \t{TEMPLATE}, in addition to the previous.}
 Figure~\ref{fig:fsa} presents an example automaton with $\Sigma = \{$\emph{det, adj, n}$\}$,
 for which we implement a corresponding CG as follows.
 
 As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det, opt\_adj, opt\_n}$\}$,
-and insert the full set to each cohort. 
+and insert the full set $\Sigma^{\prime}$ to each cohort as readings. 
 In addition, we introduce \emph{state cohorts}, which contain the full set $S = \{s_1, s_2\}$.
 For example, the sequence \emph{det n} would be modelled with the following sentence:
 
