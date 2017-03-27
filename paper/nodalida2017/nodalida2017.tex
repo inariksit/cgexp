@@ -37,7 +37,7 @@
   natural question to ask ``how expressive is it?'' Therefore, in this paper, we
   begin to address the question of the expressivity of CG.
   Aside from the obvious theoretical interest, we envision also practical
-  benefits. For instance, we hope that the \texttt{cgexp} tool, described in
+  benefits. For instance, we hope that the FSA$\rightarrow$CG conversion tool, described in
   later sections of this paper, could eventually be developed to generate
   human-readable CG code from regular expressions or a context-free grammar. 
 \end{abstract}
@@ -261,24 +261,26 @@ For the example automaton, the \t{opt\_POS}-rules are as follows.
 
 \begin{verbatim}
 REMOVE...
-   OptDet IF (NEGATE -1 S1 LINK 2 S2) ;
-   OptAdj IF (NEGATE -1 S2 LINK 2 S2) ;
-   OptN   IF (NEGATE -1 S2 LINK 2 S1) ;
+  OptDet IF (NEGATE -1 S1 LINK 2 S2) ;
+  OptAdj IF (NEGATE -1 S2 LINK 2 S2) ;
+  OptN   IF (NEGATE -1 S2 LINK 2 S1) ;
 \end{verbatim}
 
-The start and end states naturally correspond to the first and last state cohort, 
+\noindent The start and end states naturally correspond to the first and last state cohort, 
 %in the \maxAmbFSA{n}, 
 and can be trivially disambiguated, in this case both into \t{s1}.
 Once we remove a reading from either side of a cohort, some more rules 
 can take action---the context ``\t{s2} on the left side and \t{s1} on the right side''
 may be broken by removing either \t{s2} or \t{s1}.
+%As a chain reaction, the whole sentence gets disambiguated.
 
 If there is only one allowed string of length $n$ in the language, 
 then the result should have only one \t{opt\_POS} reading per cohort,
 and we proceed to check whether they correspond to the original word forms \t{"<POS>"}: 
 if \t{opt\_det} is the only reading, the word form must be \t{"<det>"}, and so on.
 
-If there are multiple strings of the same length, we'll have to relax our criteria:
+If there are multiple strings of the same length in the language,
+we have to relax our criteria:
 if every \t{"<POS>"} has a corresponding \t{opt\_POS} in the set of remaining readings, 
 such as \t{"<det>"} and \{\t{opt\_det}, \t{opt\_adj}\}, we accept the string.
 
@@ -313,14 +315,6 @@ An alternative would be to model languages with disjunction as a set of CGs,
 in this case, one that generates only $ab$ and other that generates only $ba$;
 however, this would become extremely costly for anything more than a toy grammar.
 A solution to this problem---or a proof that there is no solution---is under development.
-
-%But this is just speculation, we have not investigated the idea further. 
-%This may lead to trouble, given the previous encoding.
-%Consider, for instance, the regular languages $a*b*$ and $(ab)*$.
-%For any length $> 2$, they accept different strings: 
-%$\{aaaa, aaab, \dots, bbbb\}$ and $\{abab\}$ have no common strings in them. 
-%For instance, given the language $a*b*$ and length 2, we would have 3 CGs,
-%generating the strings $aa$, $ab$ and $bb$.
 
 
 
@@ -380,11 +374,13 @@ But if it turned out that CGs can express some interesting subset of context-fre
 or context-sensitive grammars, then we could derive CGs from already existing formalisms.
 This could be an alternative for learning CGs from corpus.
 
-Compared to high-level grammar formalisms, such as (insert your favourite), CG processing
-is generally faster. So a CG derived in this manner could act as a preprocessing step 
+Compared to traditional grammar formalisms, such as
+TAG, HPSG or CCG, % insert your favourites (and cite)
+processing CGs is generally faster. 
+So a CG derived in this manner could act as a preprocessing step 
 for some more expensive parser---then the rules need not be human-legible. 
 The rules would be derived from the grammar itself, with the sole purpose of 
-making the parsing \emph{faster}, not more accurate.
+making the parsing faster, not more accurate.
 
 
 
