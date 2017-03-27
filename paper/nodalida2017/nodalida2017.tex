@@ -154,11 +154,13 @@ symbol in the hidden alphabet\footnote{
   Our approach, however, is more restricted. 
 } (e.g. \t{"<letter>" hidden$_1$} \dots \t{hidden$_n$}).
 
-This CG uses the hidden alphabet \{\t{odd}, \t{even}, \t{>>>}, \t{<<<}\footnote{
-  These \emph{can} be the magic begin and end tags provided by CG, however, they
-  can also be implemented using two hidden symbols and the \t{REMOVE} command.
-  Therefore, whichever is chosen does not matter for the expressivity.
-}, \t{opt\_a}, \t{opt\_b}\}.
+This CG uses the hidden alphabet \{\t{odd}, \t{even}, 
+% \t{>>>}, \t{<<<}\footnote{
+%   These \emph{can} be the magic begin and end tags provided by CG, however, they
+%   can also be implemented using two hidden symbols and the \t{REMOVE} command.
+%   Therefore, whichever is chosen does not matter for the expressivity.
+% }, 
+\t{opt\_a}, \t{opt\_b}\}.
 These symbols mean that the cohort they are attached to is in an even or odd
 position, in first or last position, and that $a$ or $b$ is a legal option for
 this cohort, respectively. 
@@ -170,8 +172,9 @@ The CG operates as follows:
   last cohort is odd, then discard the sentence. Otherwise continue\dots
 \item
   The first cohort is certainly $a$ and last is certainly $b$, so we can
-  disambiguate the edges: \t{REMOVE opt\_b IF (0 >>>)}, and
-  \t{REMOVE opt\_a IF (0 <<<)}. 
+  disambiguate the edges: 
+  % \t{REMOVE opt\_b IF (0 >>>)}, and \t{REMOVE opt\_a IF (0 <<<)}. 
+  \t{REMOVE opt\_b IF (NOT -1 (*))}, and \t{REMOVE opt\_a IF (NOT 1 (*))}. 
 \item
   Disambiguate the second cohort as $a$ and second-to-last as $b$, the third as
   $a$ and third-to-last as $b$, etc, until the two ends meet in the middle. If
