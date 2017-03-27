@@ -9,8 +9,7 @@
 \usepackage{latexsym}
 \usepackage{listings}
 \special{papersize=210mm,297mm} 
-\def\wwf{\t{"<w>"}}
-\def\swf{\t{"<s>"}}
+
 
 \title{Exploring the Expressivity of Constraint Grammar}
 
@@ -24,7 +23,8 @@
 \date{\today}
 
 \def\t#1{\texttt{#1}}
-\def\hidden#1{{\tt \color{gray} #1}}
+\def\h#1{{\tt \color{gray} #1}}
+\def\swf{\h{"<s>"}}
 \def\maxAmb#1{$\langle \Sigma \rangle_#1$}
 \def\maxAmbFSA#1{$\langle \Sigma,S \rangle_#1$}
 \def\maxAmbCFG#1{$\langle \Sigma,\Sigma^{\prime} \rangle_#1$}
@@ -61,13 +61,14 @@ and memory do we need to parse sentences in the language''; more expressive
 power corresponds to greater parsing complexity.
 
 
-Previous work covers the expressivity of single rules, but not the whole grammar: 
+%Previous work covers the expressivity of single rules,
 %such as \texttt{IF (NOT 1* Verb OR Noun)}: just seeing this contextual test hints that we can express
 %a subset of regular languages that contains at least disjunction, complement and Kleene star. 
 \newcite{tapanainen1999phd} gives an account of the expressivity of
-the contextual tests for 4 different constraint formalisms. In addition, parsing
-complexity can be easily defined for a given variant and implementation of CG;
-see for instance \newcite{nemeskey14}.
+the contextual tests for 4 different constraint formalisms, including CG. 
+In addition, parsing complexity can be easily defined for a given variant and 
+implementation of CG; see for instance \newcite{nemeskey14}.
+However, to our knowledge, expressivity of a whole grammar has not been approached before.
 
 In the following section, we discuss our approach to CG as a formal language.
 Then, in the remainder or this paper, we discuss a number of preliminary
@@ -151,7 +152,7 @@ memory. When we encode our input words, we tag each cohort with \emph{every}
 symbol in the hidden alphabet\footnote{
   This can be implemented in CG using the \t{ADD} command.
   Our approach, however, is more restricted. 
-} (e.g. \t{"<letter>"} \hidden{hidden$_1$} \dots \hidden{hidden$_n$}).
+} (e.g. \t{"<letter>" hidden$_1$} \dots \t{hidden$_n$}).
 
 This CG uses the hidden alphabet \{\t{odd}, \t{even}, \t{>>>}, \t{<<<}\footnote{
   These \emph{can} be the magic begin and end tags provided by CG, however, they
@@ -168,8 +169,9 @@ The CG operates as follows:
   rest is handled with rules of the form \t{REMOVE even IF (NOT -1 odd)}. If the
   last cohort is odd, then discard the sentence. Otherwise continue\dots
 \item
-  Disambiguate the edges. The first cohort is certainly $a$ and last is
-  certainly $b$\dots
+  The first cohort is certainly $a$ and last is certainly $b$, so we can
+  disambiguate the edges: \t{REMOVE opt\_b IF (0 >>>)}, and
+  \t{REMOVE opt\_a IF (0 <<<)}. 
 \item
   Disambiguate the second cohort as $a$ and second-to-last as $b$, the third as
   $a$ and third-to-last as $b$, etc, until the two ends meet in the middle. If
@@ -204,21 +206,20 @@ that can transform all languages in that class into CG.
 
 
 We present a method to transform arbitrary finite-state automata into CG.\footnote{A subset which includes \t{LINK}, \t{NEGATE} and \t{TEMPLATE}, in addition to the previous.}
-Figure~\ref{fig:fsa} presents an example automaton, with $\Sigma = \{$\emph{det,adj,noun}$\}$,
+Figure~\ref{fig:fsa} presents an example automaton with $\Sigma = \{$\emph{det, adj, n}$\}$,
 for which we implement a corresponding CG as follows.
 
-As a modification to \maxAmb{n}, we use \maxAmbFSA{n}:
-$\Sigma$ stands for maximally ambiguous \emph{word cohorts}, and $S$ for 
-maximally ambiguous  \emph{state cohorts}, which are inserted between 
-each $\langle \Sigma \rangle$. For example, a sequence with two transitions 
-would be modelled with the following sentence \maxAmbFSA{2}, with two word cohorts:
+As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det, opt\_adj, opt\_n}$\}$,
+and insert the full set to each cohort. 
+In addition, we introduce \emph{state cohorts}, which contain the full set $S = \{s_1, s_2\}$.
+For example, the sequence \emph{det n} would be modelled with the following sentence:
 
 \begin{table}[h]
-\begin{tabular}{lllll}
-      \swf    &    \wwf      &      \swf      &     \wwf      &     \swf     \\
- ~~~~~~\t{s1} & ~~~~\t{det}  &  ~~~~\t{ s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}  \\
- ~~~~~~\t{s2} & ~~~~\t{adj}  &  ~~~~\t{ s2}   &  ~~~~\t{adj}  &  ~~~~\t{s2}  \\
-              & ~~~~\t{noun} &                &  ~~~~\t{noun} &  
+\begin{tabular}{c|c|c|c|c}
+   \swf   &   \t{"<det>"}  &  \swf      &   \t{"<n>"} &  \swf     \\ \hline
+ \h{s1}   & \t{opt\_det}   &  \h{ s1}   &  \t{opt\_det}  &  \h{s1}  \\
+ \h{s2}   & \t{opt\_adj}   &  \h{ s2}   &  \t{opt\_adj}  &  \h{s2}  \\
+          & \t{opt\_n}  &            &  \t{opt\_n} &  
 \end{tabular}
 \end{table}
 
@@ -227,9 +228,9 @@ Thus the desired result shows both the accepted string and the path in the autom
 
 \begin{table}[h]
 \centering
-\begin{tabular}{lllll}
-      \swf    &  \wwf       &      \swf     & \wwf           & \swf \\
- ~~~~~~\t{s1} & ~~~~\t{det} &  ~~~~\t{s2}   &  ~~~~\t{noun}  &  ~~~~\t{s1} 
+\begin{tabular}{c|c|c|c|c}
+   \swf   &   \t{"<det>"}  &  \swf   & \t{"<n>"}    &  \swf     \\ \hline
+  \h{s1}  & \t{opt\_det} &  \h{s2}   &  \t{opt\_n}  &  \h{s1} 
 
 \end{tabular}
 \end{table}
@@ -239,7 +240,7 @@ Thus the desired result shows both the accepted string and the path in the autom
 \begin{figure}[t]
   \centering
     \includegraphics[width=0.7\linewidth]{fsa.png}
-  \caption{A finite-state automaton describing the regular language \t{det (adj)* noun}.}
+  \caption{A finite-state automaton describing the regular language \t{det (adj)* n}.}
  \label{fig:fsa}
 \end{figure}
 
@@ -258,9 +259,9 @@ For the example automaton, the POS-rules are as follows.
 
 \begin{verbatim}
 REMOVE...
-   Det  IF (NEGATE -1 S1 LINK 2 S2) ;
-   Adj  IF (NEGATE -1 S2 LINK 2 S2) ;
-   Noun IF (NEGATE -1 S2 LINK 2 S1) ;
+   OptDet IF (NEGATE -1 S1 LINK 2 S2) ;
+   OptAdj IF (NEGATE -1 S2 LINK 2 S2) ;
+   OptN   IF (NEGATE -1 S2 LINK 2 S1) ;
 \end{verbatim}
 
 The start and end states naturally correspond to the first and last state cohort 
@@ -276,11 +277,11 @@ Consider the regular language with two strings $\{ab,ba\}$.
 Given \maxAmb{2} for any $\Sigma$, this is the closest we could get in CG output:
 
 \begin{table}[h]
-\begin{tabular}{l l}
+\begin{tabular}{r|r}
 
- \wwf          &  \wwf  \\
- ~~~~~~~~~~\t{a}  &  ~~~~~~~~~~\t{a}  \\
- ~~~~~~~~~~\t{b}  &  ~~~~~~~~~~\t{b}
+  \t{"<a>"}    &    \t{"<b>"}  \\ \hline
+   \t{opt\_a}  &  \t{opt\_a}  \\
+   \t{opt\_b}  &  \t{opt\_b}
 \end{tabular}
 \end{table}
 
