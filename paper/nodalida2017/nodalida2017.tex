@@ -60,11 +60,11 @@ and memory do we need to parse sentences in the language''; more expressive
 power corresponds to greater parsing complexity.
 
 
-Previous work covers the expressivity of single rules, such as \texttt{IF (NOT
-  1* Verb OR Noun)}: just seeing this contextual test hints that we can express
-a subset of regular languages that contains at least disjunction, complement and
-Kleene star. \newcite{tapanainen1999phd} gives an account of the expressivity of
-a single rule for 4 different constraint formalisms. In addition, parsing
+Previous work covers the expressivity of single rules, but not the whole grammar: 
+%such as \texttt{IF (NOT 1* Verb OR Noun)}: just seeing this contextual test hints that we can express
+%a subset of regular languages that contains at least disjunction, complement and Kleene star. 
+\newcite{tapanainen1999phd} gives an account of the expressivity of
+the contextual tests for 4 different constraint formalisms. In addition, parsing
 complexity can be easily defined for a given variant and implementation of CG;
 see for instance \newcite{nemeskey14}.
 
@@ -87,7 +87,7 @@ encode the input as cohorts (e.g.\ \t{"<a>"}, \t{"<b>"}), and run the grammar.
 See Figure~\ref{fig:astario} for two example runs.
 
 \begin{figure}[h]
-  \begin{lstlisting}
+  \begin{verbatim}
     LIST A = "<a>";
     LIST B = "<b>";
     SET LETTER = A OR B;
@@ -96,7 +96,7 @@ See Figure~\ref{fig:astario} for two example runs.
       IF (-1 (>>>) LINK 1* B);
     REMCOHORT LETTER
       IF (-1* ("<REJECT>"));
-  \end{lstlisting}
+  \end{verbatim}
   \caption{A constraint grammar which generates the language $a^\star$.}
   \label{fig:astar}
 \end{figure}
@@ -120,11 +120,11 @@ See Figure~\ref{fig:astario} for two example runs.
 
 \section{A lower bound for CG}
 
-It should be noted that vislcg3 supports commands such as \t{EXTERNAL}, which
-runs an external executable. It should therefore be obvious that the complete
-set of CG3 commands, at least theoretically, can generate any recursively
-enumerable language. For this reason, we restrict ourselves to a subset of the
-commands permitted by CG.
+It should be noted that VISL CG-3 \cite{bick2015,vislcg3} supports commands 
+such as \t{EXTERNAL}, which runs an external executable. It should therefore 
+be obvious that the complete set of CG-3 commands, at least theoretically, 
+can generate any recursively enumerable language. For this reason, we restrict 
+ourselves to a subset of the commands permitted by CG.
 
 In this section, we will only use the \t{REMOVE} command with sections, in
 addition to a single use of the \t{ADDCOHORT} command to add the special cohort
@@ -180,7 +180,7 @@ overlap with the context-free languages.
 
 \subsection{Example grammar: $a^nb^nc^n$}
 
-We can extend the approach used in the previous grammar to write a gramma which
+We can extend the approach used in the previous grammar to write a grammar which
 accepts $a^nb^nc^n$. Essentially, we can adapt the above grammar to find the
 middle of any input string. Once we have the middle, we can ``grow'' $a$s from
 the top and $b$s up from the middle, and $b$s down from the middle and $c$s up
