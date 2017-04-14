@@ -13,12 +13,13 @@
 
 \title{Exploring the Expressivity of Constraint Grammar}
 
-% \author{First Author \\
-%   Affiliation / Address line 1 \\
-%   {\tt email@domain} \\\And
-%   Second Author \\
-%   Affiliation / Address line 1 \\
-%   {\tt email@domain} }
+\author{%
+  Pepijn Kokke \\
+  University of Edinburgh \\
+  {\tt pepijn.kokke@ed.ac.uk} \\\And
+  Inari Listenmaa \\
+  University of Gothenburg \\
+  {\tt inari@chalmers.se} }
 
 \date{\today}
 
@@ -60,10 +61,6 @@ express in the language'', is coupled with parsing complexity, ``how much time
 and memory do we need to parse sentences in the language''; more expressive
 power corresponds to greater parsing complexity.
 
-
-%Previous work covers the expressivity of single rules,
-%such as \texttt{IF (NOT 1* Verb OR Noun)}: just seeing this contextual test hints that we can express
-%a subset of regular languages that contains at least disjunction, complement and Kleene star. 
 \newcite{tapanainen1999phd} gives an account of the expressivity of
 the contextual tests for 4 different constraint formalisms, including CG. 
 In addition, parsing complexity can be easily defined for a given variant and 
@@ -85,14 +82,24 @@ word $w \in \Sigma^\star$ if it does not reject it.
 
 As an example, consider the language $a*$ over $\Sigma = \{a,b\}$. This language
 can be encoded as a constraint grammar as in Figure~\ref{fig:astar}. We then
-encode the input as cohorts (e.g.\ \t{"<a>"}, \t{"<b>"}), and run the grammar.
+encode the input as a series of letter cohorts with readings (e.g.\
+\(\t{"<l>"}\;\t{"a"}\), \(\t{"<l>"}\;\t{"b"}\)), and run the grammar. 
 See Figure~\ref{fig:astario} for two example runs.
+
+The second example in Figure~\ref{fig:astar} reveals an important aspect of our
+definition of CG as a formal language: because we choose to encode the input
+symbols in \emph{readings} rather than in the names of cohorts, a CG is free to
+disambiguate any sequence it accepts, according to the language it formalizes.
+For instance, in the aforementioned example, the input sequence contains one
+symbol which is ambiguous between $a$ and $b$. However, no word in the language
+$a^\star$ contains a $b$, and therefore we can remove this possible reading.
 
 \begin{figure}[h]
   \begin{verbatim}
-    LIST A = "<a>";
-    LIST B = "<b>";
+    LIST A = "a";
+    LIST B = "b";
     SET LETTER = A OR B;
+    SELECT A;
     ADDCOHORT ("<REJECT>")
       BEFORE LETTER 
       IF (-1 (>>>) LINK 1* B);
@@ -105,14 +112,14 @@ See Figure~\ref{fig:astario} for two example runs.
 
 \begin{figure}[h]
   \centering
-  \begin{tabular}{c|c}
+  \begin{tabular}{l|c}
     \textbf{Input} & \textbf{Output} \\ \hline
-    \t{"<a>"}      & \t{"<REJECT>"} \\
-    \t{"<a>"}      \\
-    \t{"<b>"}      \\ \hline
-    \t{"<a>"}      & \t{"<a>"} \\
-    \t{"<a>"}      & \t{"<a>"} \\
-    \t{"<a>"}      & \t{"<a>"}
+    \(\t{"<l>"}\;\t{"a"}\)          & \t{"<REJECT>"} \\
+    \(\t{"<l>"}\;\t{"a"}\)          \\
+    \(\t{"<l>"}\;\t{"b"}\)          \\ \hline
+    \(\t{"<l>"}\;\t{"a"}\)          & \(\t{"<l>"}\;\t{"a"}\) \\
+    \(\t{"<l>"}\;\t{"a"}\)          & \(\t{"<l>"}\;\t{"a"}\) \\
+    \(\t{"<l>"}\;\t{"a"}\;\t{"b"}\) & \(\t{"<l>"}\;\t{"a"}\)
   \end{tabular}
   \caption{Examples of input and output for the grammar in
     Figure~\ref{fig:astar}.}  
@@ -150,22 +157,16 @@ This CG is defined over the alphabet $\Sigma$, in addition to a hidden alphabet
 $\Sigma^\prime$. These hidden symbols are meant to serve as a simple form of
 memory. When we encode our input words, we tag each cohort with \emph{every}
 symbol in the hidden alphabet\footnote{
-  This can be implemented in CG using the \t{ADD} command.
-  Our approach, however, is more restricted. 
-} (e.g. \t{"<letter>" hidden$_1$} \dots \t{hidden$_n$}).
+  We can automatically add these hidden symbols to our cohorts using a single
+  application of the \t{ADD} command.
+}, e.g.\ for some symbol $\ell \in \Sigma$ and $\Sigma' = \{h_1,\dots,h_n\}$ we
+would create the cohort
+\(\t{"<l>"}\;\t{"\(\ell\)"}\;\t{"h\(_1\)"}\;\dots\;\t{"h\(_n\)"}\). 
 
-This CG uses the hidden alphabet \{\t{odd}, \t{even}, 
-% \t{>>>}, \t{<<<}\footnote{
-%   These \emph{can} be the magic begin and end tags provided by CG, however, they
-%   can also be implemented using two hidden symbols and the \t{REMOVE} command.
-%   Therefore, whichever is chosen does not matter for the expressivity.
-% }, 
-\t{opt\_a}, \t{opt\_b}\}.
-These symbols mean that the cohort they are attached to is in an even or odd
-position, 
-% in first or last position, 
-and that $a$ or $b$ is a legal option for this cohort, respectively. 
-The CG operates as follows:
+The CG for $a^nb^n$ uses the hidden alphabet \{\t{odd}, \t{even}, \t{opt\_a},
+\t{opt\_b}\}. These symbols mean that the cohort they are attached to is in an
+even or odd position, and that $a$ or $b$ is a legal option for this cohort,
+respectively. The CG operates as follows: 
 \begin{enumerate}
 \item
   Is the number of characters even? We know the first cohort is odd, and the
@@ -202,16 +203,10 @@ partly overlap with the context-sensitive languages.
 
 \section{Are all regular languages in CG?}
 
-%Is CG in any particular category? It clearly covers some regular, context-free
-%and context-sensitive languages, but it may just have a common subset with those 
-%classes, as in Figure~\ref{fig:nocorr}.
-%Rather than enumerating individual grammars for a given class, we need a method 
-%that can transform all languages in that class into CG.
-
-In the present section, we propose a method to transform arbitrary finite-state automata into 
-CG.\footnote{A subset which includes \t{LINK}, \t{NEGATE} and \t{TEMPLATE}, in addition to the previous.}
-Figure~\ref{fig:fsa} presents an example automaton with $\Sigma = \{$\emph{det, adj, n}$\}$,
-for which we implement a corresponding CG as follows.
+In the present section, we propose a method to transform arbitrary finite-state
+automata into CG. Figure~\ref{fig:fsa} presents an example automaton with
+$\Sigma = \{$\emph{det, adj, n}$\}$, for which we implement a corresponding CG
+as follows.
 
 As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det, opt\_adj, opt\_n}$\}$,
 and insert the full set $\Sigma^{\prime}$ to each cohort as readings. 
