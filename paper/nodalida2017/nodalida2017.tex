@@ -208,44 +208,44 @@ automata into CG. Figure~\ref{fig:fsa} presents an example automaton with
 $\Sigma = \{$\emph{det, adj, n}$\}$, for which we implement a corresponding CG
 as follows.
 
-As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det, opt\_adj, opt\_n}$\}$,
-and insert the full set $\Sigma^{\prime}$ to each cohort as readings. 
-In addition, we introduce \emph{state cohorts}, which contain the full set $S = \{s_1, s_2\}$.
-For example, the sequence \emph{det n} would be modelled with the following sentence:
-
+As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det,
+  opt\_adj, opt\_n}$\}$, and insert the full set $\Sigma^{\prime}$ to each
+cohort as readings. In addition, we introduce \emph{state cohorts}, which
+contain the full set $S = \{s_1, s_2\}$. For example, the sequence \emph{det n}
+would be modelled with the following sentence:
+%
 \begin{table}[h]
-\begin{tabular}{c|c|c|c|c}
-   \swf   &   \t{"<det>"}  &  \swf      &   \t{"<n>"} &  \swf     \\ \hline
- \h{s1}   & \t{opt\_det}   &  \h{ s1}   &  \t{opt\_det}  &  \h{s1}  \\
- \h{s2}   & \t{opt\_adj}   &  \h{ s2}   &  \t{opt\_adj}  &  \h{s2}  \\
-          & \t{opt\_n}  &            &  \t{opt\_n} &  
-\end{tabular}
+  \centering\small
+  \begin{tabular}{c|c|c|c|c}
+    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ \hline
+    \h{s1} & \t{det}      & \h{s1} & \t{n}        & \h{s1} \\
+    \h{s2} & \t{opt\_det} & \h{s2} & \t{opt\_det} & \h{s2} \\
+           & \t{opt\_adj} &        & \t{opt\_adj} &        \\
+           & \t{opt\_n}   &        & \t{opt\_n}   &        
+  \end{tabular}
 \end{table}
-
-The rules of the grammar disambiguate both word cohorts and state cohorts.
-Thus the desired result shows both the accepted string and the path in the automaton.
-
+%
+The rules of the grammar disambiguate both word cohorts and state cohorts. Thus
+the desired result shows both the accepted string and the path in the automaton.
 \begin{table}[h]
-\centering
-\begin{tabular}{c|c|c|c|c}
-   \swf   &   \t{"<det>"}  &  \swf   & \t{"<n>"}    &  \swf     \\ \hline
-  \h{s1}  & \t{opt\_det} &  \h{s2}   &  \t{opt\_n}  &  \h{s1} 
-
-\end{tabular}
+  \centering\small
+  \begin{tabular}{c|c|c|c|c}
+    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ \hline
+    \h{s1} & \t{det}      & \h{s2} & \t{n}        & \h{s1} \\
+           & \t{opt\_det} &        & \t{opt\_n}   &  
+  \end{tabular}
 \end{table}
-
-
 
 \begin{figure}[t]
   \centering
-    \includegraphics[width=0.6\linewidth]{fsa.png}
-  \caption{A finite-state automaton describing the regular language \t{det (adj)* n}.}
+  \includegraphics[width=0.6\linewidth]{fsa.png}
+  \caption{A finite-state automaton describing the regular language \t{det
+      (adj)* n}.}
  \label{fig:fsa}
 \end{figure}
 
 
 \subsection{Disambiguation process}
-
 Given that every transition happens between two states, and every state 
 has an incoming and outgoing transition, every rule needs only
 positions -1 and 1 in its contextual tests. 
@@ -261,23 +261,20 @@ REMOVE...
   opt_n   IF (NEGATE -1 S2 LINK 2 S1) ;
 \end{verbatim}
 
-\noindent The start and end states naturally correspond to the first and last state cohort, 
-%in the \maxAmbFSA{n}, 
-and can be trivially disambiguated, in this case both into \t{s1}.
-Once we remove a reading from either side of a cohort, some more rules 
-can take action---the context ``\t{s2} on the left side and \t{s1} on the right side''
+\noindent The start and end states naturally correspond to the first and last state cohort, and can be trivially disambiguated, in this case both into \t{s1}.
+Once we remove a reading from either side of a cohort, some more rules can take
+action---the context ``\t{s2} on the left side and \t{s1} on the right side''
 may be broken by removing either \t{s2} or \t{s1}.
-%As a chain reaction, the whole sentence gets disambiguated.
 
-If there is only one allowed string of length $n$ in the language, 
-then the result should have only one \t{opt\_POS} reading per cohort,
-and we proceed to check whether they correspond to the original word forms \t{"<POS>"}: 
-if \t{opt\_det} is the only reading, the word form must be \t{"<det>"}, and so on.
+If there is only one allowed string of length $n$ in the language, then the
+result should have only one \t{opt\_POS} reading per cohort, and we proceed to
+check whether they correspond to the original word forms \t{"<POS>"}: if
+\t{opt\_det} is the only reading, the word form must be \t{"<det>"}, and so on.
 
-If there are multiple strings of the same length in the language,
-we have to relax our criteria:
-if every \t{"<POS>"} has a corresponding \t{opt\_POS} in the set of remaining readings, 
-such as \t{"<det>"} and \{\t{opt\_det}, \t{opt\_adj}\}, we accept the string.
+If there are multiple strings of the same length in the language, we have to
+relax our criteria: if every cohort with a reading \t{POS} has a corresponding
+\t{opt\_POS} in the set of remaining readings, such as \{\t{det}, \t{opt\_det},
+\t{opt\_adj}\}, we accept the string.
 
 \subsection{Disjunction}
 
@@ -287,13 +284,13 @@ With the previously described approach, this is the closest we could get in CG o
 
 
 \begin{table}[h]
-\centering
-\begin{tabular}{c|c|c|c|c}
-   \swf   &   \t{"<a>"}  &  \swf      & \t{"<b>"}    &  \swf     \\ \hline
-  \h{...}  & \t{opt\_a} &  \h{...}    &  \t{opt\_a}  &  \h{...} \\ 
-           & \t{opt\_b} &             &  \t{opt\_b}  &            
-
-\end{tabular}
+  \centering\small
+  \begin{tabular}{c|c|c|c|c}
+    \swf    & \t{"<w>"}  & \swf    & \t{"<w>"}  & \swf    \\ \hline
+    \h{...} & \t{a}      & \h{...} & \t{b}      & \h{...} \\ 
+            & \t{opt\_a} &         & \t{opt\_a} &         \\            
+            & \t{opt\_b} &         & \t{opt\_b} &
+  \end{tabular}
 \end{table}
 
 As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
