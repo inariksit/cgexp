@@ -1,13 +1,11 @@
 \documentclass[11pt]{article}
 \usepackage{nodalida2017}
-%\usepackage{times}
 \usepackage{mathptmx}
-%\usepackage{txfonts}
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{url}
 \usepackage{latexsym}
-\usepackage{listings}
+\usepackage{fancyvrb}
 \special{papersize=210mm,297mm} 
 
 
@@ -44,89 +42,108 @@
 \end{abstract}
 
 
-\section{Introduction and previous work}
-CG~\cite{karlsson1995constraint} was born as a practical, rather than formal, 
-approach to NLP. 
-Since the beginning, its authors do not envision it as a tool for 
-generating strings, only for analysing and disambiguating them.
-It is for these reasons, we believe, that the question of the expressivity of CG
-as a generative formalism went unasked and unanswered for so long.
+\section{Introduction}
+For any formalism with its root in linguistics, it is natural to ask questions
+such as ``How expressive is it?'' or ``Where does it sit in the Chomsky
+hierarchy?''~\cite{chomsky1956hierarchy}
+In this paper, we begin addressing some of these questions for constraint
+grammar~\cite[CG]{karlsson1995constraint}.
 
-The standard measure of formal languages is the Chomsky
-hierarchy~\cite{chomsky1956hierarchy}, with its four classes of grammars and
-languages, in order from most expressive to least expressive: recursively
-enumerable (Type 0), context-sensitive (Type 1), context-free (Type 2), and
-regular (Type 3). The notion of expressive power, ``which constructs can we
-express in the language'', is coupled with parsing complexity, ``how much time
-and memory do we need to parse sentences in the language''; more expressive
-power corresponds to greater parsing complexity.
+Before we can even consider such a question, there is a problem we must
+solve. CG was never meant to be a grammar in the generative sense. Instead, it
+is a tool for analysing and disambiguating strings.
+This, we believe, explains why the question of the expressivity of CG went
+unasked and unanswered for a long time.
+%WEN: How much would this upset Anssi? Has he actually looked into its
+%     expressivity?
+It also gives us our first problem: How do we view CGs generatively?
+We address this in section~\ref{sec:gencg}.
 
-\newcite{tapanainen1999phd} gives an account of the expressivity of
-the contextual tests for 4 different constraint formalisms, including CG. 
-In addition, parsing complexity can be easily defined for a given variant and 
-implementation of CG; see for instance \newcite{nemeskey14}.
-However, to our knowledge, expressivity of a whole grammar has not been approached before.
 
-In the following section, we discuss our approach to CG as a formal language.
-Then, in the remainder or this paper, we discuss a number of preliminary
-results.
+\section{Generative Constraint Grammar}\label{sec:gencg}
+We view a constraint grammar CG as generating a formal language $\mathcal{L}$
+over an alphabet $\Sigma$ as follows.
+We encode words $w \in \Sigma^\star$ as a sequence of cohorts, each of which has
+one of the symbols of $w$ as a reading.
+A constraint grammar CG rejects a word if, when we pass its encoding through the
+CG, we get back the cohort \t{"<REJECT>"}. A constraint grammar CG accepts a word
+if it does not reject it.
+We generate the language $\mathcal{L}$ by passing every $w \in \Sigma^\star$
+through the CG, and keeping those which are accepted.
 
-\section{Expressivity of a constraint grammar}
-For this paper, we will view a constraint grammar CG as generating a formal
-language $\mathcal{L}$ over an alphabet $\Sigma$ as follows:
-A constraint grammar CG rejects a word $w \in \Sigma^\star$ if, when we encode
-the word as a sequence of cohorts, and pass it through the CG, we get back the
-dedicated rejection cohort \texttt{<REJECT>}. A constraint grammar CG accepts a
-word $w \in \Sigma^\star$ if it does not reject it. 
-
-As an example, consider the language $a*$ over $\Sigma = \{a,b\}$. This language
-can be encoded as a constraint grammar as in Figure~\ref{fig:astar}. We then
-encode the input as a series of letter cohorts with readings (e.g.\
-\(\t{"<l>"}\;\t{"a"}\), \(\t{"<l>"}\;\t{"b"}\)), and run the grammar. 
-See Figure~\ref{fig:astario} for two example runs.
-
-The second example in Figure~\ref{fig:astar} reveals an important aspect of our
-definition of CG as a formal language: because we choose to encode the input
-symbols in \emph{readings} rather than in the names of cohorts, a CG is free to
-disambiguate any sequence it accepts, according to the language it formalizes.
-For instance, in the aforementioned example, the input sequence contains one
-symbol which is ambiguous between $a$ and $b$. However, no word in the language
-$a^\star$ contains a $b$, and therefore we can remove this possible reading.
-%
-\begin{figure}[h]
-  \begin{verbatim}
+As an example, consider the language $a^\star$ over $\Sigma = \{a,b\}$.
+This language is encoded by the following constraint grammar:
+\begin{center}
+  \begin{Verbatim}
     LIST A = "a";
     LIST B = "b";
     SET LETTER = A OR B;
     SELECT A;
     ADDCOHORT ("<REJECT>")
-      BEFORE LETTER 
-      IF (-1 (>>>) LINK 1* B);
+        BEFORE LETTER 
+        IF (-1 (>>>) LINK 1* B);
     REMCOHORT LETTER
-      IF (-1* ("<REJECT>"));
-  \end{verbatim}
-  \caption{A constraint grammar which generates the language $a^\star$.}
-  \label{fig:astar}
-\end{figure}
-%
-\begin{figure}[h]
-  \centering
+        IF (-1* ("<REJECT>"));
+  \end{Verbatim}
+\end{center}
+We then encode the input words as a series of letter cohorts with readings
+(e.g.\ \(\t{"<l>"}\;\t{"a"}\), \(\t{"<l>"}\;\t{"b"}\)), and run the grammar.
+For instance, if we wished to know whether either word in $\{aaa,aab\}$ is part
+of the language $a^\star$, we would run the following queries:
+\begin{center}
   \begin{tabular}{l|c}
-    \textbf{Input} & \textbf{Output} \\ \hline
-    \(\t{"<l>"}\;\t{"a"}\)          & \t{"<REJECT>"} \\
-    \(\t{"<l>"}\;\t{"a"}\)          \\
-    \(\t{"<l>"}\;\t{"b"}\)          \\ \hline
+    \textbf{Input}         & \textbf{Output} \\ \hline
+    \(\t{"<l>"}\;\t{"a"}\) & \(\t{"<l>"}\;\t{"a"}\) \\
+    \(\t{"<l>"}\;\t{"a"}\) & \(\t{"<l>"}\;\t{"a"}\) \\
+    \(\t{"<l>"}\;\t{"a"}\) & \(\t{"<l>"}\;\t{"a"}\) \\ \hline
+    \(\t{"<l>"}\;\t{"a"}\) & \t{"<REJECT>"} \\
+    \(\t{"<l>"}\;\t{"a"}\) \\
+    \(\t{"<l>"}\;\t{"b"}\)
+  \end{tabular}
+\end{center}
+As CG is a tool meant for disambiguation, we can leverage its power to run both
+queries at once:
+\begin{center}
+  \begin{tabular}{l|c}
+    \textbf{Input}                  & \textbf{Output} \\ \hline
     \(\t{"<l>"}\;\t{"a"}\)          & \(\t{"<l>"}\;\t{"a"}\) \\
     \(\t{"<l>"}\;\t{"a"}\)          & \(\t{"<l>"}\;\t{"a"}\) \\
     \(\t{"<l>"}\;\t{"a"}\;\t{"b"}\) & \(\t{"<l>"}\;\t{"a"}\)
   \end{tabular}
-  \caption{Examples of input and output for the grammar in
-    Figure~\ref{fig:astar}.}  
-  \label{fig:astario}
-\end{figure}
+\end{center}
+This is a powerful feature, because it allows us disambiguate based on some
+formal language $\mathcal{L}$ if we can find the CG which generates it.
+However, the limitations of this style become apparent when we look at a run of
+a CG for the language $\{ab,ba\}$:
+\begin{center}
+  \begin{tabular}{l|c}
+    \textbf{Input}                  & \textbf{Output} \\ \hline
+    \(\t{"<l>"}\;\t{"a"}\;\t{"b"}\) & \(\t{"<l>"}\;\t{"a"}\;\t{"b"}\) \\
+    \(\t{"<l>"}\;\t{"a"}\;\t{"b"}\) & \(\t{"<l>"}\;\t{"a"}\;\t{"b"}\) \\
+  \end{tabular}
+\end{center}
+While the output contains the interpretations $ab$ and $ba$, it also includes
+$aa$ and $bb$. Therefore, while this style is useful for disambiguating using
+CGs based on formal languages, it is too limited to be used in defining the
+language which a CG generates.
+%WEN: we should include a reference to the other formalism here, or to the
+%     discussion section in which we talk about the disjunction problem
+
+In light of the idea of using CGs based on formal languages for disambiguating,
+it seems at odds with the philosophy of CG to reject by replacing the entire
+input with a single \t{"<REJECT>"} cohort. CG generally refuses to remove the
+last possible reading of a cohort, under the philosophy that \emph{some}
+information is certainly better than none.
+However, for the definition of CG as a formal language, we need some sort of
+distinctive output for rejections. Hence, we arrive at \emph{two} distinct ways
+to run generative CGs: the method in which we input unambiguous strings, and
+output \t{"<REJECT>"}, which is used in the definition of CG as a formal
+language; and the method in which we input ambiguous strings, and simply
+disambiguate as far as possible. 
 
 
 \section{A lower bound for CG}
+% WEN: We should move this section over into section 2 about GCG
 It should be noted that VISL CG-3 \cite{bick2015,vislcg3} supports commands 
 such as \t{EXTERNAL}, which runs an external executable. It should therefore 
 be obvious that the complete set of CG-3 commands, at least theoretically, 
@@ -173,7 +190,6 @@ respectively. The CG operates as follows:
 \item
   The first cohort is certainly $a$ and last is certainly $b$, so we can
   disambiguate the edges: 
-  % \t{REMOVE opt\_b IF (0 >>>)}, and \t{REMOVE opt\_a IF (0 <<<)}. 
   \t{REMOVE opt\_b IF (NOT -1 (*))}, and \t{REMOVE opt\_a IF (NOT 1 (*))}. 
 \item
   Disambiguate the second cohort as $a$ and second-to-last as $b$, the third as
@@ -183,6 +199,7 @@ respectively. The CG operates as follows:
 \end{enumerate}
 The language $a^nb^n$ is context-free, and therefore CG must at least partly
 overlap with the context-free languages.
+
 
 \subsection{Example grammar: $a^nb^nc^n$}
 We can extend the approach used in the previous grammar to write a grammar which
@@ -315,6 +332,15 @@ In addition, we would like to focus on making the grammars more human-readable,
 so that they could be used to quickly generate a basis for a constraint grammar
 from existing context-free grammars (or equivalent formalisms).
 This could serve as an alternative to learning grammars from a corpus.
+
+
+\section{Related Work}
+\newcite{tapanainen1999phd} gives an account of the expressivity of
+the contextual tests for 4 different constraint formalisms, including CG. 
+In addition, parsing complexity can be easily defined for a given variant and 
+implementation of CG; see for instance \newcite{nemeskey14}.
+However, to our knowledge, expressivity of a whole grammar has not been approached before.
+
 
 \bibliographystyle{acl}
 \bibliography{cg}
