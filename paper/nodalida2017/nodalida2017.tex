@@ -43,8 +43,8 @@
   human-readable CG code from regular expressions or a context-free grammar. 
 \end{abstract}
 
-\section{Introduction and previous work}
 
+\section{Introduction and previous work}
 CG~\cite{karlsson1995constraint} was born as a practical, rather than formal, 
 approach to NLP. 
 Since the beginning, its authors do not envision it as a tool for 
@@ -72,7 +72,6 @@ Then, in the remainder or this paper, we discuss a number of preliminary
 results.
 
 \section{Expressivity of a constraint grammar}
-
 For this paper, we will view a constraint grammar CG as generating a formal
 language $\mathcal{L}$ over an alphabet $\Sigma$ as follows:
 A constraint grammar CG rejects a word $w \in \Sigma^\star$ if, when we encode
@@ -93,7 +92,7 @@ disambiguate any sequence it accepts, according to the language it formalizes.
 For instance, in the aforementioned example, the input sequence contains one
 symbol which is ambiguous between $a$ and $b$. However, no word in the language
 $a^\star$ contains a $b$, and therefore we can remove this possible reading.
-
+%
 \begin{figure}[h]
   \begin{verbatim}
     LIST A = "a";
@@ -109,7 +108,7 @@ $a^\star$ contains a $b$, and therefore we can remove this possible reading.
   \caption{A constraint grammar which generates the language $a^\star$.}
   \label{fig:astar}
 \end{figure}
-
+%
 \begin{figure}[h]
   \centering
   \begin{tabular}{l|c}
@@ -128,7 +127,6 @@ $a^\star$ contains a $b$, and therefore we can remove this possible reading.
 
 
 \section{A lower bound for CG}
-
 It should be noted that VISL CG-3 \cite{bick2015,vislcg3} supports commands 
 such as \t{EXTERNAL}, which runs an external executable. It should therefore 
 be obvious that the complete set of CG-3 commands, at least theoretically, 
@@ -142,7 +140,7 @@ afterwards.
 We show that, using only these commands, CG is capable of generating some
 context-free and context-sensitive languages, which establishes a lower bound on 
 the expressivity of CG (see Figure~\ref{fig:nocorr}).
-
+%
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.8\linewidth]{chomsky}
@@ -150,8 +148,8 @@ the expressivity of CG (see Figure~\ref{fig:nocorr}).
   \label{fig:nocorr}
 \end{figure}
 
-\subsection{Example grammar: $a^nb^n$ }
 
+\subsection{Example grammar: $a^nb^n$}
 Below, we briefly describe the CG which generates the language $a^nb^n$.
 This CG is defined over the alphabet $\Sigma$, in addition to a hidden alphabet
 $\Sigma^\prime$. These hidden symbols are meant to serve as a simple form of
@@ -187,7 +185,6 @@ The language $a^nb^n$ is context-free, and therefore CG must at least partly
 overlap with the context-free languages.
 
 \subsection{Example grammar: $a^nb^nc^n$}
-
 We can extend the approach used in the previous grammar to write a grammar which
 accepts $a^nb^nc^n$. Essentially, we can adapt the above grammar to find the
 middle of any input string. Once we have the middle, we can ``grow'' $a$s from
@@ -202,7 +199,6 @@ partly overlap with the context-sensitive languages.
 
 
 \section{Are all regular languages in CG?}
-
 In the present section, we propose a method to transform arbitrary finite-state
 automata into CG. Figure~\ref{fig:fsa} presents an example automaton with
 $\Sigma = \{$\emph{det, adj, n}$\}$, for which we implement a corresponding CG
@@ -227,6 +223,7 @@ would be modelled with the following sentence:
 %
 The rules of the grammar disambiguate both word cohorts and state cohorts. Thus
 the desired result shows both the accepted string and the path in the automaton.
+%
 \begin{table}[h]
   \centering\small
   \begin{tabular}{c|c|c|c|c}
@@ -235,7 +232,7 @@ the desired result shows both the accepted string and the path in the automaton.
            & \t{opt\_det} &        & \t{opt\_n}   &  
   \end{tabular}
 \end{table}
-
+%
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.6\linewidth]{fsa.png}
@@ -253,18 +250,17 @@ The semantics of the rules are ``remove an \t{opt\_POS} tag, if it is
 \emph{not} surrounded by allowed states'',
 and ``remove a state, if it is \emph{not} surrounded by allowed transitions''.
 For the example automaton, the \t{opt\_POS}-rules are as follows.
-
 \begin{verbatim}
 REMOVE...
   opt_det IF (NEGATE -1 S1 LINK 2 S2) ;
   opt_adj IF (NEGATE -1 S2 LINK 2 S2) ;
   opt_n   IF (NEGATE -1 S2 LINK 2 S1) ;
 \end{verbatim}
-
-\noindent The start and end states naturally correspond to the first and last state cohort, and can be trivially disambiguated, in this case both into \t{s1}.
+\noindent The start and end states naturally correspond to the first and last
+state cohort, and can be trivially disambiguated, in this case both into \t{s1}.
 Once we remove a reading from either side of a cohort, some more rules can take
 action---the context ``\t{s2} on the left side and \t{s1} on the right side''
-may be broken by removing either \t{s2} or \t{s1}.
+may be broken by removing either \t{s2} or \t{s1}. 
 
 If there is only one allowed string of length $n$ in the language, then the
 result should have only one \t{opt\_POS} reading per cohort, and we proceed to
@@ -276,13 +272,10 @@ relax our criteria: if every cohort with a reading \t{POS} has a corresponding
 \t{opt\_POS} in the set of remaining readings, such as \{\t{det}, \t{opt\_det},
 \t{opt\_adj}\}, we accept the string.
 
+
 \subsection{Disjunction}
-
-Consider the regular language with two strings $\{ab,ba\}$. 
-With the previously described approach, this is the closest we could get in CG output:
-
-
-
+Consider the regular language with two strings $\{ab,ba\}$. With the previously
+described approach, this is the closest we could get in CG output:
 \begin{table}[h]
   \centering\small
   \begin{tabular}{c|c|c|c|c}
@@ -292,68 +285,22 @@ With the previously described approach, this is the closest we could get in CG o
             & \t{opt\_b} &         & \t{opt\_b} &
   \end{tabular}
 \end{table}
-
 As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
-Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent this language
-faithfully, CG substitutes uncertainty on the sentence level (``either $ab$ or $ba$'')
-with uncertainty in the cohorts:
-``the first character may be either $a$ or $b$, and the second character may be either $a$ or $b$''.
+Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent this
+language faithfully, CG substitutes uncertainty on the sentence level (``either
+$ab$ or $ba$'') with uncertainty in the cohorts: ``the first character may be
+either $a$ or $b$, and the second character may be either $a$ or $b$''.
 
 This will lead us to trouble quickly: the lax version,
 ``accept if every \t{"<X>"} has a corresponding \t{opt\_X} in the readings'',
-would accept the strings $aa$ and $bb$, which obviously are not a part of the language.
+would accept the strings $aa$ and $bb$, which obviously are not a part of the
+language.
 
 An alternative would be to model languages with disjunction as a set of CGs,
 in this case, one that generates only $ab$ and other that generates only $ba$;
 however, this would become extremely costly for anything more than a toy grammar.
-A solution to this problem---or a proof that there is no solution---is under development.
-
-
-
-
-% The start and end states naturally correspond to the first and last state cohort 
-% in the \maxAmbFSA{n}, and can be trivially disambiguated, in this case both into \t{s1}.
-% The intermediate result is shown below:
-
-% \def\rmd#1{{\tt \color{gray} #1}}
-
-% \begin{table}[h]
-% \centering
-% \begin{tabular}{lllll}
-%      \swf &  \wwf   &      \swf &     \wwf &     \swf \\
-% ~~~~~~\t{s1}   & ~~~~\t{det}  &  ~~~~\t{s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}   \\
-% ~~~~~~\rmd{s2} & ~~~~\t{adj}  &  ~~~~\t{s2}   &  ~~~~\t{adj}  &  ~~~~\rmd{s2}   \\
-% ~~~~~~         & ~~~~\t{noun} &                &  ~~~~\t{noun} &  
-% \end{tabular}
-% \end{table}
-
-% Once we remove a reading from either side of a cohort, some more rules may take action.
-% Now that the first state is no longer a possible \t{s2}, the rules that remove \t{adj}
-% and \t{noun} readings will apply to the first word.
-
-% \begin{table}[h]
-% \centering
-% \begin{tabular}{lllll}
-%      \swf &  \wwf     &      \swf &     \wwf &     \swf \\
-% ~~~~~~\t{s1}   & ~~~~\t{det}    &  ~~~~\t{ s1}   &  ~~~~\t{det}  &  ~~~~\t{s1}   \\
-% ~~~~~~\rmd{s2} & ~~~~\rmd{adj}  &  ~~~~\t{ s2}   &  ~~~~\t{adj}  &  ~~~~\rmd{s2}   \\
-% ~~~~~~         & ~~~~\rmd{noun} &                &  ~~~~\t{noun} &  
-% \end{tabular}
-% \end{table}
-
-% Now the second state cohort can be disambiguated: transitions from \t{det} may only lead to \t{s2}, 
-% so we remove \t{s1}. After that, we disambiguate the second word cohort, leaving only \t{noun}.
-% No more rules may apply, so this is the final result.
-
-% \begin{table}[h]
-% \centering
-% \begin{tabular}{lllll}
-%       \swf &  \wwf     &      \swf &     \wwf  &     \swf \\
-%  ~~~~~~\t{s1}   & ~~~~\t{det}    &  ~~~~\rmd{s1}  &  ~~~~\rmd{det} &  ~~~~\t{s1}   \\
-%  ~~~~~~\rmd{s2} & ~~~~\rmd{adj}  &  ~~~~\t{s2}    &  ~~~~\rmd{adj} &  ~~~~\rmd{s2}   \\
-%  ~~~~~~         & ~~~~\rmd{noun} &                &  ~~~~\t{noun}  &  
-% \end{tabular}
-% \end{table}
+A solution to this problem---or a proof that there is no solution---is under
+development.
 
 \section{Discussion}
 
@@ -371,6 +318,5 @@ This could serve as an alternative to learning grammars from a corpus.
 
 \bibliographystyle{acl}
 \bibliography{cg}
-
 
 \end{document}
