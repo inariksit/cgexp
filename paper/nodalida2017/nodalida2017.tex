@@ -241,7 +241,7 @@ automata into CG. Figure~\ref{fig:fsa} presents an example automaton with
 $\Sigma = \{$\emph{det, adj, n}$\}$, for which we implement a corresponding CG
 as follows.
 
-\subsection{Cohorts}
+\subsection{Cohorts and sentences}
 As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det,
   opt\_adj, opt\_n}$\}$, and insert the full set $\Sigma^{\prime}$ to each
 cohort as readings. In addition, we introduce \emph{state cohorts}, which
@@ -309,7 +309,7 @@ relax our criteria: if every cohort with a reading \t{POS} has a corresponding
 Alternatively, we can apply this scenario to real-life ambiguities, where the word cohorts
 contain only some subset of all the readings. 
 In the following table, we show the initial state of the phrase ``the book''.
-The word forms are now actual words, and the \t{opt\_POS} only include the actual analyses of those words.
+The word forms are now actual words, and the \t{\h{opt\_}POS} only include the actual analyses of those words.
 
 
 \begin{table}[h]
@@ -349,8 +349,9 @@ this limitation, except for the generating multiple CGs per automaton.
 
 However, it is an unclear how much this property would limit us in creating 
 \emph{useful} CG rules out of more expressive grammar formalisms.
-Moreover, the real-life ambiguous cohorts are not \maxAmb{n}, but some much 
-smaller subset of $\Sigma$. Despite the limitation, we are still hopeful
+Applying the rules to real-life ambiguous cohorts is expected to be easier:
+those cohorts are not \maxAmb{n}, but some much smaller subset of $\Sigma$.
+Hence, despite the theoretical limitation, we are still hopeful
 for more applied use cases.
 
 
@@ -377,7 +378,6 @@ implementation of CG; see for instance \newcite{nemeskey14}.
 \cite{ylijyra2017} presents questions regarding the expressive power
 of Constraint Grammar, but concentrates on the implementation side.
 To our knowledge, CG as a generative model has not been been approached before.
-
 
 \bibliographystyle{acl}
 \bibliography{cg}
