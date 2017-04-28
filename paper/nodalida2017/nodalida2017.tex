@@ -17,7 +17,7 @@
   {\tt pepijn.kokke@ed.ac.uk} \\\And
   Inari Listenmaa \\
   University of Gothenburg \\
-  {\tt inari@chalmers.se} }
+  {\tt inari.listenmaa@cse.gu.se} }
 
 \date{\today}
 
@@ -175,8 +175,19 @@ symbol in the hidden alphabet\footnote{
   We can automatically add these hidden symbols to our cohorts using a single
   application of the \t{ADD} command.
 }, e.g.\ for some symbol $\ell \in \Sigma$ and $\Sigma' = \{h_1,\dots,h_n\}$ we
-would create the cohort
-\(\t{"<l>"}\;\t{"\(\ell\)"}\;\t{"h\(_1\)"}\;\dots\;\t{"h\(_n\)"}\). 
+would create the cohort \(\t{"<\(\ell\)>"}\;\t{"h\(_1\)"}\;\dots\;\t{"h\(_n\)"}\).
+
+% Pepijn's original:
+%\(\t{"<l>"}\;\t{"\(\ell\)"}\;\t{"h\(_1\)"}\;\dots\;\t{"h\(_n\)"}\). 
+
+% \begin{itemize}
+% \item[] \t{"<\(\ell\)>"}
+%  \begin{itemize}
+%     \item[] \t{"h\(_1\)"} \\
+%             \dots \\
+%             \t{"h\(_n\)"}
+%  \end{itemize} 
+% \end{itemize}
 
 The CG for $a^nb^n$ uses the hidden alphabet \{\t{odd}, \t{even}, \t{opt\_a},
 \t{opt\_b}\}. These symbols mean that the cohort they are attached to is in an
@@ -215,41 +226,6 @@ The language $a^nb^nc^n$ is context-sensitive, and therefore CG must at least
 partly overlap with the context-sensitive languages. 
 
 
-\section{Are all regular languages in CG?}
-In the present section, we propose a method to transform arbitrary finite-state
-automata into CG. Figure~\ref{fig:fsa} presents an example automaton with
-$\Sigma = \{$\emph{det, adj, n}$\}$, for which we implement a corresponding CG
-as follows.
-
-As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det,
-  opt\_adj, opt\_n}$\}$, and insert the full set $\Sigma^{\prime}$ to each
-cohort as readings. In addition, we introduce \emph{state cohorts}, which
-contain the full set $S = \{s_1, s_2\}$. For example, the sequence \emph{det n}
-would be modelled with the following sentence:
-%
-\begin{table}[h]
-  \centering\small
-  \begin{tabular}{c|c|c|c|c}
-    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ \hline
-    \h{s1} & \t{det}      & \h{s1} & \t{n}        & \h{s1} \\
-    \h{s2} & \t{opt\_det} & \h{s2} & \t{opt\_det} & \h{s2} \\
-           & \t{opt\_adj} &        & \t{opt\_adj} &        \\
-           & \t{opt\_n}   &        & \t{opt\_n}   &        
-  \end{tabular}
-\end{table}
-%
-The rules of the grammar disambiguate both word cohorts and state cohorts. Thus
-the desired result shows both the accepted string and the path in the automaton.
-%
-\begin{table}[h]
-  \centering\small
-  \begin{tabular}{c|c|c|c|c}
-    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ \hline
-    \h{s1} & \t{det}      & \h{s2} & \t{n}        & \h{s1} \\
-           & \t{opt\_det} &        & \t{opt\_n}   &  
-  \end{tabular}
-\end{table}
-%
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.6\linewidth]{fsa.png}
@@ -259,7 +235,46 @@ the desired result shows both the accepted string and the path in the automaton.
 \end{figure}
 
 
-\subsection{Disambiguation process}
+\section{Are all regular languages in CG?}
+In the present section, we propose a method to transform arbitrary finite-state
+automata into CG. Figure~\ref{fig:fsa} presents an example automaton with
+$\Sigma = \{$\emph{det, adj, n}$\}$, for which we implement a corresponding CG
+as follows.
+
+\subsection{Cohorts}
+As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det,
+  opt\_adj, opt\_n}$\}$, and insert the full set $\Sigma^{\prime}$ to each
+cohort as readings. In addition, we introduce \emph{state cohorts}, which
+contain the full set $S = \{s_1, s_2\}$. For example, the sequence \emph{det n}
+would be modelled with the following sentence:
+%
+\begin{table}[h]
+  \centering\small
+  \begin{tabular}{c|c|c|c|c}
+    \swf   & \t{"<det>"}  & \swf   & \t{"<n>"} & \swf   \\ \hline
+    \h{s1} & \t{opt\_det} & \h{s1} & \t{opt\_det} & \h{s1} \\
+    \h{s2} & \t{opt\_adj} & \h{s2} & \t{opt\_adj} & \h{s2} \\
+           & \t{opt\_n}   &        & \t{opt\_n}   &        \\
+     
+  \end{tabular}
+\end{table}
+
+%
+The rules of the grammar disambiguate both word cohorts and state cohorts. Thus
+the desired result shows both the accepted string and the path in the automaton.
+
+\begin{table}[h]
+  \centering\small
+  \begin{tabular}{c|c|c|c|c}
+    \swf   & \t{"<det>"}  & \swf   & \t{"<n>"} & \swf   \\ \hline
+    \h{s1} & \t{opt\_det}      & \h{s2} & \t{opt\_n}        & \h{s1} \\
+
+  \end{tabular}
+\end{table}
+
+
+
+\subsection{Rules}
 Given that every transition happens between two states, and every state 
 has an incoming and outgoing transition, every rule needs only
 positions -1 and 1 in its contextual tests. 
@@ -290,34 +305,54 @@ relax our criteria: if every cohort with a reading \t{POS} has a corresponding
 \t{opt\_adj}\}, we accept the string.
 
 
-\subsection{Disjunction}
-Consider the regular language with two strings $\{ab,ba\}$. With the previously
-described approach, this is the closest we could get in CG output:
+\paragraph{Real text}
+Alternatively, we can apply this scenario to real-life ambiguities, where the word cohorts
+contain only some subset of all the readings. 
+In the following table, we show the initial state of the phrase ``the book''.
+The word forms are now actual words, and the \t{opt\_POS} only include the actual analyses of those words.
+
+
 \begin{table}[h]
   \centering\small
   \begin{tabular}{c|c|c|c|c}
-    \swf    & \t{"<w>"}  & \swf    & \t{"<w>"}  & \swf    \\ \hline
-    \h{...} & \t{a}      & \h{...} & \t{b}      & \h{...} \\ 
-            & \t{opt\_a} &         & \t{opt\_a} &         \\            
-            & \t{opt\_b} &         & \t{opt\_b} &
+    \swf   & \t{"<the>"}  & \swf  & \t{"<book>"} & \swf   \\ \hline
+    \h{s1} & \t{\h{opt\_}det}     & \h{s1} & \t{\h{opt\_}n} & \h{s1} \\
+    \h{s2} &                      & \h{s2} & \t{\h{opt\_}v} & \h{s2} \\
+
   \end{tabular}
 \end{table}
+
+In this scenario, we would omit matching word forms to \t{\h{opt\_}POS} tags; 
+instead, it just becomes an alternative way of disambiguation.
+
+
+\subsection{Limitations}
+As we point out in Section~\ref{sec:gencg}, CG is not suited for handling disjunction;
+the same problem with the language $\{ab,ba\}$ would happen here:
+
+\begin{table}[h]
+  \centering\small
+  \begin{tabular}{c|c|c|c|c}
+    \swf    & \t{"<a>"}  & \swf    & \t{"<b>"}  & \swf    \\ \hline
+    \h{...} & \t{opt\_a} & \h{...} & \t{opt\_a} & \h{...} \\ 
+            & \t{opt\_b} &         & \t{opt\_b} &                   
+  \end{tabular}
+\end{table}
+
 As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
 Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent this
 language faithfully, CG substitutes uncertainty on the sentence level (``either
 $ab$ or $ba$'') with uncertainty in the cohorts: ``the first character may be
 either $a$ or $b$, and the second character may be either $a$ or $b$''.
+Given that this is a fundamental design of CG, we do not envision a way out of 
+this limitation, except for the generating multiple CGs per automaton.
 
-This will lead us to trouble quickly: the lax version,
-``accept if every \t{"<X>"} has a corresponding \t{opt\_X} in the readings'',
-would accept the strings $aa$ and $bb$, which obviously are not a part of the
-language.
+However, it is an unclear how much this property would limit us in creating 
+\emph{useful} CG rules out of more expressive grammar formalisms.
+Moreover, the real-life ambiguous cohorts are not \maxAmb{n}, but some much 
+smaller subset of $\Sigma$. Despite the limitation, we are still hopeful
+for more applied use cases.
 
-An alternative would be to model languages with disjunction as a set of CGs,
-in this case, one that generates only $ab$ and other that generates only $ba$;
-however, this would become extremely costly for anything more than a toy grammar.
-A solution to this problem---or a proof that there is no solution---is under
-development.
 
 \section{Discussion}
 
@@ -339,7 +374,9 @@ This could serve as an alternative to learning grammars from a corpus.
 the contextual tests for 4 different constraint formalisms, including CG. 
 In addition, parsing complexity can be easily defined for a given variant and 
 implementation of CG; see for instance \newcite{nemeskey14}.
-However, to our knowledge, expressivity of a whole grammar has not been approached before.
+\cite{ylijyra2017} presents questions regarding the expressive power
+of Constraint Grammar, but concentrates on the implementation side.
+To our knowledge, CG as a generative model has not been been approached before.
 
 
 \bibliographystyle{acl}
