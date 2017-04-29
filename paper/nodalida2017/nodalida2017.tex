@@ -261,7 +261,8 @@ would be modelled with the following sentence:
 
 %
 The rules of the grammar disambiguate both word cohorts and state cohorts. Thus
-the desired result shows both the accepted string and the path in the automaton.
+the desired result shows both the accepted string and the path in the automaton,
+as follows:
 
 \begin{table}[h]
   \centering\small
@@ -327,15 +328,18 @@ instead, it just becomes an alternative way of disambiguation.
 
 
 \subsection{Limitations}
-As we point out in Section~\ref{sec:gencg}, CG is not suited for handling disjunction;
-the same problem with the language $\{ab,ba\}$ would happen here:
+As we point out in Section~\ref{sec:gencg}, CG as a generative formalism 
+is not suited for handling disjunction.
+Given the language $\{ab,ba\}$ and \maxAmb{2}, no disambiguation would happen:
 
 \begin{table}[h]
   \centering\small
   \begin{tabular}{c|c|c|c|c}
-    \swf    & \t{"<a>"}  & \swf    & \t{"<b>"}  & \swf    \\ \hline
-    \h{...} & \t{opt\_a} & \h{...} & \t{opt\_a} & \h{...} \\ 
-            & \t{opt\_b} &         & \t{opt\_b} &                   
+    \swf        & \t{``<a>''}  & \swf       & \t{``<b>''}  & \swf    \\ \hline
+     \h{s1}     & \t{opt\_a} & \h{s1}     & \t{opt\_a} & \h{s1} \\ 
+     \h{\dots}  & \t{opt\_b} & \h{\dots}  & \t{opt\_b} & \h{\dots} \\
+     \h{s$_n$}  &            & \h{s$_n$}  &            & \h{s$_n$}
+
   \end{tabular}
 \end{table}
 
