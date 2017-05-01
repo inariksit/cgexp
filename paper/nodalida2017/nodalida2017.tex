@@ -128,6 +128,8 @@ CGs based on formal languages, it is too limited to be used in defining the
 language which a CG generates.
 %WEN: we should include a reference to the other formalism here, or to the
 %     discussion section in which we talk about the disjunction problem
+%Inari: Yeah, I am wondering myself too what's the best place to talk about it.
+%Maybe it becomes easier when we have more pages to fill?
 
 In light of the idea of using CGs based on formal languages for disambiguating,
 it seems at odds with the philosophy of CG to reject by replacing the entire
@@ -282,42 +284,56 @@ action---the context ``\t{s2} on the left side and \t{s1} on the right side''
 may be broken by removing either \t{s2} or \t{s1}. 
 
 If there is only one allowed string of length $n$ in the language, then the
-result should have only one \t{opt\_POS} reading per cohort, and we proceed to
-check whether they correspond to the original word forms \t{"POS"}: if
-\t{opt\_det} is the only reading, the word form must be \t{"det"}, and so on.
+result should have only one \t{opt\_POS} reading per cohort. 
+%If the original cohorts are unambiguous before adding the hidden readings, 
+%we use the opt-readings to accept the string.
+%If the original cohorts are ambiguous, we can use the opt-readings to disambiguate.
+The original cohort may be ambiguous or not before adding the hidden readings:
+in both cases, a mismatch between the remaining opt-reading and the (possibly singleton)
+list of original readings will be a cause to reject.
+For instance, \{\t{det}, \t{opt\_det}\} accepts the original reading \t{det};
+\{\t{det}, \t{adj}, \t{opt\_det}\} accepts and disambiguates the cohort into
+\t{det}; finally, \{\t{adj}, \t{opt\_det}\} rejects the whole string as not 
+part of the regular language.
 
 If there are multiple strings of the same length in the language, we have to
 relax our criteria: if every cohort with a reading \t{POS} has a corresponding
 \t{opt\_POS} in the set of remaining readings, such as \{\t{det}, \t{opt\_det},
-\t{opt\_adj}\}, we accept the string.
+\t{opt\_adj}\}, we accept the string. 
 
-In this scenario, we would omit matching word forms to \t{\h{opt\_}POS} tags; 
-instead, it just becomes an alternative way of disambiguation.
+% Inari: probably skip this, we're already talking about limitations elsewhere?
+%If the original cohort is ambiguous and the opt-readings do not help to disambiguate,
+%as would be the case in \{\t{det}, \t{adj}, \t{opt\_det}, \t{opt\_adj}\},
+%we cannot disambiguate further. As we point out in Section~\ref{sec:gencg},
+%with the example language $\{ab,ba\}$, this could lead in accepting too much.
 
 
 \subsection{Limitations}
-As we point out in Section~\ref{sec:gencg}, CG as a generative formalism 
-is not suited for handling disjunction.
-Given the language $\{ab,ba\}$ and \maxAmb{2}, no disambiguation would happen:
-%
-\begin{table}[h]
-  \centering\small
-  \begin{tabular}{c|c|c|c|c}
-    \swf        & \t{"<a>""}  & \swf      & \t{"<b>""}  & \swf    \\ \hline
-     \h{s1}     & \t{opt\_a} & \h{s1}     & \t{opt\_a} & \h{s1} \\ 
-     \h{\dots}  & \t{opt\_b} & \h{\dots}  & \t{opt\_b} & \h{\dots} \\
-     \h{s$_n$}  &            & \h{s$_n$}  &            & \h{s$_n$}
+%As we point out in Section~\ref{sec:gencg}, CG as a generative formalism 
+%is not suited for handling disjunction.
+%The approach with state cohorts is not able to disambiguate $\{ab,ba\}$  
 
-  \end{tabular}
-\end{table}
+%Given the language $\{ab,ba\}$ and \maxAmb{2}, no disambiguation would happen:
+%
+%\begin{table}[h]
+%  \centering\small
+%  \begin{tabular}{c|c|c|c|c}
+%    \swf        & \t{"<a>"}  & \swf      & \t{"<b>}  & \swf    \\ \hline
+%     \h{s1}     & \t{opt\_a} & \h{s1}     & \t{opt\_a} & \h{s1} \\ 
+%     \h{\dots}  & \t{opt\_b} & \h{\dots}  & \t{opt\_b} & \h{\dots} \\
+%     \h{s$_n$}  &            & \h{s$_n$}  &            & \h{s$_n$}
+%
+%  \end{tabular}
+%\end{table}
 %
 As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
-Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent this
-language faithfully, CG substitutes uncertainty on the sentence level (``either
-$ab$ or $ba$'') with uncertainty in the cohorts: ``the first character may be
-either $a$ or $b$, and the second character may be either $a$ or $b$''.
-Given that this is a fundamental design of CG, we do not envision a way out of 
-this limitation, except for the generating multiple CGs per automaton.
+Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent a 
+language such as $\{ab,ba\}$ faithfully, CG substitutes uncertainty on the 
+sentence level (``either $ab$ or $ba$'') with uncertainty in the cohorts: 
+``the first character may be either $a$ or $b$, and the second character 
+may be either $a$ or $b$''. Given that this is a fundamental design of CG, 
+we do not envision a way out of  this limitation, except for the generating 
+multiple CGs per automaton.
 
 However, it is an unclear how much this property would limit us in creating 
 \emph{useful} CG rules out of more expressive grammar formalisms.
