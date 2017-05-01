@@ -177,18 +177,6 @@ symbol in the hidden alphabet\footnote{
 }, e.g.\ for some symbol $\ell \in \Sigma$ and $\Sigma' = \{h_1,\dots,h_n\}$ we
 would create the cohort \(\t{"<\(\ell\)>"}\;\t{"h\(_1\)"}\;\dots\;\t{"h\(_n\)"}\).
 
-% Pepijn's original:
-%\(\t{"<l>"}\;\t{"\(\ell\)"}\;\t{"h\(_1\)"}\;\dots\;\t{"h\(_n\)"}\). 
-
-% \begin{itemize}
-% \item[] \t{"<\(\ell\)>"}
-%  \begin{itemize}
-%     \item[] \t{"h\(_1\)"} \\
-%             \dots \\
-%             \t{"h\(_n\)"}
-%  \end{itemize} 
-% \end{itemize}
-
 The CG for $a^nb^n$ uses the hidden alphabet \{\t{odd}, \t{even}, \t{opt\_a},
 \t{opt\_b}\}. These symbols mean that the cohort they are attached to is in an
 even or odd position, and that $a$ or $b$ is a legal option for this cohort,
@@ -224,8 +212,7 @@ Otherwise, we reject.
 
 The language $a^nb^nc^n$ is context-sensitive, and therefore CG must at least
 partly overlap with the context-sensitive languages. 
-
-
+%
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.6\linewidth]{fsa.png}
@@ -238,12 +225,13 @@ partly overlap with the context-sensitive languages.
 \section{Are all regular languages in CG?}
 In the present section, we propose a method to transform arbitrary finite-state
 automata into CG. Figure~\ref{fig:fsa} presents an example automaton with
-$\Sigma = \{$\emph{det, adj, n}$\}$, for which we implement a corresponding CG
-as follows.
+$\Sigma = \{$\emph{det, adj, n}$\}$, which checks whether some assignment of
+part-of-speech tags is ``valid''. We implement a corresponding CG in the
+following sections.
 
 \subsection{Cohorts and sentences}
 As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det,
-  opt\_adj, opt\_n}$\}$, and insert the full set $\Sigma^{\prime}$ to each
+  opt\_adj, opt\_n}$\}$, and insert the full set $\Sigma^{\prime}$ into each
 cohort as readings. In addition, we introduce \emph{state cohorts}, which
 contain the full set $S = \{s_1, s_2\}$. For example, the sequence \emph{det n}
 would be modelled with the following sentence:
@@ -251,28 +239,26 @@ would be modelled with the following sentence:
 \begin{table}[h]
   \centering\small
   \begin{tabular}{c|c|c|c|c}
-    \swf   & \t{"<det>"}  & \swf   & \t{"<n>"} & \swf   \\ \hline
-    \h{s1} & \t{opt\_det} & \h{s1} & \t{opt\_det} & \h{s1} \\
-    \h{s2} & \t{opt\_adj} & \h{s2} & \t{opt\_adj} & \h{s2} \\
-           & \t{opt\_n}   &        & \t{opt\_n}   &        \\
-     
+    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ \hline
+    \h{s1} & \t{det}      & \h{s1} & \t{n}        & \h{s1} \\
+    \h{s2} & \t{opt\_det} & \h{s2} & \t{opt\_det} & \h{s2} \\
+           & \t{opt\_adj} &        & \t{opt\_adj} &        \\
+           & \t{opt\_n}   &        & \t{opt\_n}   &        
   \end{tabular}
 \end{table}
-
 %
 The rules of the grammar disambiguate both word cohorts and state cohorts. Thus
 the desired result shows both the accepted string and the path in the automaton,
 as follows:
-
+%
 \begin{table}[h]
   \centering\small
   \begin{tabular}{c|c|c|c|c}
-    \swf   & \t{"<det>"}  & \swf   & \t{"<n>"} & \swf   \\ \hline
-    \h{s1} & \t{opt\_det}      & \h{s2} & \t{opt\_n}        & \h{s1} \\
-
+    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ \hline
+    \h{s1} & \t{det}      & \h{s2} & \t{n}        & \h{s1} \\
+           & \t{opt\_det} &        & \t{opt\_n}   &        
   \end{tabular}
 \end{table}
-
 
 
 \subsection{Rules}
@@ -282,14 +268,14 @@ positions -1 and 1 in its contextual tests.
 The semantics of the rules are ``remove an \t{opt\_POS} tag, if it is 
 \emph{not} surrounded by allowed states'',
 and ``remove a state, if it is \emph{not} surrounded by allowed transitions''.
-For the example automaton, the \t{opt\_POS}-rules are as follows.
+For the example automaton, the \t{opt\_POS}-rules are as follows:
 \begin{verbatim}
 REMOVE...
   opt_det IF (NEGATE -1 S1 LINK 2 S2) ;
   opt_adj IF (NEGATE -1 S2 LINK 2 S2) ;
   opt_n   IF (NEGATE -1 S2 LINK 2 S1) ;
 \end{verbatim}
-\noindent The start and end states naturally correspond to the first and last
+The start and end states naturally correspond to the first and last
 state cohort, and can be trivially disambiguated, in this case both into \t{s1}.
 Once we remove a reading from either side of a cohort, some more rules can take
 action---the context ``\t{s2} on the left side and \t{s1} on the right side''
@@ -297,31 +283,13 @@ may be broken by removing either \t{s2} or \t{s1}.
 
 If there is only one allowed string of length $n$ in the language, then the
 result should have only one \t{opt\_POS} reading per cohort, and we proceed to
-check whether they correspond to the original word forms \t{"<POS>"}: if
-\t{opt\_det} is the only reading, the word form must be \t{"<det>"}, and so on.
+check whether they correspond to the original word forms \t{"POS"}: if
+\t{opt\_det} is the only reading, the word form must be \t{"det"}, and so on.
 
 If there are multiple strings of the same length in the language, we have to
 relax our criteria: if every cohort with a reading \t{POS} has a corresponding
 \t{opt\_POS} in the set of remaining readings, such as \{\t{det}, \t{opt\_det},
 \t{opt\_adj}\}, we accept the string.
-
-
-\paragraph{Real text}
-Alternatively, we can apply this scenario to real-life ambiguities, where the word cohorts
-contain only some subset of all the readings. 
-In the following table, we show the initial state of the phrase ``the book''.
-The word forms are now actual words, and the \t{\h{opt\_}POS} only include the actual analyses of those words.
-
-
-\begin{table}[h]
-  \centering\small
-  \begin{tabular}{c|c|c|c|c}
-    \swf   & \t{"<the>"}  & \swf  & \t{"<book>"} & \swf   \\ \hline
-    \h{s1} & \t{\h{opt\_}det}     & \h{s1} & \t{\h{opt\_}n} & \h{s1} \\
-    \h{s2} &                      & \h{s2} & \t{\h{opt\_}v} & \h{s2} \\
-
-  \end{tabular}
-\end{table}
 
 In this scenario, we would omit matching word forms to \t{\h{opt\_}POS} tags; 
 instead, it just becomes an alternative way of disambiguation.
@@ -331,7 +299,7 @@ instead, it just becomes an alternative way of disambiguation.
 As we point out in Section~\ref{sec:gencg}, CG as a generative formalism 
 is not suited for handling disjunction.
 Given the language $\{ab,ba\}$ and \maxAmb{2}, no disambiguation would happen:
-
+%
 \begin{table}[h]
   \centering\small
   \begin{tabular}{c|c|c|c|c}
@@ -342,7 +310,7 @@ Given the language $\{ab,ba\}$ and \maxAmb{2}, no disambiguation would happen:
 
   \end{tabular}
 \end{table}
-
+%
 As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
 Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent this
 language faithfully, CG substitutes uncertainty on the sentence level (``either
