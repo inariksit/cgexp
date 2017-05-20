@@ -1,7 +1,6 @@
 module Automaton where
 
 import Data.List ( delete, nub )
-
 --------------------------------------------------------------------------------
 
 type State = Int
@@ -63,22 +62,14 @@ withSymbol a s = [ (from,to) | from <- [0..bound a]
 
 --which symbols lead to the state, and which symbols go out from it.
 withState :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> ([a],[a])
-withState a s = tupleMap (nub . concat) $ unzip [ (tr a t s, tr a s t) | t <- [0..bound a] ]
- where tupleMap f (a,b) = (f a , f b)
+withState aut s = ( nub $ concat [ tr aut t s | t <- [0..bound aut] ] 
+                  , nub $ concat [ tr aut s t | t <- [0..bound aut] ] )
 
-{---
- 
-transitionFrom :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> a -> [State]
-transitionFrom (A f b _) from symb = [ to | to <- [0..b]
-                                          , symb `elem` f from to ]
 
-transitionTo :: (Eq a, Enum a, Bounded a) => Automaton a -> State -> a -> [State]
-transitionTo (A f b _) to symb = [ from | from <- [0..b]
-                                        , symb `elem` f from to ]
----}
+---
 
 sink :: Automaton a -> State -> Bool
-sink a s = all null [ symb $ trans a s t | t <- [0..bound a] ]
+sink a s = all null [ tr a s t | t <- [0..bound a] ]
 
 noTransitionsTo :: Automaton a -> State -> Bool
 noTransitionsTo a s = all null [ symb $ trans a t s | t <- [0..bound a] ]
