@@ -1,4 +1,5 @@
 \documentclass[11pt]{article}
+\usepackage{amsmath}
 \usepackage{nodalida2017}
 \usepackage{mathptmx}
 \usepackage{xcolor}
@@ -12,9 +13,9 @@
 \title{Exploring the Expressivity of Constraint Grammar}
 
 \author{%
-  Pepijn Kokke \\
+  Wen Kokke \\
   University of Edinburgh \\
-  {\tt pepijn.kokke@ed.ac.uk} \\\And
+  {\tt wen.kokke@ed.ac.uk} \\\And
   Inari Listenmaa \\
   University of Gothenburg \\
   {\tt inari.listenmaa@cse.gu.se} }
@@ -54,8 +55,6 @@ solve. CG was never meant to be a grammar in the generative sense. Instead, it
 is a tool for analysing and disambiguating strings.
 This, we believe, explains why the question of the expressivity of CG went
 unasked and unanswered for a long time.
-%WEN: How much would this upset Anssi? Has he actually looked into its
-%     expressivity?
 It also gives us our first problem: How do we view CGs generatively?
 We address this in section~\ref{sec:gencg}.
 
@@ -126,10 +125,12 @@ While the output contains the interpretations $ab$ and $ba$, it also includes
 $aa$ and $bb$. Therefore, while this style is useful for disambiguating using
 CGs based on formal languages, it is too limited to be used in defining the
 language which a CG generates.
-%WEN: we should include a reference to the other formalism here, or to the
-%     discussion section in which we talk about the disjunction problem
-%Inari: Yeah, I am wondering myself too what's the best place to talk about it.
-%Maybe it becomes easier when we have more pages to fill?
+% Wen:
+%   We should include a reference to the other formalism here, or to the
+%   discussion section in which we talk about the disjunction problem.
+% Inari:
+%   Yeah, I am wondering myself too what's the best place to talk about it.
+%   Maybe it becomes easier when we have more pages to fill? 
 
 In light of the idea of using CGs based on formal languages for disambiguating,
 it seems at odds with the philosophy of CG to reject by replacing the entire
@@ -143,15 +144,20 @@ output \t{"<REJECT>"}, which is used in the definition of CG as a formal
 language; and the method in which we input ambiguous strings, and simply
 disambiguate as far as possible. 
 
-
-\section{A lower bound for CG}
-% WEN: We should move this section over into section 2 about GCG
 It should be noted that VISL CG-3 \cite{bick2015,vislcg3} supports commands 
 such as \t{EXTERNAL}, which runs an external executable. It should therefore 
-be obvious that the complete set of CG-3 commands, at least theoretically, 
-can generate any recursively enumerable language. For this reason, we restrict 
-ourselves to a subset of the commands permitted by CG.
+be obvious that the complete set of VISL CG-3 commands, at least theoretically,
+can generate any recursively enumerable language. For this reason, we will
+investigate particular subsets of the commands permitted by CG.
+In sections~\ref{sec:lowerbound} and~\ref{sec:regular}, we will restrict
+ourselves to the subset of CG which only uses the \t{REMOVE} command with
+sections, and show this to at least cover all regular languages and some
+context-free and context-sensitive languages.
+In section~\ref{sec:turingcomplete}, we will restrict ourselves to thesubset of
+CG which only uses the \t{ADDCOHORT} and \t{REMCOHORT} commands with sections,
+and show this to be Turing complete.
 
+\section{A lower bound for CG}\label{sec:lowerbound}
 In this section, we will only use the \t{REMOVE} command with sections, in
 addition to a single use of the \t{ADDCOHORT} command to add the special cohort
 \t{"<REJECT>"}, and a single use of the \t{REMCOHORT} command to clean up
@@ -162,8 +168,10 @@ the expressivity of CG (see Figure~\ref{fig:nocorr}).
 %
 \begin{figure}[h]
   \centering
+  % Wen: This graphic needs to be updated, because you literally prove in the
+  % next section that we cover all regular languages.
   \includegraphics[width=0.8\linewidth]{chomsky}
-  \caption{Lower bound on the expressivity of CG.}
+  \caption{Lower bound on the expressivity of the subset of CG using only \t{REMOVE}.}
   \label{fig:nocorr}
 \end{figure}
 
@@ -224,7 +232,7 @@ partly overlap with the context-sensitive languages.
 \end{figure}
 
 
-\section{Are all regular languages in CG?}
+\section{Are all regular languages in CG?}\label{sec:regular}
 In the present section, we propose a method to transform arbitrary finite-state
 automata into CG. Figure~\ref{fig:fsa} presents an example automaton with
 $\Sigma = \{$\emph{det, adj, n}$\}$, which checks whether some assignment of
@@ -238,29 +246,29 @@ cohort as readings. In addition, we introduce \emph{state cohorts}, which
 contain the full set $S = \{s_1, s_2\}$. For example, the sequence \emph{det n}
 would be modelled with the following sentence:
 %
-\begin{table}[h]
-  \centering\small
-  \begin{tabular}{c|c|c|c|c}
-    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ \hline
+\begin{center}
+  \renewcommand{\tabcolsep}{2.5pt}
+  \begin{tabular}{ccccc}
+    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ 
     \h{s1} & \t{det}      & \h{s1} & \t{n}        & \h{s1} \\
     \h{s2} & \t{opt\_det} & \h{s2} & \t{opt\_det} & \h{s2} \\
            & \t{opt\_adj} &        & \t{opt\_adj} &        \\
            & \t{opt\_n}   &        & \t{opt\_n}   &        
   \end{tabular}
-\end{table}
+\end{center}
 %
 The rules of the grammar disambiguate both word cohorts and state cohorts. Thus
 the desired result shows both the accepted string and the path in the automaton,
 as follows:
 %
-\begin{table}[h]
-  \centering\small
-  \begin{tabular}{c|c|c|c|c}
-    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ \hline
+\begin{center}
+  \renewcommand{\tabcolsep}{2.5pt}
+  \begin{tabular}{ccccc}
+    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ 
     \h{s1} & \t{det}      & \h{s2} & \t{n}        & \h{s1} \\
            & \t{opt\_det} &        & \t{opt\_n}   &        
   \end{tabular}
-\end{table}
+\end{center}
 
 
 \subsection{Rules}
@@ -273,9 +281,9 @@ and ``remove a state, if it is \emph{not} surrounded by allowed transitions''.
 For the example automaton, the \t{opt\_POS}-rules are as follows:
 \begin{verbatim}
 REMOVE...
-  opt_det IF (NEGATE -1 S1 LINK 2 S2) ;
-  opt_adj IF (NEGATE -1 S2 LINK 2 S2) ;
-  opt_n   IF (NEGATE -1 S2 LINK 2 S1) ;
+  opt_det IF (NEGATE -1 S1 LINK 2 S2);
+  opt_adj IF (NEGATE -1 S2 LINK 2 S2);
+  opt_n   IF (NEGATE -1 S2 LINK 2 S1);
 \end{verbatim}
 The start and end states naturally correspond to the first and last
 state cohort, and can be trivially disambiguated, in this case both into \t{s1}.
@@ -285,9 +293,9 @@ may be broken by removing either \t{s2} or \t{s1}.
 
 If there is only one allowed string of length $n$ in the language, then the
 result should have only one \t{opt\_POS} reading per cohort. 
-%If the original cohorts are unambiguous before adding the hidden readings, 
-%we use the opt-readings to accept the string.
-%If the original cohorts are ambiguous, we can use the opt-readings to disambiguate.
+% If the original cohorts are unambiguous before adding the hidden readings,  we
+% use the opt-readings to accept the string. If the original cohorts are
+% ambiguous, we can use the opt-readings to disambiguate. 
 The original cohort may be ambiguous or not before adding the hidden readings:
 in both cases, a mismatch between the remaining opt-reading and the (possibly singleton)
 list of original readings will be a cause to reject.
@@ -301,50 +309,167 @@ relax our criteria: if every cohort with a reading \t{POS} has a corresponding
 \t{opt\_POS} in the set of remaining readings, such as \{\t{det}, \t{opt\_det},
 \t{opt\_adj}\}, we accept the string. 
 
-% Inari: probably skip this, we're already talking about limitations elsewhere?
-%If the original cohort is ambiguous and the opt-readings do not help to disambiguate,
-%as would be the case in \{\t{det}, \t{adj}, \t{opt\_det}, \t{opt\_adj}\},
-%we cannot disambiguate further. As we point out in Section~\ref{sec:gencg},
-%with the example language $\{ab,ba\}$, this could lead in accepting too much.
+% Inari:
+%   Probably skip this, we're already talking about limitations elsewhere? If
+%   the original cohort is ambiguous and the opt-readings do not help to
+%   disambiguate, as would be the case in \{\t{det}, \t{adj}, \t{opt\_det},
+%   \t{opt\_adj}\}, we cannot disambiguate further. As we point out in
+%   Section~\ref{sec:gencg}, with the example language $\{ab,ba\}$, this could
+%   lead in accepting too much. 
 
 
 \subsection{Limitations}
-%As we point out in Section~\ref{sec:gencg}, CG as a generative formalism 
-%is not suited for handling disjunction.
-%The approach with state cohorts is not able to disambiguate $\{ab,ba\}$  
-
-%Given the language $\{ab,ba\}$ and \maxAmb{2}, no disambiguation would happen:
-%
-%\begin{table}[h]
-%  \centering\small
-%  \begin{tabular}{c|c|c|c|c}
-%    \swf        & \t{"<a>"}  & \swf      & \t{"<b>}  & \swf    \\ \hline
-%     \h{s1}     & \t{opt\_a} & \h{s1}     & \t{opt\_a} & \h{s1} \\ 
-%     \h{\dots}  & \t{opt\_b} & \h{\dots}  & \t{opt\_b} & \h{\dots} \\
-%     \h{s$_n$}  &            & \h{s$_n$}  &            & \h{s$_n$}
-%
-%  \end{tabular}
-%\end{table}
-%
 As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
 Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent a 
 language such as $\{ab,ba\}$ faithfully, CG substitutes uncertainty on the 
 sentence level (``either $ab$ or $ba$'') with uncertainty in the cohorts: 
 ``the first character may be either $a$ or $b$, and the second character 
-may be either $a$ or $b$''. Given that this is a fundamental design of CG, 
-we do not envision a way out of  this limitation, except for the generating 
-multiple CGs per automaton.
+may be either $a$ or $b$''.
+Given that this is a fundamental design of CG, we do not envision a way to work
+around this limitation. Thus, when we use a CG generated from a regular
+expression to \emph{disambiguate}, it will be overly permissive.
 
-However, it is an unclear how much this property would limit us in creating 
-\emph{useful} CG rules out of more expressive grammar formalisms.
-Applying the rules to real-life ambiguous cohorts is expected to be easier:
-those cohorts are not \maxAmb{n}, but some much smaller subset of $\Sigma$.
-Hence, despite the theoretical limitation, we are still hopeful
-for more applied use cases.
 
+\section{Turing Machines in CG?}\label{sec:turingcomplete}
+In the previous sections, we have assumed that CG refers to the subset of VISL
+CG-3 which uses only the \t{REMOVE} command. In this section, we will take CG to
+refer to the subset of VISL CG-3 which uses only the \t{ADDCOHORT} and
+\t{REMCOHORT} commands, and show that this subset is Turing complete.
+We will do this by implementing a procedure which translates arbitrary Turing
+machines to CG, taking VISL CG-3 itself as sufficient evidence of the fact that
+Turing machines can simulate constraint grammars.
+
+\subsection{A sample Turing machine}
+We will discuss our translation by means of an example Turing machine. Before we
+delve into this, however, we will briefly remind the reader of the definition of
+a Turing machine. A Turing machine is a 7-tuple
+\[
+  M = \langle Q, \Gamma, b, \Sigma, \delta, q_0, F \rangle.
+\]
+$Q$ is a finite, non-empty set of states, with a designated starting state $q_0
+\in Q$, and a subset $F \subseteq Q$ of accepting states. $\Gamma$ is a set of
+tape symbols, with a designated blank symbol $b$ and a subset $\Sigma \subseteq
+\Gamma \setminus \{b\}$ of input symbols. Lastly, $\delta$ is a transition
+function of the type
+\[
+  (Q \setminus F) \times \Gamma \to Q \times \Gamma \times \{\text{Left},\text{Right}\}.
+\]
+For the remainder of this section, we will use the Turing machine which computes
+the successors of binary numbers as an example. This machine is given as follows:
+\[\!
+\begin{aligned}
+  &Q&      \!\!\!\!=\;& \{\t{S0}, \t{S1}, \t{S2}, \text{Halt}\} &&\Sigma& \!\!\!\!=\;& \{\t{0}, \t{1}\} \\
+  &\Gamma& \!\!\!\!=\;& \{\t{\_}, \t{0}, \t{1}\}                &&q_0&    \!\!\!\!=\;& \t{S0} \\
+  &b&      \!\!\!\!=\;& \t{\_}                                  &&F&      \!\!\!\!=\;& \{\text{Halt}\}
+\end{aligned}
+\]
+The transition function $\delta$ is described in table~\ref{tab:tm}.
+What do these various states do? \t{S0} and \t{S2} both move the head of the
+Turing machine to the start of the number. This leaves \t{S1} for the actual
+computation. While in state \t{S1}, the head will move rightwards, overwriting
+any \t{1} it encounters with a \t{0}, until it reaches either a \t{0} or the end
+of the number. It then overwrites this final symbol with a \t{1}.
+Table~\ref{tab:tmtrace} shows the execution trace of our sample Turing machine
+for the input \t{1101}, writing the current state \emph{before} the current
+position of the head.
+
+\begin{table*}[h]
+  \centering
+  \begin{tabular}{cl|llc}
+    \textbf{State In} & \textbf{Symbol In} & \textbf{Symbol Out} & \textbf{State Out} & \textbf{Move} \\ \hline
+                   & Read \t{"\_"} & Write \t{"\_"} & \t{"S1"} & Right \\
+    \t{"S0"}       & Read \t{"0"}  & Write \t{"0"}  & \t{"S0"} & Left  \\
+                   & Read \t{"1"}  & Write \t{"1"}  & \t{"S0"} & Left  \\ \cline{1-5}
+                   & Read \t{"\_"} & Write \t{"1"}  & \t{"S2"} & Left  \\
+    \t{"S1"}       & Read \t{"0"}  & Write \t{"1"}  & \t{"S2"} & Left  \\
+                   & Read \t{"1"}  & Write \t{"0"}  & \t{"S1"} & Right \\ \cline{1-5}
+                   & Read \t{"\_"} & Write \t{"\_"} & Halt     & Right \\ 
+    \t{"S2"}       & Read \t{"0"}  & Write \t{"0"}  & \t{"S2"} & Left  \\
+                   & Read \t{"1"}  & Write \t{"1"}  & \t{"S2"} & Left  
+  \end{tabular}
+  \caption{Sample Turing machine (binary successor function)}
+  \label{tab:tm}
+\end{table*}
+
+\begin{table*}[h]
+  \centering
+  \begin{tabular}{ccccccccccc}
+    \t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}\\
+    \t{"\_"}&        &\t{"\_"}&\h{"S0"}&\t{"1"}&        &\t{"1"}&        &\t{"0"}&                   &\t{"1"}\\
+    \t{"\_"}&\h{"S0"}&\t{"\_"}&        &\t{"1"}&        &\t{"1"}&        &\t{"0"}&                   &\t{"1"}\\
+    \t{"\_"}&        &\t{"\_"}&\h{"S1"}&\t{"1"}&        &\t{"1"}&        &\t{"0"}&                   &\t{"1"}\\
+    \t{"\_"}&        &\t{"\_"}&        &\t{"0"}&\h{"S1"}&\t{"1"}&        &\t{"0"}&                   &\t{"1"}\\
+    \t{"\_"}&        &\t{"\_"}&        &\t{"0"}&        &\t{"0"}&\h{"S1"}&\t{"0"}&\hphantom{\t{"S1"}}&\t{"1"}\\
+    \t{"\_"}&        &\t{"\_"}&        &\t{"0"}&\h{"S2"}&\t{"0"}&        &\t{"1"}&                   &\t{"1"}\\
+    \t{"\_"}&        &\t{"\_"}&\h{"S2"}&\t{"0"}&        &\t{"0"}&        &\t{"1"}&                   &\t{"1"}\\
+    \t{"\_"}&\h{"S2"}&\t{"\_"}&        &\t{"0"}&        &\t{"0"}&        &\t{"1"}&                   &\t{"1"}\\
+    \t{"\_"}&        &\t{"\_"}&\h{"S2"}&\t{"0"}&        &\t{"0"}&        &\t{"1"}&                   &\t{"1"}
+  \end{tabular}
+  \caption{Execution trace of a Turing machine (see table~\ref{tab:tm}) for input \t{1101}}
+  \label{tab:tmtrace}
+\end{table*}
+
+\subsection{Representing the tape}
+
+\begin{center}
+  \renewcommand{\tabcolsep}{2.5pt}
+  \begin{tabular}{ccccc}
+    \t{"<c>"} & \t{"<c>"} & \t{"<c>"} & \t{"<c>"} \\
+    \t{"1"}   & \t{"1"}   & \t{"0"}   & \t{"1"}  
+  \end{tabular}
+\end{center}
+
+\begin{center}
+  \renewcommand{\tabcolsep}{2.5pt}
+  \begin{tabular}{ccccc}
+    \t{"<c>"} & \t{"<c>"} & \h{"<s>"} & \t{"<c>"} & \t{"<c>"} \\
+    \t{"0"}   & \t{"1"}   & \h{"S1"}  & \t{"0"}   & \t{"1"}
+  \end{tabular}
+\end{center}
+
+\begin{Verbatim}
+BEFORE-SECTIONS
+ADDCOHORT ("<S>" "S0") 
+    BEFORE ("<C>") IF (-1 (>>>));
+\end{Verbatim}
+
+\begin{Verbatim}
+ADD ("<S>" "OLD") ("<S>");
+ADD ("<C>" "OLD") ("<C>")
+    IF (-1 ("<S>" "OLD"));
+\end{Verbatim}
+
+\begin{Verbatim}
+ADDCOHORT ("<S>" "S1")
+    BEFORE ("<C>")
+    IF (-2 ("<S>" "S1" "OLD") 
+    LINK 1 ("<C>" "1" "OLD"));
+ADDCOHORT ("<C>" "0")
+    AFTER ("<C>" "1" "OLD")
+    IF (-1 ("<S>" "S1" "OLD"));
+\end{Verbatim}
+
+\begin{Verbatim}
+ADDCOHORT ("<C>" "_")
+    BEFORE ("<S>")
+    IF (-1 (>>>));
+ADDCOHORT ("<C>" "_") 
+    AFTER ("<C>")
+    IF (0 (<<<) LINK -1 ("<S>"));
+\end{Verbatim}
+
+\begin{Verbatim}
+REMCOHORT ("<S>" "OLD");
+REMCOHORT ("<C>" "OLD");
+\end{Verbatim}
+
+\begin{Verbatim}
+AFTER-SECTIONS
+REMCOHORT ("<C>" "_") IF (NOT -1* SYM);
+REMCOHORT ("<C>" "_") IF (NOT  1* SYM);
+\end{Verbatim}
 
 \section{Discussion}
-
 At the time of writing, the grammars generated by the FSA$\rightarrow$CG
 conversion tool look awkward, and involve a number of extra cohorts and symbols.
 However, it does give us the ability to quickly generate fragments of CG code
