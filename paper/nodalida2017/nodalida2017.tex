@@ -225,11 +225,12 @@ partly overlap with the context-sensitive languages.
 %
 
 \section{Are all regular languages in CG?}\label{sec:regular}
-In the present section, we propose a method to transform all regular
-languages into CG. We show how any finite-state automaton can
-be expressed in a CG: start with states and transitions as ambiguous
-cohorts, and the disambiguated result shows both the correct sequence
-and its path in the automaton.
+In the present section, we propose a method to transform any
+finite-state automata into CG. 
+%We show how any finite-state automaton can be expressed in a CG: encode the states and transitions as ambiguous
+%cohorts, and the disambiguated result shows both the correct sequence and its path in the automaton.
+The translation is implemented in Haskell,
+and can be found on GitHub\footnote{See \url{https://github.com/inariksit/cgexp}}.
 
 \subsection{Finite-state automata}
 Formally, a finite-state automaton is a 5-tuple
@@ -262,7 +263,7 @@ We implement a corresponding CG in the following sections.
   \centering
   \includegraphics[width=0.6\linewidth]{fsa.png}
   \caption{A finite-state automaton describing the regular language \t{det
-      (adj)* n}.}
+      (adj)* noun}.}
  \label{fig:fsa}
 \end{figure}
 
@@ -272,10 +273,11 @@ We implement a corresponding CG in the following sections.
 We encode our input as a sequence of \emph{state cohorts} and \emph{transition cohorts}.
 Initially, a state cohort contains the full set $S = \{s_1, s_2\}$ as
 its readings, and a
-transition cohort contains the alphabet $\Sigma = \{\emph{det, adj, n}\}$, or some
+transition cohort contains the alphabet $\Sigma = \{\emph{det, adj, noun}\}$, or some
 subset of it.
-As an example, we generate all 2-letter words for the automaton in Figure~\ref{fig:fsa}.
-The initial maximally ambiguous input for length 2 looks as follows:
+As an example, we generate all 2-letter words recognised by the
+automaton in Figure~\ref{fig:fsa}. The initial maximally ambiguous
+input for length 2 looks as follows:
 %
 \begin{center}
   \renewcommand{\tabcolsep}{2.5pt}
@@ -283,26 +285,25 @@ The initial maximally ambiguous input for length 2 looks as follows:
     \swf   & \t{"<w>"}  & \swf   & \t{"<w>"} & \swf   \\ 
     \h{s1} & \t{det}      & \h{s1} & \t{det} & \h{s1} \\
     \h{s2} & \t{adj}      & \h{s2} & \t{adj} & \h{s2} \\
-           & \t{n}        &        & \t{n}   &               
+           & \t{noun}     &        & \t{noun} &               
   \end{tabular}
 \end{center}
 %
 \noindent 
-The rules of the grammar disambiguate both transition cohorts and state cohorts. Thus
-the desired result shows both the accepted sequence(s), \emph{det n}
-in this case, and their path(s) in the automaton.
+The grammar disambiguates both transition cohorts and state cohorts. Thus
+the desired result shows both the accepted sequence(s)---\emph{det noun}
+in this case---and their path(s) in the automaton.
 %
 \begin{center}
   \renewcommand{\tabcolsep}{2.5pt}
   \begin{tabular}{ccccc}
     \swf   & \t{"<w>"}  & \swf   & \t{"<w>"} & \swf   \\ 
-    \h{s1} & \t{det}    & \h{s2} & \t{n}     & \h{s1}       
+    \h{s1} & \t{det}    & \h{s2} & \t{noun}  & \h{s1}       
   \end{tabular}
 \end{center}
 %
 We can easily adapt the disambiguation scheme for real-world
-ambiguities, such as ``the \exampleWord{}''\footnote{Choose whichever: the present,
-  the sweet, ...}. The state cohorts are identical, but the transition
+ambiguities, such as ``the \exampleWord{}''. The state cohorts are identical, but the transition
 cohorts contain now some actual word form, and the initial ambiguity
 is not over the whole $\Sigma$, but some subset of it.
 %
@@ -311,7 +312,7 @@ is not over the whole $\Sigma$, but some subset of it.
   \begin{tabular}{ccccc}
     \swf   & \t{"<the>"}  & \swf   & \t{"<\exampleWord{}>"} & \swf    \\ 
     \h{s1} & \t{det}      & \h{s1} & \t{adj}   & \h{s1}  \\
-    \h{s2} &              & \h{s2} & \t{n}     & \h{s2}     
+    \h{s2} &              & \h{s2} & \t{noun}  & \h{s2}     
   \end{tabular}
 \end{center}
 %
@@ -324,7 +325,7 @@ output is identical.
   \renewcommand{\tabcolsep}{2.5pt}
   \begin{tabular}{ccccc}
     \swf   & \t{"<the>"}  & \swf   & \t{"<\exampleWord{}>"} & \swf    \\ 
-    \h{s1} & \t{det}      & \h{s2} & \t{n}   & \h{s1}  \\
+    \h{s1} & \t{det}      & \h{s2} & \t{noun} & \h{s1}  \\
   \end{tabular}
 \end{center}
 %
@@ -395,9 +396,16 @@ language such as $\{ab,ba\}$ faithfully, CG substitutes uncertainty on the
 sentence level (``either $ab$ or $ba$'') with uncertainty in the cohorts: 
 ``the first character may be either $a$ or $b$, and the second character 
 may be either $a$ or $b$''.
+For languages that contain disjunction, we have to relax our criteria:
+every transition cohort in the result may contain multiple readings,
+but each of them must contribute to some valid word. However, some
+combinations of readings may lead to words outside the language.
+
 Given that this is a fundamental design of CG, we do not envision a way to work
 around this limitation. Thus, when we use a CG generated from a regular
-expression to disambiguate, it will be overly permissive. But if we
+expression to generate, it will be overly permissive. On the other
+hand, disambiguating real-world text could be easier, because the
+cohorts are initially less ambiguous.
 
 
 \section{Turing Machines in CG?}\label{sec:turingcomplete}
