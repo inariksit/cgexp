@@ -28,6 +28,7 @@
 \def\maxAmb#1{$\langle \Sigma \rangle_#1$}
 \def\maxAmbFSA#1{$\langle \Sigma,S \rangle_#1$}
 \def\maxAmbCFG#1{$\langle \Sigma,\Sigma^{\prime} \rangle_#1$}
+\def\exampleWord{{\color{red} TODO}}
 
 \begin{document}
 \maketitle
@@ -233,57 +234,112 @@ partly overlap with the context-sensitive languages.
 
 
 \section{Are all regular languages in CG?}\label{sec:regular}
-In the present section, we propose a method to transform arbitrary finite-state
-automata into CG. Figure~\ref{fig:fsa} presents an example automaton with
-$\Sigma = \{$\emph{det, adj, n}$\}$, which checks whether some assignment of
-part-of-speech tags is ``valid''. We implement a corresponding CG in the
-following sections.
+In the present section, we propose a method to transform all regular
+languages into CG. We show how any finite-state automaton can
+be expressed in a CG: start with states and transitions as ambiguous
+cohorts, and the disambiguated result shows both the correct sequence
+and its path in the automaton.
+
+\subsection{Finite-state automata}
+Formally, a finite-state automaton is a 5-tuple
+\[
+  \langle \Sigma, S, s_0, \delta, F \rangle.
+\]
+
+
+$\Sigma$ is the alphabet of the automaton, $S$ is a set of states,
+including a starting state $s_0$ and a set $F$ of final states.
+$\delta$ is a transition function, which takes one state and one
+symbol from the alphabet, and returns the state(s) where we can get
+from the original state with that symbol.
+The automaton in Figure~\ref{fig:fsa} is presented as follows:
+
+\[\!
+\begin{aligned}
+  &S&      \!\!\!\!=\;& \{\t{S1}, \t{S2}\}   &&\Sigma& \!\!\!\!=\;& \{\emph{det, adj, n}\} \\
+  &s_0&    \!\!\!\!=\;& \t{s1}               &&\delta&  \!\!\!\!=\;& \{\t{s1} \times \emph{det} = \{\t{s2}\}, \; \dots \}  \\ 
+  &F&      \!\!\!\!=\;& \{\t{s1}\}           &&      & & %& \!\!\!\!  \;& \t{s2}   \times \emph{adj} = \t{s2}, ...
+\end{aligned}
+\]
+
+Informally, the automaton describes a simple set of possible noun
+phrases: there must be one determiner, one noun, and 0 or more
+adjectives in between. 
+We implement a corresponding CG in the following sections.
 
 \subsection{Cohorts and sentences}
-As previously, we define a hidden alphabet $\Sigma^{\prime} = \{$\t{opt\_det,
-  opt\_adj, opt\_n}$\}$, and insert the full set $\Sigma^{\prime}$ into each
-cohort as readings. In addition, we introduce \emph{state cohorts}, which
-contain the full set $S = \{s_1, s_2\}$. For example, the sequence \emph{det n}
-would be modelled with the following sentence:
+
+We encode our input as a sequence of \emph{state cohorts} and \emph{transition cohorts}.
+Initially, a state cohort contains the full set $S = \{s_1, s_2\}$, and a
+transition cohort contains $\Sigma = \{\emph{det, adj, n}\}$ or some
+subset of it.
+As an example, we generate all 2-letter words for the automaton in Figure~\ref{fig:fsa}.
+The initial maximally ambiguous input for length 2 looks as follows:
 %
 \begin{center}
   \renewcommand{\tabcolsep}{2.5pt}
   \begin{tabular}{ccccc}
-    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ 
-    \h{s1} & \t{det}      & \h{s1} & \t{n}        & \h{s1} \\
-    \h{s2} & \t{opt\_det} & \h{s2} & \t{opt\_det} & \h{s2} \\
-           & \t{opt\_adj} &        & \t{opt\_adj} &        \\
-           & \t{opt\_n}   &        & \t{opt\_n}   &        
+    \swf   & \t{"<w>"}  & \swf   & \t{"<w>"} & \swf   \\ 
+    \h{s1} & \t{det}      & \h{s1} & \t{det} & \h{s1} \\
+    \h{s2} & \t{adj}      & \h{s2} & \t{adj} & \h{s2} \\
+           & \t{n}        &        & \t{n}   &               
   \end{tabular}
 \end{center}
 %
-The rules of the grammar disambiguate both word cohorts and state cohorts. Thus
-the desired result shows both the accepted string and the path in the automaton,
-as follows:
+\noindent 
+The rules of the grammar disambiguate both transition cohorts and state cohorts. Thus
+the desired result shows both the accepted sequence, \emph{det n}, and the path in the automaton.
 %
 \begin{center}
   \renewcommand{\tabcolsep}{2.5pt}
   \begin{tabular}{ccccc}
-    \swf   & \t{"<the>"}  & \swf   & \t{"<book>"} & \swf   \\ 
-    \h{s1} & \t{det}      & \h{s2} & \t{n}        & \h{s1} \\
-           & \t{opt\_det} &        & \t{opt\_n}   &        
+    \swf   & \t{"<w>"}  & \swf   & \t{"<w>"} & \swf   \\ 
+    \h{s1} & \t{det}    & \h{s2} & \t{n}     & \h{s1}       
   \end{tabular}
 \end{center}
-
-
+%
+We can easily adapt the disambiguation scheme for real-world
+ambiguities, such as ``the \exampleWord{}''\footnote{Choose whichever: the present,
+  the sweet, ...}. The state cohorts are identical, but the transition
+cohorts contain now some actual word form, and the initial ambiguity
+is not over the whole $\Sigma$, but some subset of it.
+%
+\begin{center}
+  \renewcommand{\tabcolsep}{2.5pt}
+  \begin{tabular}{ccccc}
+    \swf   & \t{"<the>"}  & \swf   & \t{"<\exampleWord{}>"} & \swf    \\ 
+    \h{s1} & \t{det}      & \h{s1} & \t{adj}   & \h{s1}  \\
+    \h{s2} &              & \h{s2} & \t{n}     & \h{s2}     
+  \end{tabular}
+\end{center}
+%
+The disambiguation process goes exactly like in the first version, with full
+$\Sigma$ in the transition cohorts.
+Depending on how much the initial input contains ambiguity, the
+result may be the same, or more disambiguated. For our example, the
+output is identical:
+\begin{center}
+  \renewcommand{\tabcolsep}{2.5pt}
+  \begin{tabular}{ccccc}
+    \swf   & \t{"<the>"}  & \swf   & \t{"<\exampleWord{}>"} & \swf    \\ 
+    \h{s1} & \t{det}      & \h{s2} & \t{n}   & \h{s1}  \\
+  \end{tabular}
+\end{center}
+%
+%
 \subsection{Rules}
 Given that every transition happens between two states, and every state 
 has an incoming and outgoing transition, every rule needs only
 positions -1 and 1 in its contextual tests. 
-The semantics of the rules are ``remove an \t{opt\_POS} tag, if it is 
+The semantics of the rules are ``remove a reading (transition), if it is 
 \emph{not} surrounded by allowed states'',
 and ``remove a state, if it is \emph{not} surrounded by allowed transitions''.
-For the example automaton, the \t{opt\_POS}-rules are as follows:
+For the example automaton, the POS-rules are as follows:
 \begin{verbatim}
 REMOVE...
-  opt_det IF (NEGATE -1 S1 LINK 2 S2);
-  opt_adj IF (NEGATE -1 S2 LINK 2 S2);
-  opt_n   IF (NEGATE -1 S2 LINK 2 S1);
+  det IF (NEGATE -1 S1 LINK 2 S2);
+  adj IF (NEGATE -1 S2 LINK 2 S2);
+  n   IF (NEGATE -1 S2 LINK 2 S1);
 \end{verbatim}
 The start and end states naturally correspond to the first and last
 state cohort, and can be trivially disambiguated, in this case both into \t{s1}.
@@ -291,31 +347,33 @@ Once we remove a reading from either side of a cohort, some more rules can take
 action---the context ``\t{s2} on the left side and \t{s1} on the right side''
 may be broken by removing either \t{s2} or \t{s1}. 
 
-If there is only one allowed string of length $n$ in the language, then the
-result should have only one \t{opt\_POS} reading per cohort. 
-% If the original cohorts are unambiguous before adding the hidden readings,  we
-% use the opt-readings to accept the string. If the original cohorts are
-% ambiguous, we can use the opt-readings to disambiguate. 
-The original cohort may be ambiguous or not before adding the hidden readings:
-in both cases, a mismatch between the remaining opt-reading and the (possibly singleton)
-list of original readings will be a cause to reject.
-For instance, \{\t{det}, \t{opt\_det}\} accepts the original reading \t{det};
-\{\t{det}, \t{adj}, \t{opt\_det}\} accepts and disambiguates the cohort into
-\t{det}; finally, \{\t{adj}, \t{opt\_det}\} rejects the whole string as not 
-part of the regular language.
+\subsection{Result}
 
-If there are multiple strings of the same length in the language, we have to
-relax our criteria: if every cohort with a reading \t{POS} has a corresponding
-\t{opt\_POS} in the set of remaining readings, such as \{\t{det}, \t{opt\_det},
-\t{opt\_adj}\}, we accept the string. 
+For the final result of the disambiguation, we consider the two options.
+In the first case, every cohort contains the whole alphabet,
+and in the second case, only a subset.
 
-% Inari:
-%   Probably skip this, we're already talking about limitations elsewhere? If
-%   the original cohort is ambiguous and the opt-readings do not help to
-%   disambiguate, as would be the case in \{\t{det}, \t{adj}, \t{opt\_det},
-%   \t{opt\_adj}\}, we cannot disambiguate further. As we point out in
-%   Section~\ref{sec:gencg}, with the example language $\{ab,ba\}$, this could
-%   lead in accepting too much. 
+\paragraph{Full $\Sigma$}
+If there is only one allowed word of length $n$ in the language,
+then the result will contain only fully disambiguated transition
+cohorts.
+Furthermore, if there is only path in the automaton that leads
+to this word, then also the state cohorts are fully disambiguated.
+
+If there are multiple strings of the same length in the language, then
+we have to relax our criteria: every transition cohort in the result
+may contain multiple readings, but all of them must contribute to some
+valid word of length $n$.
+If there are multiple paths in the automaton to reach the accepted
+word(s), then the state cohorts may also be ambiguous.
+
+\paragraph{Subset of $\Sigma$}
+If the initial input is malformed, for example, ``the \exampleWord''
+is missing a \t{det} reading in the first transition cohort, then the
+output will be incorrect.
+
+If the initial input is well-formed, then the result may be
+disambiguated further than with the full $\Sigma$ in the transition cohorts.
 
 
 \subsection{Limitations}
@@ -327,7 +385,7 @@ sentence level (``either $ab$ or $ba$'') with uncertainty in the cohorts:
 may be either $a$ or $b$''.
 Given that this is a fundamental design of CG, we do not envision a way to work
 around this limitation. Thus, when we use a CG generated from a regular
-expression to \emph{disambiguate}, it will be overly permissive.
+expression to disambiguate, it will be overly permissive. But if we
 
 
 \section{Turing Machines in CG?}\label{sec:turingcomplete}
