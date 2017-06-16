@@ -1,14 +1,13 @@
 \documentclass[11pt]{article}
-\usepackage{amsmath}
 \usepackage{nodalida2017}
+\usepackage{amsmath}
+\usepackage{enumitem}
 \usepackage{mathptmx}
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{url}
 \usepackage{latexsym}
 \usepackage{fancyvrb}
-\special{papersize=210mm,297mm} 
-
 
 \title{Exploring the Expressivity of Constraint Grammar}
 
@@ -339,6 +338,11 @@ We will do this by implementing a procedure which translates arbitrary Turing
 machines to CG, taking VISL CG-3 itself as sufficient evidence of the fact that
 Turing machines can simulate constraint grammars.
 
+The translation we present in this section has been implemented in Haskell, and
+can be found on GitHub\footnote{%
+  See \url{https://github.com/wenkokke/cgtm}.
+}
+
 \subsection{A sample Turing machine}
 We will discuss our translation by means of an example Turing machine. Before we
 delve into this, however, we will briefly remind the reader of the definition of
@@ -373,7 +377,7 @@ Table~\ref{tab:tmtrace} shows the execution trace of our sample Turing machine
 for the input \t{1101}, writing the current state \emph{before} the current
 position of the head.
 
-\begin{table*}[h]
+\begin{table*}[b]
   \centering
   \begin{tabular}{cl|llc}
     \textbf{State In} & \textbf{Symbol In} & \textbf{Symbol Out} & \textbf{State Out} & \textbf{Move} \\ \hline
@@ -391,7 +395,7 @@ position of the head.
   \label{tab:tm}
 \end{table*}
 
-\begin{table*}[h]
+\begin{table*}[b]
   \centering
   \begin{tabular}{ccccccccccc}
     \t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}\\
@@ -409,8 +413,9 @@ position of the head.
   \label{tab:tmtrace}
 \end{table*}
 
-\subsection{Representing the tape}
-
+\subsection{Representing the tape and state}
+We will represent the tape of the Turing machine using the sequence of cell
+cohorts (written \t{"<c>"}):
 \begin{center}
   \renewcommand{\tabcolsep}{2.5pt}
   \begin{tabular}{ccccc}
@@ -418,56 +423,102 @@ position of the head.
     \t{"1"}   & \t{"1"}   & \t{"0"}   & \t{"1"}  
   \end{tabular}
 \end{center}
-
+We will store the current state in a special cohort (written \t{"<s>"}) which we
+insert right before the cell the Turing machine is currently reading. This means
+that, e.g.\ the middle row in table~\ref{tab:tmtrace} is represented by the
+following cohorts:
 \begin{center}
-  \renewcommand{\tabcolsep}{2.5pt}
-  \begin{tabular}{ccccc}
-    \t{"<c>"} & \t{"<c>"} & \h{"<s>"} & \t{"<c>"} & \t{"<c>"} \\
-    \t{"0"}   & \t{"1"}   & \h{"S1"}  & \t{"0"}   & \t{"1"}
+  \renewcommand{\tabcolsep}{1pt}
+  \begin{tabular}{ccccccc}
+    \t{"<c>"} & \t{"<c>"} & \t{"<c>"} & \t{"<c>"} & \h{"<s>"} & \t{"<c>"} & \t{"<c>"} \\
+    \t{"\_"}  & \t{"\_"}  & \t{"0"}   & \t{"0"}   & \h{"S1"}  & \t{"0"}   & \t{"1"}
   \end{tabular}
 \end{center}
 
+\subsection{Simulating the Turing machine}
+We start the Turing machine by inserting a cohort with the starting state at the
+beginning of our input. The starting state for our sample machine is \t{S0}, so
+we add the following code to our CG:
 \begin{Verbatim}
 BEFORE-SECTIONS
-ADDCOHORT ("<S>" "S0") 
-    BEFORE ("<C>") IF (-1 (>>>));
+ADDCOHORT ("<s>" "S0") 
+   BEFORE ("<c>") IF (-1 (>>>));
 \end{Verbatim}
-
+Now for the main portion of the Turing machine---simulating the transition 
+function. Since this function is applied iteratively, we will wrap our code in a
+\t{SECTION}.
+We need some way to simulate an infinite tape. Therefore, the first thing we do
+in each section is check if the current head is near the edge of the tape. If it
+is, we simply add a new, blank cell:
 \begin{Verbatim}
-ADD ("<S>" "OLD") ("<S>");
-ADD ("<C>" "OLD") ("<C>")
-    IF (-1 ("<S>" "OLD"));
+ADDCOHORT ("<c>" "_")
+   BEFORE ("<s>")
+       IF (-1 (>>>));
+ADDCOHORT ("<c>" "_") 
+    AFTER ("<c>")
+       IF (0 (<<<) LINK -1 ("<s>"));
 \end{Verbatim}
-
+We also need some way to distinguish input from output, so before we apply our
+transition rules, we mark the old state and the old input symbol with the tag
+\t{"OLD"}: 
 \begin{Verbatim}
-ADDCOHORT ("<S>" "S1")
-    BEFORE ("<C>")
-    IF (-2 ("<S>" "S1" "OLD") 
-    LINK 1 ("<C>" "1" "OLD"));
-ADDCOHORT ("<C>" "0")
-    AFTER ("<C>" "1" "OLD")
-    IF (-1 ("<S>" "S1" "OLD"));
+ADD ("<s>" "OLD") ("<s>");
+ADD ("<c>" "OLD") ("<c>")
+ IF (-1 ("<s>" "OLD"));
 \end{Verbatim}
+We are using an \t{ADD} command here for clarity, though it is possible to
+encode this usage of \t{ADD} using \t{ADDCOHORT} by simply inserting a
+specialized cohort (e.g.\ \t{"<old>"}) after the cohort we wish to mark, and
+adjusting all indices and ranges accordingly.
 
+Then it is time to encode our transition rules. We will translate every entry in
+our transition function to a pair of rules. The first of these inserts the new
+state, and the second of these inserts a \emph{new} cell, with whatever we wish
+to write, after the old cell. For instance, the sixth rule in
+table~\ref{tab:tm}, which says that ``if we are in state 1, and we read a 1,
+then we write a 0, move the tape to the right, and continue in state 1,'' is
+compiled to the following two rules:
 \begin{Verbatim}
-ADDCOHORT ("<C>" "_")
-    BEFORE ("<S>")
-    IF (-1 (>>>));
-ADDCOHORT ("<C>" "_") 
-    AFTER ("<C>")
-    IF (0 (<<<) LINK -1 ("<S>"));
+ADDCOHORT ("<s>" "S1")
+   BEFORE ("<c>")
+       IF (-2 ("<s>" "S1" "OLD") LINK 
+            1 ("<c>" "1" "OLD"));
+ADDCOHORT ("<c>" "0")
+    AFTER ("<c>" "1" "OLD")
+       IF (-1 ("<s>" "S1" "OLD"));
 \end{Verbatim}
-
+Note that the first of these rules is in effect responsible for moving the head
+over the tape. Because of this, a rule for left movement will look slightly
+different. For instance, the rule which says that ``if we are in state 1, and we
+read a blank, then we write a 1, move the tape to the left, and change to state
+2'' is compiled to the following two rules:
 \begin{Verbatim}
-REMCOHORT ("<S>" "OLD");
-REMCOHORT ("<C>" "OLD");
+ADDCOHORT ("<s>" "S2")
+   BEFORE ("<c>")
+       IF (1 ("<s>" "S1" "OLD") LINK
+           1 ("<c>" "_" "OLD"));
+ADDCOHORT ("<c>" "1")
+    AFTER ("<c>" "_" "OLD")
+       IF (-1 ("<s>" "S1" "OLD"));
 \end{Verbatim}
-
+We run such a pair of rules for each element in the transition function, and
+then we finish the \t{SECTION} by removing the old state and input cell:
+\begin{Verbatim}
+REMCOHORT ("<s>" "OLD");
+REMCOHORT ("<c>" "OLD");
+\end{Verbatim}
+If we wish to know where head of the machine was located when the program
+terminated, we can alter these lines to remove any state \emph{except} for the
+halting states. However, in this instance, we will opt instead to truncate the
+tape after the execution finishes, by removing any leading or trailing blank
+cells:
 \begin{Verbatim}
 AFTER-SECTIONS
-REMCOHORT ("<C>" "_") IF (NOT -1* SYM);
-REMCOHORT ("<C>" "_") IF (NOT  1* SYM);
+REMCOHORT ("<c>" "_") IF (NOT -1* SYM);
+REMCOHORT ("<c>" "_") IF (NOT  1* SYM);
 \end{Verbatim}
+
+\section{Linear-Bounded Automata in CG?}
 
 \section{Discussion}
 At the time of writing, the grammars generated by the FSA$\rightarrow$CG
@@ -492,7 +543,13 @@ implementation of CG; see for instance \newcite{nemeskey14}.
 of Constraint Grammar, concentrating on the implementation side.
 To our knowledge, CG as a generative model has not been been approached before.
 
+\clearpage
 \bibliographystyle{acl}
 \bibliography{cg}
 
 \end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
