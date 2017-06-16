@@ -447,16 +447,8 @@ the successors of binary numbers as an example. This machine is given as follows
 \end{aligned}
 \]
 The transition function $\delta$ is described in table~\ref{tab:tm}.
-What do these various states do? \t{S0} and \t{S2} both move the head of the
-Turing machine to the start of the number. This leaves \t{S1} for the actual
-computation. While in state \t{S1}, the head will move rightwards, overwriting
-any \t{1} it encounters with a \t{0}, until it reaches either a \t{0} or the end
-of the number. It then overwrites this final symbol with a \t{1}.
-Table~\ref{tab:tmtrace} shows the execution trace of our sample Turing machine
-for the input \t{1101}, writing the current state \emph{before} the current
-position of the head.
-
-\begin{table*}[b]
+%
+\begin{table*}[h]
   \centering
   \begin{tabular}{cl|llc}
     \textbf{State In} & \textbf{Symbol In} & \textbf{Symbol Out} & \textbf{State Out} & \textbf{Move} \\ \hline
@@ -473,8 +465,17 @@ position of the head.
   \caption{Sample Turing machine (binary successor function)}
   \label{tab:tm}
 \end{table*}
-
-\begin{table*}[b]
+%
+What do these various states do? \t{S0} and \t{S2} both move the head of the
+Turing machine to the start of the number. This leaves \t{S1} for the actual
+computation. While in state \t{S1}, the head will move rightwards, overwriting
+any \t{1} it encounters with a \t{0}, until it reaches either a \t{0} or the end
+of the number. It then overwrites this final symbol with a \t{1}.
+Table~\ref{tab:tmtrace} shows the execution trace of our sample Turing machine
+for the input \t{1101}, writing the current state \emph{before} the current
+position of the head.
+%
+\begin{table*}[h]
   \centering
   \begin{tabular}{ccccccccccc}
     \t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}&\h{"<s>"}&\t{"<c>"}\\
@@ -550,8 +551,8 @@ encode this usage of \t{ADD} using \t{ADDCOHORT} by simply inserting a
 specialized cohort (e.g.\ \t{"<old>"}) after the cohort we wish to mark, and
 adjusting all indices and ranges accordingly.
 
-Then it is time to encode our transition rules. We will translate every entry in
-our transition function to a pair of rules. The first of these inserts the new
+Next, we encode our transition rules. We will translate every entry in our
+transition function to a pair of rules. The first of these inserts the new 
 state, and the second of these inserts a \emph{new} cell, with whatever we wish
 to write, after the old cell. For instance, the sixth rule in
 table~\ref{tab:tm}, which says that ``if we are in state 1, and we read a 1,
@@ -598,6 +599,51 @@ REMCOHORT ("<c>" "_") IF (NOT  1* SYM);
 \end{Verbatim}
 
 \section{Linear-Bounded Automata in CG?}
+Linear-bounded automata (LBA) are important, because they accept exactly the
+class of context-sensitive languages. They are defined as Turing machines whose
+tape is restricted to the portion containing the input.
+It therefore seems obvious that we can simulate an LBA by removing the two
+rules which expand the tape from the transformation outlined in
+section~\ref{sec:turingcomplete}. However, this is not incredibly interesting,
+as we already know the subset of CG using only \t{ADDCOHORT} and \t{REMCOHORT}
+is Turing complete. In this section, we will discuss a different subset of CG
+which we believe to be sufficiently expressive to cover all context-sensitive
+grammars. This is the subsets using only \t{ADD} and \t{REPLACE}.
+
+\subsection{LBAs using \t{ADD} and \t{REPLACE}}
+In the encoding for Turing machines in section~\ref{sec:turingcomplete} we use
+\t{ADDCOHORT}, as it is the most obvious way to simulate an infinite tape.
+However, for LBAs, we no longer need an infinite tape. We can require the
+machine to do all its work with the limited number of cohorts it has been given
+as its input. This means we can do all the computation by adding and removing
+tags. We can retain much of the structure we set up for simulating Turing
+machines:
+\begin{enumerate}
+\item%
+  we start by marking the cohort we are currently reading---i.e.\ the only
+  cohort with a state tag---with \t{"OLD"}; then 
+\item%
+  we \t{ADD} the next state tag to the cohort to which we are moving; then
+\item%
+  we \t{REPLACE} all tags on the cohort which we left with the output symbol.
+\end{enumerate}
+And we repeat the above steps until we reach a halting state. This way, we can
+implement any linear-bounded automaton as a constraint grammar using only
+\t{ADD} and \t{REPLACE}.
+
+We can take this idea one step further by replacing any usage of \t{ADD} with a
+usage of \t{REPLACE}. We can do this, because LBAs use a finite set of states
+and a finite alphabet. For instance, we can mark the cohort we are currently
+reading as \t{"OLD"} using a series of \t{REPLACE} rules, $\forall q \in Q,
+\forall a \in \Gamma,$
+\begin{Verbatim}
+REPLACE ("<c>" "st_q" "sy_a" "OLD") 
+ TARGET ("<c>" "st_q" "sy_a")
+\end{Verbatim}
+Similarly for tagging the next state.
+However, this does result in a huge blowup in the number of rules, as instead of
+writing a single rule for each of these uses of \t{ADD}, we now write $|Q| \cdot
+|\Gamma|$ rules, to test every single combination of state and symbol.
 
 \section{Discussion}
 At the time of writing, the grammars generated by the FSA$\rightarrow$CG
@@ -632,3 +678,4 @@ To our knowledge, CG as a generative model has not been been approached before.
 %%% mode: latex
 %%% TeX-master: t
 %%% End:
+%  LocalWords:  automata
