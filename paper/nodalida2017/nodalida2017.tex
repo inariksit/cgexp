@@ -634,12 +634,14 @@ implement any linear-bounded automaton as a constraint grammar using only
 We can take this idea one step further by replacing any usage of \t{ADD} with a
 usage of \t{REPLACE}. We can do this, because LBAs use a finite set of states
 and a finite alphabet. For instance, we can mark the cohort we are currently
-reading as \t{"OLD"} using a series of \t{REPLACE} rules, $\forall q \in Q,
-\forall a \in \Gamma,$
-\begin{Verbatim}
-REPLACE ("<c>" "st_q" "sy_a" "OLD") 
- TARGET ("<c>" "st_q" "sy_a")
-\end{Verbatim}
+reading as \t{"OLD"} using a series of \t{REPLACE} rules,
+\[
+  \begin{aligned}
+    \forall q \in Q, \forall a \in \Gamma,\\
+    \t{REPLACE} \; &\t{(}\t{"<c>"} \; \t{"$q$"} \; \t{"$a$"} \; \t{"OLD"}\t{)}\\
+                \; &\t{(}\t{"<c>"} \; \t{"$q$"} \; \t{"$a$"}\t{)}\t{;}
+  \end{aligned}
+\]
 Similarly for tagging the next state.
 However, this does result in a huge blowup in the number of rules, as instead of
 writing a single rule for each of these uses of \t{ADD}, we now write $|Q| \cdot
