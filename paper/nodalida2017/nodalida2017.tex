@@ -223,14 +223,6 @@ Otherwise, we reject.
 The language $a^nb^nc^n$ is context-sensitive, and therefore CG must at least
 partly overlap with the context-sensitive languages. 
 %
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.6\linewidth]{fsa.png}
-  \caption{A finite-state automaton describing the regular language \t{det
-      (adj)* n}.}
- \label{fig:fsa}
-\end{figure}
-
 
 \section{Are all regular languages in CG?}\label{sec:regular}
 In the present section, we propose a method to transform all regular
@@ -266,11 +258,21 @@ phrases: there must be one determiner, one noun, and 0 or more
 adjectives in between. 
 We implement a corresponding CG in the following sections.
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.6\linewidth]{fsa.png}
+  \caption{A finite-state automaton describing the regular language \t{det
+      (adj)* n}.}
+ \label{fig:fsa}
+\end{figure}
+
+
 \subsection{Cohorts and sentences}
 
 We encode our input as a sequence of \emph{state cohorts} and \emph{transition cohorts}.
-Initially, a state cohort contains the full set $S = \{s_1, s_2\}$, and a
-transition cohort contains $\Sigma = \{\emph{det, adj, n}\}$ or some
+Initially, a state cohort contains the full set $S = \{s_1, s_2\}$ as
+its readings, and a
+transition cohort contains the alphabet $\Sigma = \{\emph{det, adj, n}\}$, or some
 subset of it.
 As an example, we generate all 2-letter words for the automaton in Figure~\ref{fig:fsa}.
 The initial maximally ambiguous input for length 2 looks as follows:
@@ -287,7 +289,8 @@ The initial maximally ambiguous input for length 2 looks as follows:
 %
 \noindent 
 The rules of the grammar disambiguate both transition cohorts and state cohorts. Thus
-the desired result shows both the accepted sequence, \emph{det n}, and the path in the automaton.
+the desired result shows both the accepted sequence(s), \emph{det n}
+in this case, and their path(s) in the automaton.
 %
 \begin{center}
   \renewcommand{\tabcolsep}{2.5pt}
@@ -316,7 +319,7 @@ The disambiguation process goes exactly like in the first version, with full
 $\Sigma$ in the transition cohorts.
 Depending on how much the initial input contains ambiguity, the
 result may be the same, or more disambiguated. For our example, the
-output is identical:
+output is identical.
 \begin{center}
   \renewcommand{\tabcolsep}{2.5pt}
   \begin{tabular}{ccccc}
@@ -330,49 +333,59 @@ output is identical:
 Given that every transition happens between two states, and every state 
 has an incoming and outgoing transition, every rule needs only
 positions -1 and 1 in its contextual tests. 
-The semantics of the rules are ``remove a reading (transition), if it is 
+The semantics of the rules are ``remove a transition, if it is 
 \emph{not} surrounded by allowed states'',
 and ``remove a state, if it is \emph{not} surrounded by allowed transitions''.
-For the example automaton, the POS-rules are as follows:
+For the example automaton, the rules are as follows:
+
 \begin{verbatim}
-REMOVE...
-  det IF (NEGATE -1 S1 LINK 2 S2);
-  adj IF (NEGATE -1 S2 LINK 2 S2);
-  n   IF (NEGATE -1 S2 LINK 2 S1);
+ REMOVE... # Transition rules
+   Det  IF (NEGATE -1 S1 LINK 2 S2);
+   Adj  IF (NEGATE -1 S2 LINK 2 S2);
+   Noun IF (NEGATE -1 S2 LINK 2 S1);
+
+ REMOVE... # State rules
+   S1 IF (NEGATE -1 >>> OR Noun
+             LINK 2 Det) ;
+   S2 IF (NEGATE -1 Det OR Adj 
+             LINK 2 Adj OR Noun) ;
 \end{verbatim}
+
 The start and end states naturally correspond to the first and last
 state cohort, and can be trivially disambiguated, in this case both into \t{s1}.
 Once we remove a reading from either side of a cohort, some more rules can take
 action---the context ``\t{s2} on the left side and \t{s1} on the right side''
 may be broken by removing either \t{s2} or \t{s1}. 
+One by one, these rules disambiguate the input, removing impossible
+states and transitions from the cohorts.
 
-\subsection{Result}
+% \subsection{Result}
 
-For the final result of the disambiguation, we consider the two options.
-In the first case, every cohort contains the whole alphabet,
-and in the second case, only a subset.
+% For the final result of the disambiguation, we consider the two options.
+% In the first case, every cohort contains the whole alphabet,
+% and in the second case, only a subset.
 
-\paragraph{Full $\Sigma$}
-If there is only one allowed word of length $n$ in the language,
-then the result will contain only fully disambiguated transition
-cohorts.
-Furthermore, if there is only path in the automaton that leads
-to this word, then also the state cohorts are fully disambiguated.
+% \paragraph{Full $\Sigma$}
+% If there is only one allowed word of length $n$ in the language,
+% then the result will contain only fully disambiguated transition
+% cohorts.
+% Furthermore, if there is only path in the automaton that leads
+% to this word, then also the state cohorts are fully disambiguated.
 
-If there are multiple strings of the same length in the language, then
-we have to relax our criteria: every transition cohort in the result
-may contain multiple readings, but all of them must contribute to some
-valid word of length $n$.
-If there are multiple paths in the automaton to reach the accepted
-word(s), then the state cohorts may also be ambiguous.
+% If there are multiple strings of the same length in the language, then
+% we have to relax our criteria: every transition cohort in the result
+% may contain multiple readings, but all of them must contribute to some
+% valid word of length $n$.
+% If there are multiple paths in the automaton to reach the accepted
+% word(s), then the state cohorts may also be ambiguous.
 
-\paragraph{Subset of $\Sigma$}
-If the initial input is malformed, for example, ``the \exampleWord''
-is missing a \t{det} reading in the first transition cohort, then the
-output will be incorrect.
+% \paragraph{Subset of $\Sigma$}
+% If the initial input is malformed, for example, ``the \exampleWord''
+% is missing a \t{det} reading in the first transition cohort, then the
+% output will be incorrect.
 
-If the initial input is well-formed, then the result may be
-disambiguated further than with the full $\Sigma$ in the transition cohorts.
+% If the initial input is well-formed, then the result may be
+% disambiguated further than with the full $\Sigma$ in the transition cohorts.
 
 
 \subsection{Limitations}
