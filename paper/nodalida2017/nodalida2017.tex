@@ -37,9 +37,10 @@
   natural question to ask ``how expressive is it?'' Therefore, in this paper, we
   begin to address the question of the expressivity of CG.
   Aside from the obvious theoretical interest, we envision also practical
-  benefits. For instance, we hope that the FSA$\rightarrow$CG conversion tool, described in
-  later sections of this paper, could eventually be developed to generate
-  human-readable CG code from regular expressions or a context-free grammar. 
+  benefits. Understanding what CG can and cannot express
+  makes it possible to transform other formalisms to corresponding or
+  approximate CGs, thus making way for new ways of grammar writing,
+  and better reuse of existing language resources.
 \end{abstract}
 
 
@@ -152,8 +153,8 @@ In sections~\ref{sec:lowerbound} and~\ref{sec:regular}, we will restrict
 ourselves to the subset of CG which only uses the \t{REMOVE} command with
 sections, and show this to at least cover all regular languages and some
 context-free and context-sensitive languages.
-In section~\ref{sec:turingcomplete}, we will restrict ourselves to thesubset of
-CG which only uses the \t{ADDCOHORT} and \t{REMCOHORT} commands with sections,
+In section~\ref{sec:turingcomplete}, we will restrict ourselves to the
+subset of CG which only uses the \t{ADDCOHORT} and \t{REMCOHORT} commands with sections,
 and show this to be Turing complete.
 
 \section{A lower bound for CG}\label{sec:lowerbound}
@@ -579,7 +580,7 @@ then we finish the \t{SECTION} by removing the old state and input cell:
 REMCOHORT ("<s>" "OLD");
 REMCOHORT ("<c>" "OLD");
 \end{Verbatim}
-If we wish to know where head of the machine was located when the program
+If we wish to know where the head of the machine was located when the program
 terminated, we can alter these lines to remove any state \emph{except} for the
 halting states. However, in this instance, we will opt instead to truncate the
 tape after the execution finishes, by removing any leading or trailing blank
