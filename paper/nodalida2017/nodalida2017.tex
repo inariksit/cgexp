@@ -27,7 +27,7 @@
 \def\maxAmb#1{$\langle \Sigma \rangle_#1$}
 \def\maxAmbFSA#1{$\langle \Sigma,S \rangle_#1$}
 \def\maxAmbCFG#1{$\langle \Sigma,\Sigma^{\prime} \rangle_#1$}
-\def\exampleWord{{\color{red} TODO}}
+\def\exampleWord{{present}}
 
 \begin{document}
 \maketitle
@@ -82,7 +82,6 @@ This language is encoded by the following constraint grammar:
         BEFORE LETTER 
         IF (-1 (>>>) LINK 1* B);
     REMCOHORT LETTER
-        IF (-1* ("<REJECT>"));
   \end{Verbatim}
 \end{center}
 We then encode the input words as a series of letter cohorts with readings
@@ -248,9 +247,10 @@ The automaton in Figure~\ref{fig:fsa} is presented as follows:
 
 \[\!
 \begin{aligned}
-  &S&      \!\!\!\!=\;& \{\t{S1}, \t{S2}\}   &&\Sigma& \!\!\!\!=\;& \{\emph{det, adj, n}\} \\
-  &s_0&    \!\!\!\!=\;& \t{s1}               &&\delta&  \!\!\!\!=\;& \{\t{s1} \times \emph{det} = \{\t{s2}\}, \; \dots \}  \\ 
-  &F&      \!\!\!\!=\;& \{\t{s1}\}           &&      & & %& \!\!\!\!  \;& \t{s2}   \times \emph{adj} = \t{s2}, ...
+  &S&      \!\!\!\!=\;& \{\t{s1}, \t{s2}\}  &&\Sigma& \!\!\!\!=\;& \{\emph{det, adj, n}\} \\
+  &s_0&    \!\!\!\!=\;& \t{s1}              &&\delta& \!\!\!\!=\;& \{\t{s1} \xrightarrow{\text{\em det}} \{\t{s2}\},  \\ 
+  &F&      \!\!\!\!=\;& \{\t{s1}\}          &&      & \!\!\!\! \;& \ \t{s2} \xrightarrow{\text{\em adj}} \{\t{s2}\}, \\
+  & &                 &                     &&      & \!\!\!\! \;& \ \t{s2} \xrightarrow{\text{\em noun}} \{\t{s1}\} \} \\
 \end{aligned}
 \]
 
@@ -271,13 +271,12 @@ We implement a corresponding CG in the following sections.
 \subsection{Cohorts and sentences}
 
 We encode our input as a sequence of \emph{state cohorts} and \emph{transition cohorts}.
-Initially, a state cohort contains the full set $S = \{s_1, s_2\}$ as
-its readings, and a
-transition cohort contains the alphabet $\Sigma = \{\emph{det, adj, noun}\}$, or some
-subset of it.
-As an example, we generate all 2-letter words recognised by the
-automaton in Figure~\ref{fig:fsa}. The initial maximally ambiguous
-input for length 2 looks as follows:
+Initially, a state cohort contains the full set $S = \{\t{s1}, \t{s2}\}$ as
+its readings, and a transition cohort contains the alphabet $\Sigma =
+\{\emph{det, adj, noun}\}$, or some subset of it. As an example, we
+generate all 2-letter words recognised by the automaton in
+Figure~\ref{fig:fsa}. The initial maximally ambiguous input for length
+2 looks as follows:
 %
 \begin{center}
   \renewcommand{\tabcolsep}{2.5pt}
@@ -340,16 +339,21 @@ and ``remove a state, if it is \emph{not} surrounded by allowed transitions''.
 For the example automaton, the rules are as follows:
 
 \begin{verbatim}
- REMOVE... # Transition rules
-   Det  IF (NEGATE -1 S1 LINK 2 S2);
-   Adj  IF (NEGATE -1 S2 LINK 2 S2);
-   Noun IF (NEGATE -1 S2 LINK 2 S1);
+# Transition rules
+REMOVE Det  
+    IF (NEGATE -1 S1 LINK 2 S2) ;
+REMOVE Adj
+    IF (NEGATE -1 S2 LINK 2 S2) ;
+REMOVE Noun 
+    IF (NEGATE -1 S2 LINK 2 S1) ;
 
- REMOVE... # State rules
-   S1 IF (NEGATE -1 >>> OR Noun
-             LINK 2 Det) ;
-   S2 IF (NEGATE -1 Det OR Adj 
-             LINK 2 Adj OR Noun) ;
+# State rules
+REMOVE S1
+    IF (NEGATE -1 >>> OR Noun
+           LINK 2 Det) ;
+REMOVE S2
+    IF (NEGATE -1 Det OR Adj 
+           LINK 2 Adj OR Noun) ;
 \end{verbatim}
 
 The start and end states naturally correspond to the first and last
@@ -360,52 +364,62 @@ may be broken by removing either \t{s2} or \t{s1}.
 One by one, these rules disambiguate the input, removing impossible
 states and transitions from the cohorts.
 
-% \subsection{Result}
+\subsection{Result}
 
-% For the final result of the disambiguation, we consider the two options.
-% In the first case, every cohort contains the whole alphabet,
-% and in the second case, only a subset.
+For the final result of the disambiguation, we consider three options:
+either the cohorts contain the whole alphabet, a well-formed subset
+or a malformed subset.
 
-% \paragraph{Full $\Sigma$}
-% If there is only one allowed word of length $n$ in the language,
-% then the result will contain only fully disambiguated transition
-% cohorts.
-% Furthermore, if there is only path in the automaton that leads
-% to this word, then also the state cohorts are fully disambiguated.
+\paragraph{Full $\Sigma$}
+If there is only one allowed word of length $n$ in the language,
+then the result will contain only fully disambiguated transition
+cohorts.
+Furthermore, if there is only path in the automaton that leads
+to this word, then also the state cohorts are fully disambiguated.
 
-% If there are multiple strings of the same length in the language, then
-% we have to relax our criteria: every transition cohort in the result
-% may contain multiple readings, but all of them must contribute to some
-% valid word of length $n$.
-% If there are multiple paths in the automaton to reach the accepted
-% word(s), then the state cohorts may also be ambiguous.
+If there are multiple words of the same length in the language, then
+we have to relax our criteria: every transition cohort and state
+cohort in the result may contain multiple readings, but all of them
+must contribute to some valid word of length $n$, and its path in the
+automaton. 
 
-% \paragraph{Subset of $\Sigma$}
-% If the initial input is malformed, for example, ``the \exampleWord''
-% is missing a \t{det} reading in the first transition cohort, then the
-% output will be incorrect.
+\paragraph{Well-formed subset of $\Sigma$}
+With well-formed subset, we mean that each cohort contains
+at least one of the correct readings: \{\t{det}\} for ``the'', and
+\{\t{adj,noun}\} for ``\exampleWord{}''. 
+If the initial input is well-formed, then the result will be correct,
+and may even be disambiguated further than with the full $\Sigma$ in
+the transition cohorts.
 
-% If the initial input is well-formed, then the result may be
-% disambiguated further than with the full $\Sigma$ in the transition cohorts.
+\paragraph{Malformed subset of $\Sigma$}
+Malformed subset has at least one cohort without any correct readings,
+for example, ``the'' is missing a \t{det} reading.
+This will lead to arbitrary disambiguations, which do not correspond to the automaton.
+Without a \t{det} reading in ``the'', the rule which removes \t{s2}
+would trigger in the middle state, leaving us with three \t{s1}
+states. \t{s1-s1-s1} is an impossible path in the automaton,
+so it would trigger all of the transition rules, and stop only when
+there is one, arbitrary, reading left in the transition cohorts.
 
 
-\subsection{Limitations}
-As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
-Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent a 
-language such as $\{ab,ba\}$ faithfully, CG substitutes uncertainty on the 
-sentence level (``either $ab$ or $ba$'') with uncertainty in the cohorts: 
-``the first character may be either $a$ or $b$, and the second character 
-may be either $a$ or $b$''.
-For languages that contain disjunction, we have to relax our criteria:
-every transition cohort in the result may contain multiple readings,
-but each of them must contribute to some valid word. However, some
-combinations of readings may lead to words outside the language.
 
-Given that this is a fundamental design of CG, we do not envision a way to work
-around this limitation. Thus, when we use a CG generated from a regular
-expression to generate, it will be overly permissive. On the other
-hand, disambiguating real-world text could be easier, because the
-cohorts are initially less ambiguous.
+% \subsection{Limitations}
+% As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
+% Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent a 
+% language such as $\{ab,ba\}$ faithfully, CG substitutes uncertainty on the 
+% sentence level (``either $ab$ or $ba$'') with uncertainty in the cohorts: 
+% ``the first character may be either $a$ or $b$, and the second character 
+% may be either $a$ or $b$''.
+% For languages that contain disjunction, we have to relax our criteria:
+% every transition cohort in the result may contain multiple readings,
+% but each of them must contribute to some valid word. However, some
+% combinations of readings may lead to words outside the language.
+
+% Given that this is a fundamental design of CG, we do not envision a way to work
+% around this limitation. Thus, when we use a CG generated from a regular
+% expression to generate, it will be overly permissive. On the other
+% hand, disambiguating real-world text could be easier, because the
+% cohorts are initially less ambiguous.
 
 
 \section{Turing Machines in CG?}\label{sec:turingcomplete}
@@ -657,6 +671,27 @@ However, it does give us the ability to quickly generate fragments of CG code
 which disambiguate or rewrite input based on a regular expression.
 We are hoping to develop this further, to also include context-free or even
 mildly context-sensitive grammars.
+
+
+\subsection{Limitations}
+As \newcite{lager_nivre01} point out, CG has no way of expressing disjunction.
+Unlike its close cousin FSIG \cite{koskenniemi90}, which would represent a 
+language such as $\{ab,ba\}$ faithfully, CG substitutes uncertainty on the 
+sentence level (``either $ab$ or $ba$'') with uncertainty in the cohorts: 
+``the first character may be either $a$ or $b$, and the second character 
+may be either $a$ or $b$''.
+For languages that contain disjunction, we have to relax our criteria:
+every transition cohort in the result may contain multiple readings,
+but each of them must contribute to some valid word. However, some
+combinations of readings may lead to words outside the language.
+
+Given that this is a fundamental design of CG, we do not envision a way to work
+around this limitation. Thus, when we use a CG generated from a regular
+expression to generate, it will be overly permissive. On the other
+hand, disambiguating real-world text could be easier, because the
+cohorts are initially less ambiguous.
+
+
 Such CGs could be used as, e.g.\ as part of a larger constraint grammar.
 In addition, we would like to focus on making the grammars more human-readable,
 so that they could be used to quickly generate a basis for a constraint grammar
